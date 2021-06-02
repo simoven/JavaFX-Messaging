@@ -49,6 +49,9 @@ public class DatabaseHandler {
 	
 	public synchronized User checkUserLogin(String username, String password) throws SQLException {
 		User utente = null;
+		if(!checkUserExist(username))
+			return null;
+		
 		String query = "SELECT * FROM Utente WHERE username=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setString(1, username);
@@ -59,7 +62,7 @@ public class DatabaseHandler {
 			String pass = rs.getString("password");
 			if(BCrypt.checkpw(password, pass)) {
 				utente = new User(username, password, rs.getString("Nome"), rs.getString("Cognome"));
-				utente.setPropicFile(rs.getBytes("ProPic"));
+				utente.setPropicFile(rs.getBytes("Img_profilo"));
 			}
 		}
 		
@@ -69,7 +72,7 @@ public class DatabaseHandler {
 	}
 	
 	public synchronized boolean registerUser(User utente) throws SQLException {
-		if(checkUserExist(utente))
+		if(checkUserExist(utente.getUsername()))
 			return false;
 		
 		String query = "INSERT INTO Utente VALUES(?,?,?,?,?,null);";
@@ -78,7 +81,7 @@ public class DatabaseHandler {
 		stm.setString(2, BCrypt.hashpw(utente.getPassword(), BCrypt.gensalt(12)));
 		stm.setString(3, utente.getName());
 		stm.setString(4, utente.getLastName());
-		stm.setBytes(5, Utilities.getByteArrFromFile(utente.getProPicAsFile()));
+		stm.setBytes(5, utente.getProPic());
 		
 		int res = stm.executeUpdate();
 		stm.close();
@@ -86,10 +89,10 @@ public class DatabaseHandler {
 		return res != 0;
 	}
 	
-	public synchronized boolean checkUserExist(User utente) throws SQLException {
-		String query = "SELECT * FROM users WHERE username=?;";
+	public synchronized boolean checkUserExist(String username) throws SQLException {
+		String query = "SELECT * FROM Utente WHERE username=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
-		stm.setString(1, utente.getUsername());
+		stm.setString(1, username);
 		ResultSet rs = stm.executeQuery();
 		boolean result = rs.next();
 		stm.close();
@@ -98,7 +101,7 @@ public class DatabaseHandler {
 	}
 	
 	public synchronized void addPendingMessage(TextMessage msg, String receiver) throws SQLException {
-		String dateTime = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_DATE_TIME);
+		String dateTime = Utilities.getCurrentISODate();
 		String query;
 		if(msg.isAGroupMessage())
 			query = "INSERT INTO MessaggioDiGruppo Values(null, ?, ?, ?, null, ?, ?);";
@@ -118,7 +121,7 @@ public class DatabaseHandler {
 	}
 
 	public synchronized void addPendingImage(ImageMessage msg, String receiver) throws SQLException {
-		String dateTime = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_DATE_TIME);
+		String dateTime = Utilities.getCurrentISODate();
 		String query;
 		if(msg.isAGroupMessage())
 			query = "INSERT INTO MessaggioDiGruppo Values(null, ?, ?, null, ?, ?, ?)";
@@ -149,9 +152,11 @@ public class DatabaseHandler {
 	}
 	
 	public synchronized void updateLastAccess(String username) throws SQLException {
-		String query = "UPDATE Utente SET Ultimo_accesso=(SELECT datetime('now')) WHERE username=?;";
+		String date = Utilities.getCurrentISODate();
+		String query = "UPDATE Utente SET Ultimo_accesso=? WHERE username=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
-		stm.setString(1, username);
+		stm.setString(1, date);
+		stm.setString(2, username);
 		stm.executeUpdate();
 		stm.close();
 	}

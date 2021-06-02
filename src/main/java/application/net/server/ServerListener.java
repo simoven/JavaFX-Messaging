@@ -1,13 +1,10 @@
 package application.net.server;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -17,45 +14,45 @@ import application.logic.Message;
 import application.logic.TextMessage;
 import application.net.misc.Protocol;
 import application.net.misc.User;
+import application.net.misc.Utilities;
 
 public class ServerListener implements Runnable {
 
 	private Socket socket;
-	private BufferedReader inputStream = null;
-	private BufferedOutputStream outputStream = null;
+	private ObjectInputStream inputStream = null;
+	private ObjectOutputStream outputStream = null;
 	private Server server;
-	private String username;
+	private String serverUsername;
 	private boolean isLogged;
 	
 	public ServerListener(Socket socket, Server server) {
 		this.socket = socket;
 		this.server = server;
-		this.username = null;
+		this.serverUsername = null;
 		this.isLogged = false;
 		
 		try {
-			outputStream = new BufferedOutputStream(socket.getOutputStream());
-			inputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			
-			Thread t = new Thread(this);
-			t.setDaemon(true);
-			t.start();
+			outputStream = new ObjectOutputStream(socket.getOutputStream());		
 		} catch (IOException e) {
 			//TODO mostra errore impossibile stabilire una connessione con il server
 		}
 	}
 	
 	public void run() {
-		try {
+		try {			
+			inputStream = new ObjectInputStream(socket.getInputStream());
 			while(!isLogged) {
-				String request = inputStream.readLine();
+				String request = (String) inputStream.readObject();
+				
+				if(request == null)
+					continue;
+				
 				if(request.equals(Protocol.REQUEST_LOGIN)) {
 					if(!handleLogin()) {
 						closeStreams();
 						return;
 					}
 					
-					sendMessage(Protocol.REQUEST_SUCCESSFUL);
 					isLogged = true;
 				}
 				else if(request.equals(Protocol.REQUEST_REGISTRATION)) {
@@ -63,18 +60,16 @@ public class ServerListener implements Runnable {
 						closeStreams();
 						return;
 					}
-					
-					sendMessage(Protocol.REQUEST_SUCCESSFUL);
 				}
 				else 
 					sendMessage(Protocol.BAD_REQUEST);
 			}
 			
 			//Adesso sono loggato
-			server.addOnlineUser(username, socket);
+			server.addOnlineUser(serverUsername, socket);
 			
 			while(!Thread.currentThread().isInterrupted() && inputStream != null && outputStream != null) {
-				String request = inputStream.readLine();
+				String request = (String) inputStream.readObject();
 				
 				switch (request) {
 					case Protocol.MESSAGE_SEND_REQUEST:
@@ -104,32 +99,36 @@ public class ServerListener implements Runnable {
 			
 		} catch (IOException e) {
 			sendMessage(Protocol.COMMUNICATION_ERROR);
-			try {
-				if(server.disconnectUser(username))
-					DatabaseHandler.getInstance().updateLastAccess(username);
-				} catch (SQLException i) {
-					//nulla
-				}
-			closeStreams();
+			disconnect();
+			e.printStackTrace();
 			return;
 		} catch (SQLException i) {
 			sendMessage(Protocol.SERVER_ERROR);
-		} catch (ClassNotFoundException f) {
+			i.printStackTrace();
+			return;
+		}
+		 catch (ClassNotFoundException f) {
 			sendMessage(Protocol.BAD_REQUEST);
-			server.disconnectUser(username);
-			closeStreams();
+			disconnect();
+			f.printStackTrace();
 			return;
 		}
 	}
-		
-	private void handleOnlineStatusRequest() throws IOException, SQLException {
-		String userToCheck = inputStream.readLine();
+	
+	private void disconnect() {
 		try {
-			PrintWriter writer = new PrintWriter(outputStream, true);
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			if(server.disconnectUser(serverUsername))
+				DatabaseHandler.getInstance().updateLastAccess(serverUsername);
+		} catch (SQLException i) {/*nulla*/ }
+		closeStreams();
+	}
+		
+	private void handleOnlineStatusRequest() throws IOException, SQLException, ClassNotFoundException {
+		String userToCheck = (String) inputStream.readObject();
+		try {
 			InformationMessage info = new InformationMessage();
 			
-			writer.println(Protocol.ONLINE_STATUS_REQUEST);
+			sendMessage(Protocol.ONLINE_STATUS_REQUEST);
 			
 			if(server.checkIsUserLogged(userToCheck))
 				info.setInformation(Protocol.USER_ONLINE);
@@ -140,12 +139,10 @@ public class ServerListener implements Runnable {
 				System.out.println(date);
 			}
 			
-			out.writeObject(info);
-			out.close();
+			outputStream.writeObject(info);
 		} catch (NullPointerException e) {
 			return;
 		}
-		
 	}
 	
 	private void handleSingleImageSend(String receiver, ImageMessage msg) throws IOException, SQLException {
@@ -155,28 +152,24 @@ public class ServerListener implements Runnable {
 			DatabaseHandler.getInstance().addPendingImage(msg, receiver);
 		}
 		else {
-			PrintWriter writer = new PrintWriter(outputStream, true);
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			ObjectOutputStream out = new ObjectOutputStream(recSocket.getOutputStream());
 			
-			writer.println(Protocol.IMAGE_SEND_REQUEST);
+			out.writeObject(Protocol.IMAGE_SEND_REQUEST);
 			out.writeObject(msg);
+			out.flush();
 			
-			writer.close();
 			out.close();
 		}
-		
-		socket.close();
 	}
 
 	private void handleImageSend(boolean isGroupMessage) throws IOException, SQLException, ClassNotFoundException {
-		ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-		
 		try {
-			Message msg = (Message) in.readObject();
-			
-			//Lo ignoro semplicemente
-			if(!(msg instanceof ImageMessage))
+			Message msg = (Message) inputStream.readObject();
+		
+			if(!(msg instanceof ImageMessage)) {
+				sendMessage(Protocol.BAD_REQUEST);
 				return;
+			}
 			
 			ImageMessage imgMsg = (ImageMessage) msg;
 			
@@ -191,8 +184,10 @@ public class ServerListener implements Runnable {
 					handleSingleImageSend(partecipant, imgMsg);
 				}
 			}
-			in.close();
+			
+			sendMessage(Protocol.REQUEST_SUCCESSFUL);
 		} catch (NullPointerException e) {
+			sendMessage(Protocol.BAD_REQUEST);
 			return;
 		}
 	}
@@ -204,26 +199,24 @@ public class ServerListener implements Runnable {
 			DatabaseHandler.getInstance().addPendingMessage(msg, receiver);
 		}
 		else {
-			PrintWriter writer = new PrintWriter(outputStream, true);
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			ObjectOutputStream out = new ObjectOutputStream(recSocket.getOutputStream());
 			
-			writer.println(Protocol.MESSAGE_SEND_REQUEST);
+			out.writeObject(Protocol.MESSAGE_SEND_REQUEST);
 			out.writeObject(msg);
+			out.flush();
 			
-			writer.close();
 			out.close();
 		}
 	}
 
 	private void handleSendMessage(boolean isGroupMessage) throws IOException, ClassNotFoundException, SQLException {
-		ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-		
 		try {
-			Message msg = (Message) in.readObject();
+			Message msg = (Message) inputStream.readObject();
 			
-			//Lo ignoro semplicemente
-			if(!(msg instanceof TextMessage))
+			if(!(msg instanceof TextMessage)) {
+				sendMessage(Protocol.BAD_REQUEST);
 				return;
+			}
 			
 			TextMessage txtMsg = (TextMessage) msg;
 			
@@ -242,15 +235,22 @@ public class ServerListener implements Runnable {
 				}
 			}
 			
-			in.close();
+			sendMessage(Protocol.REQUEST_SUCCESSFUL);
 		} catch (NullPointerException e) {
+			sendMessage(Protocol.BAD_REQUEST);
 			return;
 		}
 	}
 
 	private boolean handleLogin() throws IOException, ClassNotFoundException, SQLException {
-		String username = inputStream.readLine();
-		String password = inputStream.readLine();
+		String username = (String) inputStream.readObject();
+		String password = (String) inputStream.readObject();
+		
+		if(!Utilities.checkIfUsernameValid(username).equals(Utilities.USERNAME_VALID) ||
+		   !Utilities.checkIfPasswordValid(password).equals(Utilities.PASSWORD_VALID)) {
+			sendMessage(Protocol.INVALID_CREDENTIAL);
+			return false;
+		}
 		
 		if(server.checkIsUserLogged(username)) {
 			sendMessage(Protocol.USER_ALREADY_LOGGED);
@@ -264,18 +264,29 @@ public class ServerListener implements Runnable {
 			return false;
 		}
 		
+		serverUsername = username;
+		
+		sendMessage(Protocol.REQUEST_SUCCESSFUL);
 		sendUser(utente);
+		
 		return true;
 	}
 	
 	private boolean handleRegistration() throws IOException, ClassNotFoundException, SQLException {
 		User utente = retrieveUser();
 		
+		if(!Utilities.checkIfUsernameValid(utente.getUsername()).equals(Utilities.USERNAME_VALID) ||
+		   !Utilities.checkIfPasswordValid(utente.getPassword()).equals(Utilities.PASSWORD_VALID)) {
+			sendMessage(Protocol.INVALID_CREDENTIAL);
+			return false;
+		}
+		
 		if(!DatabaseHandler.getInstance().registerUser(utente)) {
 			sendMessage(Protocol.USER_ALREADY_EXIST);
 			return false;
 		}
 		
+		sendMessage(Protocol.REQUEST_SUCCESSFUL);
 		return true;
 	}
 	
@@ -283,25 +294,25 @@ public class ServerListener implements Runnable {
 		if(outputStream == null)
 			return;
 		
-		PrintWriter pw = new PrintWriter(outputStream, true);
-		pw.println(message);
+		try {
+			outputStream.writeObject(message);
+			outputStream.flush();
+		} catch (IOException e) {
+			closeStreams();
+			e.printStackTrace();
+			return;
+		}
 	}
 	
 	private User retrieveUser() throws IOException, ClassNotFoundException {
-		ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-		User utente = (User) input.readObject();
-		
-		input.close();
+		User utente = (User) inputStream.readObject();
 		
 		return utente;
 	}
 	
 	private void sendUser(User utente) throws IOException {
-		ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-		out.writeObject(utente);
-		out.flush();
-		
-		out.close();
+		outputStream.writeObject(utente);
+		outputStream.flush();
 	}
 	
 	private void closeStreams() {
@@ -314,6 +325,7 @@ public class ServerListener implements Runnable {
 			
 			if(socket != null)
 				socket.close();
+		
 		} catch(IOException e) {
 			//Niente
 		}

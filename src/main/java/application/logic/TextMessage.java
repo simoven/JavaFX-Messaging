@@ -6,8 +6,9 @@ public class TextMessage extends Message {
 	
 	private String text;
 	
-	public TextMessage(String sender, String receiver) {
+	public TextMessage(String sender, String receiver, String text) {
 		super(sender, receiver);
+		this.text = text;
 	}
 	
 	public String getText() {

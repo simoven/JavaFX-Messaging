@@ -1,10 +1,6 @@
 package application.net.misc;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.Serializable;
-
-import javafx.scene.image.Image;
 
 public class User implements Serializable {
 	
@@ -14,8 +10,7 @@ public class User implements Serializable {
 	private String lastName;
 	private String username;
 	private String password;
-	private Image proPic;
-	private File proPicAsFile;
+	private byte [] proPic;
 	
 	public User(String username, String password, String name, String lastName) {
 		this.name = name;
@@ -23,11 +18,10 @@ public class User implements Serializable {
 		this.username = username;
 		this.password = password;
 		this.proPic = null;
-		this.proPicAsFile = null;
 	}
 	
 	public void setPropicFile(byte[] arr) {
-		proPic = new Image(new ByteArrayInputStream(arr));
+		proPic = arr;
 	}
 	
 	public String getLastName() {
@@ -38,7 +32,7 @@ public class User implements Serializable {
 		return name;
 	}
 	
-	public Image getProPic() {
+	public byte[] getProPic() {
 		return proPic;
 	}
 	
@@ -48,9 +42,5 @@ public class User implements Serializable {
 	
 	public String getPassword() {
 		return password;
-	}
-	
-	public File getProPicAsFile() {
-		return proPicAsFile;
 	}
 }

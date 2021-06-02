@@ -16,6 +16,7 @@ public class Protocol {
 	public static final String USER_DISCONNECTED = "User is offline";
 	public static final String USER_ALREADY_LOGGED = "User is already online";
 	public static final String WRONG_CREDENTIAL = "The combination of username/password is wrong";
+	public static final String INVALID_CREDENTIAL = "Username or password are invalid";
 	public static final String USER_ALREADY_EXIST = "Select username already exist";
 	public static final String COMMUNICATION_ERROR = "Error while handling the request";
 	public static final String SERVER_ERROR = "A server error happened";

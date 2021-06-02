@@ -25,6 +25,26 @@ public class Message implements Serializable {
 		return receiver;
 	}
 	
+	public String getSentDate() {
+		return sentDate;
+	}
+	
+	public String getSentHour() {
+		return sentHour;
+	}
+	
+	public void setGroupMessage(boolean isGroupMessage) {
+		this.isGroupMessage = isGroupMessage;
+	}
+	
+	public void setSentDate(String sentDate) {
+		this.sentDate = sentDate;
+	}
+	
+	public void setSentHour(String sentHour) {
+		this.sentHour = sentHour;
+	}
+	
 	public boolean isAGroupMessage() {
 		return isGroupMessage;
 	}

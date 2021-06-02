@@ -23,7 +23,7 @@ public class Server implements Runnable {
 	public boolean startServer() {
 		if(DatabaseHandler.getInstance().tryConnection()) {
 			try {
-				server = new ServerSocket(8000);
+				server = new ServerSocket(8500);
 				
 				Thread th = new Thread(this);
 				th.setDaemon(true);
@@ -67,7 +67,7 @@ public class Server implements Runnable {
 		if(username == null)
 			return false;
 		
-		if(activeUser.get(username) != null)
+		if(activeUser.get(username) != null) 
 			activeUser.remove(username);
 		
 		return true;
