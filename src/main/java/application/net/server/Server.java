@@ -60,6 +60,7 @@ public class Server implements Runnable {
 	}
 	
 	public void addOnlineUser(String username, Socket socket) {
+		System.out.println("socket di "+ username + "messo");
 		activeUser.put(username, socket);
 	}
 	
@@ -67,8 +68,10 @@ public class Server implements Runnable {
 		if(username == null)
 			return false;
 		
-		if(activeUser.get(username) != null) 
+		if(activeUser.get(username) != null) {
+			System.out.println("socket di "+ username + "tolto");
 			activeUser.remove(username);
+		}
 		
 		return true;
 	}

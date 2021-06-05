@@ -8,8 +8,8 @@ public class Protocol {
 	
 	public static final String MESSAGE_SEND_REQUEST = "Sending message";
 	public static final String GROUP_MESSAGE_SEND_REQUEST = "Sending group message";
-	public static final String IMAGE_SEND_REQUEST = "Sending image";
-	public static final String GROUP_IMAGE_SEND_REQUEST = "Sending group image";
+	//public static final String IMAGE_SEND_REQUEST = "Sending image";
+	//public static final String GROUP_IMAGE_SEND_REQUEST = "Sending group image";
 	public static final String ONLINE_STATUS_REQUEST = "Request the online status of the user";
 	
 	public static final String SEND_FAILED = "Error while sending the message";
@@ -24,4 +24,6 @@ public class Protocol {
 	public static final String USER_ONLINE = "User is online";
 	
 	public static final String ADDED_NEW_GROUP = "User added to a new Group";
+	public static final String MESSAGES_RETRIEVED = "Messages retrieved from server";
+	public static final String MESSAGES_LIST = "Lista messaggi";
 }

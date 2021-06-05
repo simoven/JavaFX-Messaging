@@ -1,14 +1,15 @@
 package application.net.client;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-import application.logic.ImageMessage;
-import application.logic.InformationMessage;
-import application.logic.Message;
-import application.logic.TextMessage;
+import application.logic.messages.ChatMessage;
+import application.logic.messages.InformationMessage;
+import application.logic.messages.Message;
 import application.net.misc.Protocol;
 import application.net.misc.User;
 import javafx.concurrent.Service;
@@ -43,20 +44,10 @@ public class Client extends Service <Message> {
 	}
 	
 	private boolean sendMessage(String message) {
-		if(outputStream == null)
-			return false;
-		
-		try {
-			outputStream.writeObject(message);
-			outputStream.flush();
-		} catch (IOException e) {
-			return false;
-		}
-		
-		return true;
+		return sendObject(message);
 	}
 	
-	public void reset() {
+	public void resetClient() {
 		try {
 			if(inputStream != null)
 				inputStream.close();
@@ -94,6 +85,7 @@ public class Client extends Service <Message> {
 				inputStream = new ObjectInputStream(socket.getInputStream());
 			
 			String response = (String) inputStream.readObject();
+			System.out.println("leggo client");
 
 			if(response.equals(Protocol.REQUEST_SUCCESSFUL))
 				utente = (User) inputStream.readObject();
@@ -127,59 +119,36 @@ public class Client extends Service <Message> {
 		return false;
 	}
 	
-	public boolean sendChatMessage(Message msg, boolean isTextMessage) {
-		if(isTextMessage) {
-			if(msg.isAGroupMessage())
-				sendMessage(Protocol.GROUP_MESSAGE_SEND_REQUEST);
-			else 
-				sendMessage(Protocol.MESSAGE_SEND_REQUEST);
-		}
-		else {
-			if(msg.isAGroupMessage())
-				sendMessage(Protocol.GROUP_IMAGE_SEND_REQUEST);
-			else 
-				sendMessage(Protocol.IMAGE_SEND_REQUEST);
-		}
+	public boolean sendChatMessage(Message msg) {
+		if(msg.isAGroupMessage())
+			sendMessage(Protocol.GROUP_MESSAGE_SEND_REQUEST);
+		else 
+			sendMessage(Protocol.MESSAGE_SEND_REQUEST);
 		
-		sendObject(msg);
 		
-		try {
-			if(inputStream == null)
-				inputStream = new ObjectInputStream(socket.getInputStream());
-			
-			String response = (String) inputStream.readObject();
-			
-			if(!response.equals(Protocol.REQUEST_SUCCESSFUL))
-				return false;
-		} catch (Exception e) {
-			return false;
-		}
-		
-		return true;
+		return sendObject(msg);
 	}
-	
+
 	@Override
 	protected Task <Message> createTask() {
 		return new Task<Message>() {
 			
 			@Override
 			protected Message call() throws Exception {
-				if(inputStream == null)
-					inputStream = new ObjectInputStream(socket.getInputStream());
-				
-				String request = (String) inputStream.readObject();
+				inputStream = new ObjectInputStream(socket.getInputStream());
+				String requestIncoming = (String) inputStream.readObject();
 				Message msg = null;
 				
 				try {
-					if(request.equals(Protocol.MESSAGE_SEND_REQUEST)) {
-						msg = (TextMessage) inputStream.readObject();
-					}
-					else if(request.equals(Protocol.IMAGE_SEND_REQUEST)) {
-						msg = (ImageMessage) inputStream.readObject();
-					}
-					else if(request.equals(Protocol.ONLINE_STATUS_REQUEST)) {
+					if(requestIncoming.equals(Protocol.MESSAGE_SEND_REQUEST)) 
+						msg = (ChatMessage) inputStream.readObject();
+					
+					else if(requestIncoming.equals(Protocol.ONLINE_STATUS_REQUEST)) 
 						msg = (InformationMessage) inputStream.readObject();
-					}
+					
+					else if(requestIncoming.equals(Protocol.MESSAGES_RETRIEVED))
+						msg = (InformationMessage) inputStream.readObject();
+					
 				} catch(ClassNotFoundException e) {
 					return null;
 				}

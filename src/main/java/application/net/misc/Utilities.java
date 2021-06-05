@@ -90,4 +90,8 @@ public class Utilities {
 		
 		return PASSWORD_NOT_VALID;
 	}
+	
+	public static String getTodayDate() {
+		return getDateFromString(getCurrentISODate());
+	}
 }

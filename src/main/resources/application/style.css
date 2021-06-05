@@ -1,0 +1,89 @@
+#leftVbox {
+	-fx-background-color: #636566;
+}
+
+#searchField {
+	-fx-background-color: #46474A;
+	-fx-background-radius: 100px;
+	-fx-text-fill: white;
+}
+
+#leftScrollPane {
+	-fx-background: #636566;
+	-fx-background-color: #636566;
+}
+
+#hLine {
+	-fx-background-color: #46474A;
+}
+
+.lastMessageInChat {
+	-fx-text-fill:  #9DA7A7;
+}
+
+.rightMessageVBox {
+	-fx-background-color: #128c7e;
+   	-fx-background-radius: 15 15 15 0;
+    -fx-text-fill: #eeeeee;
+    -fx-font-family: Arial;
+}
+
+.split-pane, .scroll-pane { -fx-background-insets: 0; -fx-padding: 0; }
+
+.leftMessageVBox {
+	-fx-background-color: #636566;
+   	-fx-background-radius: 15 15 15 0;
+    -fx-text-fill: #eeeeee;
+    -fx-font-family: Arial;
+}
+
+.messageText {
+	-fx-text-fill: white; 
+	-fx-font-size: 1.2em;
+}
+
+.messageTime {
+	-fx-fill: white; 
+	-fx-font-size: 0.8em;
+}
+
+#messageTextArea {
+    -fx-background-color: transparent;
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-border-width: 1;
+    -fx-border-color: #c6c6c6;
+}
+
+#messageTextArea .viewport{
+    -fx-background-color: transparent;
+}
+
+#messageTextArea .content{
+    -fx-background-color: transparent;
+}
+
+/*#chatProfileHBox {
+	-fx-background-color: #636566;
+}*/
+
+#chatScrollPane {
+	-fx-background: #bcd2be;
+	-fx-background-color: #bcd2be;
+}
+
+/*#newGroupButton {
+
+}
+
+#newChatButton {
+
+}
+
+.newMessageRight {
+
+}
+
+.newMessageLeft {
+
+}*/

@@ -1,21 +1,26 @@
 package application;
 
 import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Scanner;
 
 import javax.swing.JFileChooser;
 
-import application.logic.ImageMessage;
-import application.logic.TextMessage;
+import application.logic.messages.ChatMessage;
 import application.net.client.Client;
+import application.net.client.LocalDatabaseHandler;
 import application.net.misc.User;
 import application.net.misc.Utilities;
 
 public class Main {
 
 	public static void main(String[] args) {
-		//MainApplication.main(args);
-		Scanner scn = new Scanner(System.in);
+		MainApplication.main(args);
+		//System.out.println(Utilities.getCurrentISODate());
+	
+		/*Scanner scn = new Scanner(System.in);
 		String username = null;
 		
 		while(true) {
@@ -51,35 +56,17 @@ public class Main {
 			else if(request.equals("Message")) {
 				String message = scn.next();
 				String dest = scn.next();
-				TextMessage msg = new TextMessage(username, dest, message);
+				ChatMessage msg = new ChatMessage(username, dest);
+				msg.setText(message);
 				msg.setGroupMessage(false);
 				msg.setSentDate(Utilities.getDateFromString(Utilities.getCurrentISODate()));
 				msg.setSentHour(Utilities.getHourFromString(Utilities.getCurrentISODate()));
 				
-				if(Client.getInstance().sendChatMessage(msg, true))
+				if(Client.getInstance().sendChatMessage(msg))
 					System.out.println("Messaggio inviato");
 				else
 					System.out.println("Messaggio non inviato");
 			}
-			else if(request.equals("Image")) {
-				JFileChooser f = new JFileChooser();
-				File file = null;
-				int res = f.showOpenDialog(null);
-				if(res == JFileChooser.APPROVE_OPTION)
-					file = f.getSelectedFile();
-				
-				String dest = scn.next();
-				ImageMessage msg = new ImageMessage(username,  dest);
-				msg.setImage(Utilities.getByteArrFromFile(file));
-				msg.setGroupMessage(false);
-				msg.setSentDate(Utilities.getDateFromString(Utilities.getCurrentISODate()));
-				msg.setSentHour(Utilities.getHourFromString(Utilities.getCurrentISODate()));
-				
-				if(Client.getInstance().sendChatMessage(msg, false))
-					System.out.println("Messaggio inviato");
-				else
-					System.out.println("Messaggio non inviato");
-			}
-		}
+		}*/
 	}
 }

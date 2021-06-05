@@ -1,17 +1,18 @@
 package application.net.server;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import application.logic.ImageMessage;
-import application.logic.InformationMessage;
-import application.logic.Message;
-import application.logic.TextMessage;
+import application.logic.messages.ChatMessage;
+import application.logic.messages.InformationMessage;
+import application.logic.messages.Message;
 import application.net.misc.Protocol;
 import application.net.misc.User;
 import application.net.misc.Utilities;
@@ -68,16 +69,15 @@ public class ServerListener implements Runnable {
 			//Adesso sono loggato
 			server.addOnlineUser(serverUsername, socket);
 			
-			while(!Thread.currentThread().isInterrupted() && inputStream != null && outputStream != null) {
+			//Prima di iniziare a gestire le richieste controllo se ci sono messaggi inviati quando il client era offline
+			checkPendingMessage();
+			
+			while(!Thread.currentThread().isInterrupted()) {
 				String request = (String) inputStream.readObject();
 				
 				switch (request) {
 					case Protocol.MESSAGE_SEND_REQUEST:
 						handleSendMessage(false);
-						break;
-					
-					case Protocol.IMAGE_SEND_REQUEST:
-						handleImageSend(false);
 						break;
 						
 					case Protocol.ONLINE_STATUS_REQUEST:
@@ -88,9 +88,6 @@ public class ServerListener implements Runnable {
 						handleSendMessage(true);
 						break;
 						
-					case Protocol.GROUP_IMAGE_SEND_REQUEST:
-						handleImageSend(true);
-						
 					default:
 						sendMessage(Protocol.BAD_REQUEST);
 						break;
@@ -98,9 +95,8 @@ public class ServerListener implements Runnable {
 			}
 			
 		} catch (IOException e) {
-			sendMessage(Protocol.COMMUNICATION_ERROR);
-			disconnect();
 			e.printStackTrace();
+			disconnect();
 			return;
 		} catch (SQLException i) {
 			sendMessage(Protocol.SERVER_ERROR);
@@ -109,6 +105,7 @@ public class ServerListener implements Runnable {
 		}
 		 catch (ClassNotFoundException f) {
 			sendMessage(Protocol.BAD_REQUEST);
+			f.printStackTrace();
 			disconnect();
 			f.printStackTrace();
 			return;
@@ -121,6 +118,19 @@ public class ServerListener implements Runnable {
 				DatabaseHandler.getInstance().updateLastAccess(serverUsername);
 		} catch (SQLException i) {/*nulla*/ }
 		closeStreams();
+	}
+	
+	private void checkPendingMessage() throws SQLException {
+		ArrayList <Message> listMessaggi = DatabaseHandler.getInstance().getPendingMessages(serverUsername);
+		if(listMessaggi.isEmpty())
+			return;
+		
+		sendMessage(Protocol.MESSAGES_RETRIEVED);
+		
+		InformationMessage msg = new InformationMessage();
+		msg.setPacket(listMessaggi);
+		msg.setInformation(Protocol.MESSAGES_LIST);
+		sendObject(msg);
 	}
 		
 	private void handleOnlineStatusRequest() throws IOException, SQLException, ClassNotFoundException {
@@ -139,73 +149,26 @@ public class ServerListener implements Runnable {
 				System.out.println(date);
 			}
 			
-			outputStream.writeObject(info);
+			sendObject(info);
 		} catch (NullPointerException e) {
 			return;
 		}
 	}
 	
-	private void handleSingleImageSend(String receiver, ImageMessage msg) throws IOException, SQLException {
-		Socket recSocket = server.getSocket(receiver);
-		
-		if(recSocket == null) {
-			DatabaseHandler.getInstance().addPendingImage(msg, receiver);
-		}
-		else {
-			ObjectOutputStream out = new ObjectOutputStream(recSocket.getOutputStream());
-			
-			out.writeObject(Protocol.IMAGE_SEND_REQUEST);
-			out.writeObject(msg);
-			out.flush();
-			
-			out.close();
-		}
-	}
-
-	private void handleImageSend(boolean isGroupMessage) throws IOException, SQLException, ClassNotFoundException {
-		try {
-			Message msg = (Message) inputStream.readObject();
-		
-			if(!(msg instanceof ImageMessage)) {
-				sendMessage(Protocol.BAD_REQUEST);
-				return;
-			}
-			
-			ImageMessage imgMsg = (ImageMessage) msg;
-			
-			String receiver = msg.getReceiver();
-			
-			if(!isGroupMessage) {
-				handleSingleImageSend(receiver, imgMsg);
-			}
-			else {
-				ArrayList <String> groupUsers = DatabaseHandler.getInstance().getGroupPartecipants(receiver);
-				for(String partecipant : groupUsers) {
-					handleSingleImageSend(partecipant, imgMsg);
-				}
-			}
-			
-			sendMessage(Protocol.REQUEST_SUCCESSFUL);
-		} catch (NullPointerException e) {
-			sendMessage(Protocol.BAD_REQUEST);
-			return;
-		}
-	}
-	
-	private void handleSingleMessageSend(String receiver, TextMessage msg) throws IOException, SQLException {
+	private void handleSingleMessageSend(String receiver, ChatMessage msg) throws IOException, SQLException {
 		Socket recSocket = server.getSocket(receiver);
 		
 		if(recSocket == null) {
 			DatabaseHandler.getInstance().addPendingMessage(msg, receiver);
 		}
 		else {
+			System.out.println(socket);
+			System.out.println(recSocket);
 			ObjectOutputStream out = new ObjectOutputStream(recSocket.getOutputStream());
 			
 			out.writeObject(Protocol.MESSAGE_SEND_REQUEST);
 			out.writeObject(msg);
 			out.flush();
-			
-			out.close();
 		}
 	}
 
@@ -213,29 +176,26 @@ public class ServerListener implements Runnable {
 		try {
 			Message msg = (Message) inputStream.readObject();
 			
-			if(!(msg instanceof TextMessage)) {
+			if(!(msg instanceof ChatMessage)) {
 				sendMessage(Protocol.BAD_REQUEST);
 				return;
 			}
 			
-			TextMessage txtMsg = (TextMessage) msg;
+			ChatMessage chatMsg = (ChatMessage) msg;
 			
 			String receiver = msg.getReceiver();
 			
 			if(!isGroupMessage) {
 				//Se è un messaggio singolo prendo il socket della persona e lo invio direttamente a lei
-				handleSingleMessageSend(receiver, txtMsg);
+				handleSingleMessageSend(receiver, chatMsg);
 			}
 			else {
 				//Devo prendere tutte le persone che sono nel gruppo e inviarlo singolarmente a ognuno di esse
-				//Il receiver in questo caso è l'id del gruppo
-				ArrayList <String> groupUsers = DatabaseHandler.getInstance().getGroupPartecipants(receiver);
+				ArrayList <String> groupUsers = DatabaseHandler.getInstance().getGroupPartecipants(chatMsg.getGroupId());
 				for(String partecipant : groupUsers) {
-					handleSingleMessageSend(partecipant, txtMsg);
+					handleSingleMessageSend(partecipant, chatMsg);
 				}
 			}
-			
-			sendMessage(Protocol.REQUEST_SUCCESSFUL);
 		} catch (NullPointerException e) {
 			sendMessage(Protocol.BAD_REQUEST);
 			return;
@@ -291,11 +251,15 @@ public class ServerListener implements Runnable {
 	}
 	
 	private void sendMessage(String message) {
+		sendObject(message);
+	}
+	
+	private void sendObject(Object obj) {
 		if(outputStream == null)
 			return;
 		
 		try {
-			outputStream.writeObject(message);
+			outputStream.writeObject(obj);
 			outputStream.flush();
 		} catch (IOException e) {
 			closeStreams();

@@ -1,4 +1,4 @@
-package application.logic;
+package application.logic.messages;
 
 public class InformationMessage extends Message {
 	

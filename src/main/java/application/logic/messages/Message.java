@@ -1,4 +1,4 @@
-package application.logic;
+package application.logic.messages;
 
 import java.io.Serializable;
 
@@ -10,6 +10,7 @@ public class Message implements Serializable {
 	protected String receiver;
 	protected String sentDate;
 	protected String sentHour;
+	protected int groupId;
 	protected boolean isGroupMessage;
 	
 	public Message(String sender, String receiver) {
@@ -33,6 +34,14 @@ public class Message implements Serializable {
 		return sentHour;
 	}
 	
+	public int getGroupId() {
+		return groupId;
+	}
+	
+	public void setGroupId(int groupId) {
+		this.groupId = groupId;
+	}
+	
 	public void setGroupMessage(boolean isGroupMessage) {
 		this.isGroupMessage = isGroupMessage;
 	}
@@ -47,5 +56,10 @@ public class Message implements Serializable {
 	
 	public boolean isAGroupMessage() {
 		return isGroupMessage;
+	}
+
+	public String getSentHourTrimmed() {
+		String [] split = sentHour.split(":");
+		return split [0] + ":" + split [1];
 	}
 }

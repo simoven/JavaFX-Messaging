@@ -5,15 +5,12 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
-import application.logic.ImageMessage;
-import application.logic.TextMessage;
+import application.logic.messages.ChatMessage;
+import application.logic.messages.Message;
 import application.net.misc.User;
 import application.net.misc.Utilities;
 
@@ -75,7 +72,7 @@ public class DatabaseHandler {
 		if(checkUserExist(utente.getUsername()))
 			return false;
 		
-		String query = "INSERT INTO Utente VALUES(?,?,?,?,?,null);";
+		String query = "INSERT INTO Utente VALUES(?,?,?,?,?,null, null);";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setString(1, utente.getUsername());
 		stm.setString(2, BCrypt.hashpw(utente.getPassword(), BCrypt.gensalt(12)));
@@ -100,43 +97,25 @@ public class DatabaseHandler {
 		return result;
 	}
 	
-	public synchronized void addPendingMessage(TextMessage msg, String receiver) throws SQLException {
+	public synchronized void addPendingMessage(ChatMessage msg, String receiver) throws SQLException {
 		String dateTime = Utilities.getCurrentISODate();
 		String query;
 		if(msg.isAGroupMessage())
-			query = "INSERT INTO MessaggioDiGruppo Values(null, ?, ?, ?, null, ?, ?);";
+			query = "INSERT INTO MessaggioDiGruppo Values(null, ?, ?, ?, ?, ?, ?);";
 		else 
-			query = "INSERT INTO Messaggi Values(null, ?, ?, ?, null, ?);";
+			query = "INSERT INTO Messaggi Values(null, ?, ?, ?, ?, ?);";
 		PreparedStatement stmt = dbConnection.prepareStatement(query);
 		stmt.setString(1, msg.getSender());
 		stmt.setString(2, receiver);
 		stmt.setString(3, msg.getText());
-		stmt.setString(4, dateTime);
+		stmt.setBytes(4, msg.getImage());
+		stmt.setString(5, dateTime);
 		//Nel caso del messaggio di gruppo il receiver è un intero : l'id del gruppo
 		//uso la string receiver in modo da capire qual è l'username della persona che non ha ricevuto il messaggio
 		if(msg.isAGroupMessage())
 			stmt.setInt(5, Integer.parseInt(msg.getReceiver()));
 		stmt.executeUpdate();
 		stmt.close();
-	}
-
-	public synchronized void addPendingImage(ImageMessage msg, String receiver) throws SQLException {
-		String dateTime = Utilities.getCurrentISODate();
-		String query;
-		if(msg.isAGroupMessage())
-			query = "INSERT INTO MessaggioDiGruppo Values(null, ?, ?, null, ?, ?, ?)";
-		else
-			query = "INSERT INTO Messaggi Values(null, ?, ?, null, ?, ?);";
-		PreparedStatement stm = dbConnection.prepareStatement(query);
-		stm.setString(1, msg.getSender());
-		stm.setString(2, receiver);
-		stm.setBytes(3, msg.getImage());
-		stm.setString(4, dateTime);
-		if(msg.isAGroupMessage())
-			stm.setInt(5, Integer.parseInt(msg.getReceiver()));
-		stm.executeUpdate();
-		stm.close();
-		
 	}
 
 	public synchronized String getLastAccess(String userToCheck) throws SQLException {
@@ -161,22 +140,59 @@ public class DatabaseHandler {
 		stm.close();
 	}
 
-	public ArrayList<String> getGroupPartecipants(String groupId) throws SQLException {
+	public synchronized ArrayList<String> getGroupPartecipants(int groupId) throws SQLException {
 		ArrayList <String> tmp = new ArrayList <String>();
-		try {
-			String query = "SELECT User_utente FROM UtenteInGruppo WHERE Id_gruppo=?;";
-			PreparedStatement stm = dbConnection.prepareStatement(query);
-			stm.setInt(1, Integer.parseInt(groupId));
-			
-			ResultSet rs = stm.executeQuery();
-			while(rs.next()) {
-				tmp.add(rs.getString("User_utente"));
-			}
-		} catch (NumberFormatException e) {
-			//Significa che il group id non è un intero, quindi è sbagliato
-			return null;
+		String query = "SELECT User_utente FROM UtenteInGruppo WHERE Id_gruppo=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setInt(1, groupId);
+		
+		ResultSet rs = stm.executeQuery();
+		while(rs.next()) {
+			tmp.add(rs.getString("User_utente"));
 		}
 		
 		return tmp;
 	}		
+	
+	public synchronized ArrayList <Message> getPendingMessages(String username) throws SQLException {
+		ArrayList <Message> lista = new ArrayList <Message>();
+		
+		//Prima aggiungo i messaggi singoli
+		String query = "SELECT * FROM Messaggi WHERE Receiver=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setString(1, username);
+		
+		ResultSet rs = stm.executeQuery();
+		while(rs.next()) {
+			ChatMessage msg = new ChatMessage(rs.getString("Sender"), username);
+			msg.setText(rs.getString("Message_text"));
+			msg.setImage(rs.getBytes("Image"));
+			msg.setGroupMessage(false);
+			msg.setSentDate(Utilities.getDateFromString(rs.getString("Date")));
+			msg.setSentHour(Utilities.getHourFromString(rs.getString("Date")));
+			lista.add(msg);
+		}
+		
+		rs.close();
+		stm.close();
+		
+		//E dopo quelli di gruppo
+		query = "SELECT * FROM MessaggioDiGruppo WHERE Receiver=?";
+		stm = dbConnection.prepareStatement(query);
+		stm.setString(1, username);
+		
+		rs = stm.executeQuery();
+		while(rs.next()) {
+			ChatMessage msg = new ChatMessage(rs.getString("Sender"), username);
+			msg.setText(rs.getString("Message_text"));
+			msg.setImage(rs.getBytes("Image"));
+			msg.setGroupMessage(true);
+			msg.setGroupId(rs.getInt("Group_id"));
+			msg.setSentDate(Utilities.getDateFromString(rs.getString("Date")));
+			msg.setSentHour(Utilities.getHourFromString(rs.getString("Date")));
+			lista.add(msg);
+		}
+		
+		return lista;
+	}
 }
