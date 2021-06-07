@@ -12,14 +12,14 @@ import java.util.regex.Pattern;
 
 public class Utilities {
 
-	public static final String USERNAME_TOO_SHORT = "Username must be at least 4 characters long";
-	public static final String PASSWORD_TOO_SHORT = "Password must be at least 8 characters long";
-	public static final String USERNAME_TOO_LONG = "Username cannot exceed 16 character";
-	public static final String PASSWORD_TOO_LONG = "Password cannot exceed 20 characters";
+	public static final String USERNAME_TOO_SHORT = "L'username deve essere lungo almeno 4 caratteri";
+	public static final String PASSWORD_TOO_SHORT = "La password deve essere lunga almeno 8 caratteri";
+	public static final String USERNAME_TOO_LONG = "L'username deve essere lungo al massimo 16 caratteri";
+	public static final String PASSWORD_TOO_LONG = "La password deve essere lunga al massimo 20 caratteri";
 	public static final String USERNAME_VALID = "Username is valid";
 	public static final String PASSWORD_VALID = "Password is valid";
-	public static final String USERNAME_NOT_VALID = "Username characters not valid";
-	public static final String PASSWORD_NOT_VALID = "Password character not valid";
+	public static final String USERNAME_NOT_VALID = "I caratteri dell'username non sono validi";
+	public static final String PASSWORD_NOT_VALID = "I caratteri della password non sono validi";
 	
 	
 	public static byte[] getByteArrFromFile(File file) {
@@ -84,11 +84,20 @@ public class Utilities {
 			return PASSWORD_TOO_LONG;
 		
 		//Deve contenere almeno un numero, carattere lowercase, uppercase, speciale e niente spazi
-				String regex = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).*";
+		String regex = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).*";
 		if(Pattern.matches(regex, password))
 			return PASSWORD_VALID;
 		
 		return PASSWORD_NOT_VALID;
+	}
+	
+	public static boolean checkIfNameValid(String name) {
+		if(name == null || name.isBlank())
+			return false;
+		
+		String regex = "[a-zA-Z\\s]+";
+		return Pattern.matches(regex, name);
+		
 	}
 	
 	public static String getTodayDate() {

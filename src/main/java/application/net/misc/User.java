@@ -24,6 +24,10 @@ public class User implements Serializable {
 		proPic = arr;
 	}
 	
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	
 	public String getLastName() {
 		return lastName;
 	}

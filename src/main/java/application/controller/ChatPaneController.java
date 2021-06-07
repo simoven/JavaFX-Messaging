@@ -63,12 +63,6 @@ public class ChatPaneController {
     	chatVbox.heightProperty().addListener(observable -> chatScrollPane.setVvalue(1D));
     	bottomHBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
     	ChatView.getInstance().setChatPaneController(this);
-    	//System.out.println(Client.getInstance().requestRegistration(new User("", "Rn31tnj6@", "Domenico", "Prova")));
-    	//System.out.println("sono simo");
-    	System.out.println(Client.getInstance().requestLogin("franchecco", "Rn31tnj6@"));
-    	//Client.getInstance().setOnFailed(new ClientFailedController());
-    	Client.getInstance().setOnSucceeded(new ClientSucceedController());
-    	Client.getInstance().restart();
     }
     
     public ScrollPane getChatScrollPane() { return chatScrollPane; }

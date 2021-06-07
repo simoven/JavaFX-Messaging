@@ -13,9 +13,7 @@ import application.logic.contacts.Contact;
 import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
 import application.logic.messages.Message;
-import application.net.client.Client;
 import application.net.misc.Utilities;
-import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.control.Label;
@@ -61,6 +59,15 @@ public class ChatView {
 	public ChatChooserController getChatChooserController() { return chatChooserController; }
 	
 	public ChatPaneController getChatPaneController() { return chatPaneController; }
+	
+	public void updateInformation() {
+		Image img;
+		if(ChatLogic.getInstance().getMyInformation().getProPic() != null)
+			img = new Image(new ByteArrayInputStream(ChatLogic.getInstance().getMyInformation().getProPic()), 100, 100, true, true);
+		else
+			img = new Image(getClass().getResource("/application/images/defaultSinglePic.jpeg").toExternalForm(), 100, 100, true, true);
+		chatMainController.getMyPropicCircle().setFill(new ImagePattern(img));
+	}
 	
 	public void appendMessageInChat(Message msg, boolean isMyMessage) {
 		if(!(msg instanceof ChatMessage))

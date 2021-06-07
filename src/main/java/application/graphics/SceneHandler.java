@@ -55,15 +55,36 @@ public class SceneHandler {
 		mainChat = (AnchorPane) loader.load();
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/ChatChooser.fxml"));
 		contactsPane = (BorderPane) loader.load();
+		loader = new FXMLLoader(getClass().getResource("/application/fxml/Login.fxml"));
+		loginPane = (AnchorPane) loader.load();
+		loader = new FXMLLoader(getClass().getResource("/application/fxml/Registration.fxml"));
+		registerPane = (AnchorPane) loader.load();
 		ChatLogic.getInstance();
 		
-		scene = new Scene(mainChat, 1200, 800);
-		windowFrame.setMinHeight(800);
-		windowFrame.setMinWidth(1200);
+		scene = new Scene(loginPane, 800, 600);
+		windowFrame.setMinHeight(600);
+		windowFrame.setMinWidth(800);
 		scene.getStylesheets().add(getClass().getResource("/application/style.css").toExternalForm());
 		windowFrame.setTitle("JavaFX Messaging");
 		windowFrame.setScene(scene);
-		//windowFrame.setResizable(false);
+		windowFrame.setResizable(false);
+		windowFrame.show();
+	}
+	
+	public void setLoginScene() {
+		scene.setRoot(loginPane);
+	}
+	
+	public void setRegisterScene() {
+		scene.setRoot(registerPane);
+	}
+	
+	public void setChatScene() {
+		scene.setRoot(mainChat);
+		windowFrame.hide();
+		windowFrame.setMinHeight(800);
+		windowFrame.setMinWidth(1200);
+		windowFrame.setResizable(true);
 		windowFrame.show();
 	}
 	

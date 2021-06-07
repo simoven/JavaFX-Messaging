@@ -15,13 +15,13 @@ import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
 import application.logic.messages.Message;
 import application.net.client.LocalDatabaseHandler;
+import application.net.misc.User;
 import application.net.misc.Utilities;
 
 public class ChatLogic {
 
 	private static ChatLogic instance = null;
-	private String myUsername;
-	private byte [] myProfilePic;
+	private User myInformation;
 	private Chat activeChat;
 	private Contact activeContact;
 	private Vector <Contact> contactList;
@@ -29,20 +29,6 @@ public class ChatLogic {
 	
 	private ChatLogic() {
 		chatList = new Vector <Chat> ();
-		
-		try {
-			LocalDatabaseHandler.getInstance().setUsername("franchecco");
-			LocalDatabaseHandler.getInstance().createLocalDB();
-			myUsername = "franchecco";
-			contactList = LocalDatabaseHandler.getInstance().retrieveContacts();
-			chatList.addAll(LocalDatabaseHandler.getInstance().retrieveSingleChatInfo(contactList));
-			System.out.println(chatList);
-			displayAllChat();
-			Collections.sort(chatList);
-		} catch (SQLException e) {
-			contactList = new Vector <Contact>();
-			e.printStackTrace();
-		}
 	}
 	
 	public static ChatLogic getInstance() {
@@ -52,16 +38,29 @@ public class ChatLogic {
 		return instance;
 	}
 	
-	public void setMyUsername(String myUsername) {
-		this.myUsername = myUsername;
+	public void setMyInformation(User myUser) {
+		this.myInformation = myUser;
+		
+		try {
+			LocalDatabaseHandler.getInstance().setUsername(myInformation.getUsername());
+			LocalDatabaseHandler.getInstance().createLocalDB();
+			contactList = LocalDatabaseHandler.getInstance().retrieveContacts();
+			chatList.addAll(LocalDatabaseHandler.getInstance().retrieveSingleChatInfo(contactList));
+			ChatView.getInstance().updateInformation();
+			displayAllChat();
+			Collections.sort(chatList);
+		} catch (SQLException e) {
+			contactList = new Vector <Contact>();
+			e.printStackTrace();
+		}
+	}
+	
+	public User getMyInformation() {
+		return myInformation;
 	}
 	
 	public String getMyUsername() {
-		return myUsername;
-	}
-	
-	public void setMyProfilePic(byte[] myProfilePic) {
-		this.myProfilePic = myProfilePic;
+		return myInformation.getUsername();
 	}
 	
 	public Contact getActiveContact() {
@@ -87,7 +86,7 @@ public class ChatLogic {
 		ChatView.getInstance().showContactInformation(activeContact);
 		for(Message msg : activeChat.getListMessaggi()) {
 			boolean isMyMessage = true;
-			if(!msg.getSender().equals(myUsername))
+			if(!msg.getSender().equals(myInformation.getUsername()))
 				isMyMessage = false;
 			
 			ChatView.getInstance().appendMessageInChat(msg, isMyMessage);
@@ -118,7 +117,7 @@ public class ChatLogic {
 	public void showContactsChoice() {
 		ChatView.getInstance().getChatChooserController().getAllUsersVbox().getChildren().clear();
 		for(Contact contact : ChatLogic.getInstance().getContactList()) {
-			if(contact instanceof SingleContact && !contact.getUsername().equals(myUsername)) 
+			if(contact instanceof SingleContact && !contact.getUsername().equals(myInformation.getUsername())) 
 				ChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact);
 		}
 	}
@@ -175,7 +174,7 @@ public class ChatLogic {
 	}
 	
 	public void addIncomingMessage(ChatMessage msg) {
-		if(!msg.getReceiver().equals(myUsername)) {
+		if(!msg.getReceiver().equals(myInformation.getUsername())) {
 			return;
 		}
 		

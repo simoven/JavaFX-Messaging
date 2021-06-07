@@ -54,9 +54,10 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     
     public VBox getAllChatVbox() { return allChatVbox; }
     
+    public Circle getMyPropicCircle() { return myPropicCircle; }
+    
     @FXML
     void initialize() {
-    	setChatPane();
     	ChatView.getInstance().setChatMainController(this);
     	leftVbox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.2));
     	buttonBox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.2));

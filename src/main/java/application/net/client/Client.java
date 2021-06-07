@@ -58,6 +58,8 @@ public class Client extends Service <Message> {
 			
 		}
 		
+		inputStream = null;
+		outputStream = null;
 		instance = null;
 	}
 	
@@ -85,7 +87,6 @@ public class Client extends Service <Message> {
 				inputStream = new ObjectInputStream(socket.getInputStream());
 			
 			String response = (String) inputStream.readObject();
-			System.out.println("leggo client");
 
 			if(response.equals(Protocol.REQUEST_SUCCESSFUL))
 				utente = (User) inputStream.readObject();
