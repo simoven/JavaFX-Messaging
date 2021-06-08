@@ -3,6 +3,7 @@ package application.controller;
 import application.graphics.ChatView;
 import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
+import application.net.client.Client;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -84,6 +85,7 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     
     @Override
     public void handle(MouseEvent event) {
+    	//Questo metodo gestisce il click su una chat
     	HBox box = (HBox) event.getSource();
     	//Se c'è il pallino di notifica, lo tolgo
     	if(box.getChildren().get(0) instanceof Circle) {
@@ -94,7 +96,6 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     	VBox vBox = (VBox) box.getChildren().get(1);
     	Label username = (Label) vBox.getChildren().get(0);
     	ChatLogic.getInstance().setSingleActiveChat(username.getText());
-    	
+    	Client.getInstance().requestOnlineStatus(username.getText());
     }
-   
 }

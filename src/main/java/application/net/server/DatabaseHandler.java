@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import application.logic.messages.ChatMessage;
 import application.logic.messages.Message;
+import application.net.misc.LongUser;
 import application.net.misc.User;
 import application.net.misc.Utilities;
 
@@ -45,7 +46,7 @@ public class DatabaseHandler {
 	}
 	
 	public synchronized User checkUserLogin(String username, String password) throws SQLException {
-		User utente = null;
+		LongUser utente = null;
 		if(!checkUserExist(username))
 			return null;
 		
@@ -58,7 +59,8 @@ public class DatabaseHandler {
 		if(rs.next()) {
 			String pass = rs.getString("password");
 			if(BCrypt.checkpw(password, pass)) {
-				utente = new User(username, password, rs.getString("Nome"), rs.getString("Cognome"));
+				utente = new LongUser(username, rs.getString("Nome"), rs.getString("Cognome"));
+				utente.setPassword("");
 				utente.setPropicFile(rs.getBytes("Img_profilo"));
 			}
 		}
@@ -68,7 +70,7 @@ public class DatabaseHandler {
 		return utente;
 	}
 	
-	public synchronized boolean registerUser(User utente) throws SQLException {
+	public synchronized boolean registerUser(LongUser utente) throws SQLException {
 		if(checkUserExist(utente.getUsername()))
 			return false;
 		
@@ -126,7 +128,7 @@ public class DatabaseHandler {
 		
 		if(rs.next())
 			return rs.getString(1);
-		
+	
 		return null;
 	}
 	
@@ -193,6 +195,43 @@ public class DatabaseHandler {
 			lista.add(msg);
 		}
 		
+		rs.close();
+		stm.close();
+		
+		/*query = "DELETE FROM Messaggi WHERE Receiver=?;";
+		stm = dbConnection.prepareStatement(query);
+		stm.setString(1, username);
+		stm.executeUpdate();
+		
+		stm.close();
+		
+		query = "DELETE FROM MessaggioDiGruppo WHERE Receiver=?;";
+		stm = dbConnection.prepareStatement(query);
+		stm.setString(1, username);
+		stm.executeUpdate();
+		
+		stm.close();*/
+		
 		return lista;
 	}
-}
+	
+	public synchronized ArrayList <User> searchUsers(String subUsername) throws SQLException {
+		ArrayList <User> lista = new ArrayList <User>();
+		String query = "SELECT * FROM Utente WHERE Username LIKE '%" + subUsername + "%';";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		//stm.setString(1, "%" + subUsername + "%");
+		ResultSet rs = stm.executeQuery();
+		while (rs.next()) {
+			System.out.println("Result found");
+			User user = new User(rs.getString("Username"));
+			user.setPropicFile(rs.getBytes("Img_profilo"));
+			user.setStatus(rs.getString("Status"));
+			lista.add(user);
+		}
+		
+		rs.close();
+		stm.close();
+		
+		return lista;
+	}
+} 

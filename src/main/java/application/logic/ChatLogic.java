@@ -1,10 +1,10 @@
 package application.logic;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Vector;
 
-import application.controller.ChatMainController;
 import application.graphics.ChatView;
 import application.logic.chat.Chat;
 import application.logic.chat.GroupChat;
@@ -16,7 +16,6 @@ import application.logic.messages.ChatMessage;
 import application.logic.messages.Message;
 import application.net.client.LocalDatabaseHandler;
 import application.net.misc.User;
-import application.net.misc.Utilities;
 
 public class ChatLogic {
 
@@ -26,6 +25,7 @@ public class ChatLogic {
 	private Contact activeContact;
 	private Vector <Contact> contactList;
 	private Vector <Chat> chatList;
+	private ArrayList <SingleContact> lastSearchContacts;
 	
 	private ChatLogic() {
 		chatList = new Vector <Chat> ();
@@ -46,9 +46,9 @@ public class ChatLogic {
 			LocalDatabaseHandler.getInstance().createLocalDB();
 			contactList = LocalDatabaseHandler.getInstance().retrieveContacts();
 			chatList.addAll(LocalDatabaseHandler.getInstance().retrieveSingleChatInfo(contactList));
+			chatList.addAll(LocalDatabaseHandler.getInstance().retriveGroupChat(contactList));
 			ChatView.getInstance().updateInformation();
 			displayAllChat();
-			Collections.sort(chatList);
 		} catch (SQLException e) {
 			contactList = new Vector <Contact>();
 			e.printStackTrace();
@@ -72,6 +72,7 @@ public class ChatLogic {
 	}
 	
 	public void displayAllChat() {
+		Collections.sort(chatList);
 		ChatView.getInstance().getChatMainController().getAllChatVbox().getChildren().clear();
 		for(Chat chat : chatList) {
 			if(!chat.getListMessaggi().isEmpty())
@@ -82,7 +83,6 @@ public class ChatLogic {
 	private void displayCurrentChat() {
 		ChatView.getInstance().getChatMainController().setChatPane();
 		ChatView.getInstance().getChatPaneController().getChatVbox().getChildren().clear();
-		
 		ChatView.getInstance().showContactInformation(activeContact);
 		for(Message msg : activeChat.getListMessaggi()) {
 			boolean isMyMessage = true;
@@ -94,31 +94,87 @@ public class ChatLogic {
 	}
 	
 	public void setSingleActiveChat(String username) {
-		boolean found = false;
+		boolean chatFound = false;
+		boolean contactFound = false;
 		for(Contact c : contactList) {
 			if(c instanceof SingleContact && c.getUsername().equals(username)) {
+				contactFound = true;
+				activeContact = c;
 				for(Chat chat : chatList) {
 					if(chat instanceof SingleChat && ((SingleChat) chat).getChattingWith().equals(c)) {
 						activeChat = chat;
-						activeContact = c;
-						found = true;
+						chatFound = true;
 						break;
 					}
 				}
-				if(found)
+				if(chatFound)
 					break;
+				else {
+					activeChat = createChat(activeContact);
+					chatList.add(activeChat);
+				}
 			}
 		}
 		
-		if(found)
-			displayCurrentChat();
+		//Se il contatto non è presente nei miei contatti, allora significa che ho cliccato su un contatto da una ricerca globale 
+		if(!contactFound) {
+			if(lastSearchContacts == null)
+				return; 
+			
+			for(SingleContact contact : lastSearchContacts) {
+				if(contact.getUsername().equals(username)) {
+					activeContact = contact;
+					contactList.add(activeContact);
+					activeChat = createChat(activeContact);
+					chatList.add(activeChat);
+					try {
+						LocalDatabaseHandler.getInstance().registerUser(contact);
+					} catch (SQLException e) {
+						//TODO Mostra errore 
+					}
+					break;
+				}
+			}
+		}
+		
+		displayCurrentChat();
+	}
+	
+	public void addMessageInChat(ChatMessage msg) {
+		activeChat.addMessage(msg);
+		ChatView.getInstance().appendMessageInChat(msg, true);
+		displayAllChat();
 	}
 	
 	public void showContactsChoice() {
 		ChatView.getInstance().getChatChooserController().getAllUsersVbox().getChildren().clear();
 		for(Contact contact : ChatLogic.getInstance().getContactList()) {
 			if(contact instanceof SingleContact && !contact.getUsername().equals(myInformation.getUsername())) 
-				ChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact);
+				ChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact, false);
+		}
+	}
+	
+	public void showContactsChoiceFiltered(String subUsername) {
+		ChatView.getInstance().getChatChooserController().getAllUsersVbox().getChildren().clear();
+		for(Contact contact : ChatLogic.getInstance().getContactList()) {
+			if(contact instanceof SingleContact && contact.getUsername().contains(subUsername)) 
+				ChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact, false);
+		}
+	}
+	
+	public void showGlobalContact(ArrayList <SingleContact> globalContact) {
+		lastSearchContacts = globalContact;
+		filterMyContacts();
+		for(SingleContact contact : globalContact)
+			ChatView.getInstance().appendContactInChoiceScreen(contact, true);
+	}
+	
+	private void filterMyContacts() {
+		//Rimuovo dalla ricerca i contatti già miei
+		for(Contact c : contactList) {
+			int idx = lastSearchContacts.indexOf(c);
+			if(idx != -1)
+				lastSearchContacts.remove(idx);
 		}
 	}
 	
@@ -139,6 +195,8 @@ public class ChatLogic {
 	}
 	
 	private SingleContact createContact(String sender) {
+		//Poichè non è nei miei contatti, richiedo informazioni su di esso
+		//Client.getInstance().requestContactInformation(sender);
 		SingleContact c = new SingleContact(sender);
 		contactList.add(c);
 		return c;
@@ -207,5 +265,37 @@ public class ChatLogic {
 			ChatView.getInstance().appendMessageInChat(msg, false);
 		
 		displayAllChat();
+	}
+
+	public void retrievePendingMessage(ArrayList<Message> listMessaggi) {
+		for(Message msg : listMessaggi) {
+			if(!msg.isAGroupMessage()) {
+				SingleContact sender = searchContact(msg.getSender());
+				if(sender == null) {
+					sender = createContact(msg.getSender());
+					contactList.add(sender);
+				}
+				
+				SingleChat chat = (SingleChat) searchChat(sender);
+				if(chat == null) {
+					chat = (SingleChat) createChat(sender);
+					chatList.add(chat);
+				}
+				
+				chat.addNewMessage(msg);
+			}
+			else {
+				//TODO
+			}
+		}
+		
+		displayAllChat();
+		
+	}
+
+	public void updateOnlineStatus(String username, String status) {
+		if(activeContact.getUsername().equals(username))
+			ChatView.getInstance().updateOnlineStatus(status);
+		
 	}
 }

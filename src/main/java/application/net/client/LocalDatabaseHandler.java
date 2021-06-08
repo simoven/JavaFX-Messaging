@@ -16,6 +16,7 @@ import application.logic.contacts.GroupContact;
 import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
 import application.logic.messages.Message;
+import application.net.misc.LongUser;
 import application.net.misc.User;
 import application.net.misc.Utilities;
 
@@ -72,16 +73,15 @@ public class LocalDatabaseHandler {
 		return result;
 	}
 	
-	public boolean registerUser(User utente) throws SQLException {
+	public boolean registerUser(SingleContact utente) throws SQLException {
 		if(checkUserExist(utente.getUsername()))
 			return false;
 		
-		String query = "INSERT INTO Utente VALUES(?,?,?,?);";
+		String query = "INSERT INTO Utente VALUES(?,?,?);";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setString(1, utente.getUsername());
-		stm.setString(2, utente.getName());
-		stm.setString(3, utente.getLastName());
-		stm.setBytes(4, utente.getProPic());
+		stm.setBytes(2, utente.getProfilePic());
+		stm.setString(3, utente.getStatus());
 		
 		int res = stm.executeUpdate();
 		stm.close();
@@ -108,7 +108,7 @@ public class LocalDatabaseHandler {
 		stmt.close();
 	}
 	
-	public Vector <Message> retrieveMessageFromChat(String dest) throws SQLException {
+	private Vector <Message> retrieveMessageFromChat(String dest) throws SQLException {
 		Vector <Message> msgList = new Vector <Message>();
 		String query = "SELECT * FROM Messaggi WHERE Sender=? OR Receiver=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
@@ -143,6 +143,7 @@ public class LocalDatabaseHandler {
 			
 			SingleContact sinContact = (SingleContact) c;
 			SingleChat chat = new SingleChat(sinContact);
+			chat.setUnreadedMessage(false);
 			chat.setListMessaggi(retrieveMessageFromChat(sinContact.getUsername()));
 			
 			if(!chat.getListMessaggi().isEmpty())
@@ -152,7 +153,7 @@ public class LocalDatabaseHandler {
 		return singleChatVector;
 	}
 	
-	public Vector <Message> retrieveMessageFromGroupChat(int groupId) throws SQLException {
+	private Vector <Message> retrieveMessageFromGroupChat(int groupId) throws SQLException {
 		Vector <Message> msgList = new Vector <Message>();
 		String query = "SELECT * FROM MessaggioDiGruppo;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
@@ -176,7 +177,7 @@ public class LocalDatabaseHandler {
 		return msgList;
 	}
 	
-	public Vector <String> retriveGroupPartecipants(int groupId) throws SQLException {
+	private Vector <String> retriveGroupPartecipants(int groupId) throws SQLException {
 		Vector <String> tmp = new Vector <String>();
 		String query = "SELECT User_utente FROM UtenteInGruppo WHERE Id_gruppo=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
@@ -190,7 +191,7 @@ public class LocalDatabaseHandler {
 		return tmp;
 	}
 	
-	public Vector <Chat> getGroupChats(Vector <Contact> contactList) throws SQLException {
+	public Vector <Chat> retriveGroupChat(Vector <Contact> contactList) throws SQLException {
 		Vector <Chat> groupChatArr = new Vector <Chat>();
 		//Per ogni contatto gruppo salvato, recupero la lista dei membri e dei messaggi e la associo ai miei contatti
 		for(Contact contact : contactList) {
@@ -199,6 +200,7 @@ public class LocalDatabaseHandler {
 			
 			GroupContact gpContact = (GroupContact) contact;
 			GroupChat chat = new GroupChat(gpContact);
+			chat.setUnreadedMessage(false);
 			Vector <SingleContact> listContatti = new Vector <SingleContact>();
 			Vector <String> listUser = retriveGroupPartecipants(gpContact.getGroupId());
 			//Per ogni stringa username, cerco il contatto a cui è associato
@@ -206,6 +208,10 @@ public class LocalDatabaseHandler {
 				for(Contact c : contactList) {
 					if(c instanceof SingleContact && c.getUsername().equals(user)) {
 						listContatti.add((SingleContact) c);
+						//Se in un gruppo è presente un contatto che non c'è nella mia lista, lo aggiungo
+						if(contactList.indexOf(c) == -1)
+							contactList.add((SingleContact) c);
+		
 						break;
 					}
 				}
@@ -254,8 +260,6 @@ public class LocalDatabaseHandler {
 	private void createUtente() throws SQLException {
 		String query = "CREATE TABLE IF NOT EXISTS \"Utente\" (\n"
 				+ "	\"Username\"	TEXT NOT NULL,\n"
-				+ "	\"Nome\"	TEXT NOT NULL,\n"
-				+ "	\"Cognome\"	TEXT NOT NULL,\n"
 				+ "	\"Img_profilo\"	BLOB,\n"
 				+ "	\"Status\"	TEXT,\n"
 				+ "	PRIMARY KEY(\"Username\")\n"
@@ -296,14 +300,11 @@ public class LocalDatabaseHandler {
 		String query = "CREATE TABLE IF NOT EXISTS \"MessaggioDiGruppo\" (\n"
 				+ "	\"Id_messaggio\"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n"
 				+ "	\"Sender\"	TEXT NOT NULL,\n"
-				+ "	\"Receiver\"	TEXT NOT NULL,\n"
 				+ "	\"MessageText\"	TEXT,\n"
 				+ "	\"Image\"	BLOB,\n"
 				+ "	\"Date\"	TEXT NOT NULL,\n"
 				+ "	\"Group_id\"	INTEGER NOT NULL,\n"
-				+ "	FOREIGN KEY(\"Sender\") REFERENCES \"Utente\"(\"Username\"),\n"
-				+ "	FOREIGN KEY(\"Receiver\") REFERENCES \"Utente\"(\"Username\")\n"
-				+ ")";
+				+ "	FOREIGN KEY(\"Sender\") REFERENCES \"Utente\"(\"Username\"))";
 		Statement stm = dbConnection.createStatement();
 		stm.executeUpdate(query);
 		stm.close();

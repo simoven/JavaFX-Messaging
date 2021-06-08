@@ -1,6 +1,7 @@
 package application.net.server;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
@@ -13,10 +14,10 @@ public class Server implements Runnable {
 	private ServerSocket server;
 	private ExecutorService executorService;
 	
-	private Map <String, Socket> activeUser;
+	private Map <String, ObjectOutputStream> activeUser;
 	
 	public Server() {
-		activeUser = new HashMap <String, Socket>();
+		activeUser = new HashMap <String, ObjectOutputStream>();
 		executorService = Executors.newCachedThreadPool();
 	}
 	
@@ -49,7 +50,6 @@ public class Server implements Runnable {
 				ServerListener sl = new ServerListener(socket, this);
 				executorService.submit(sl);
 			} catch (IOException e) {
-				
 				e.printStackTrace();
 			}
 		}
@@ -59,24 +59,21 @@ public class Server implements Runnable {
 		return activeUser.get(username) != null;
 	}
 	
-	public void addOnlineUser(String username, Socket socket) {
-		System.out.println("socket di "+ username + "messo");
-		activeUser.put(username, socket);
+	public void addOnlineUser(String username, ObjectOutputStream objOut) {
+		activeUser.put(username, objOut);
 	}
 	
 	public boolean disconnectUser(String username) {
 		if(username == null)
 			return false;
 		
-		if(activeUser.get(username) != null) {
-			System.out.println("socket di "+ username + "tolto");
+		if(activeUser.get(username) != null)
 			activeUser.remove(username);
-		}
 		
 		return true;
 	}
 	
-	public Socket getSocket(String username) {
+	public ObjectOutputStream getStream(String username) {
 		return activeUser.get(username);
 	}
 }

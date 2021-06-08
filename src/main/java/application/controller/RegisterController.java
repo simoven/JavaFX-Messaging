@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 
 import application.graphics.SceneHandler;
 import application.net.client.Client;
+import application.net.misc.LongUser;
 import application.net.misc.User;
 import application.net.misc.Utilities;
 import javafx.event.ActionEvent;
@@ -112,7 +113,8 @@ public class RegisterController {
     	if(!valid)
     		return;
     	
-    	User utente = new User(usernameField.getText(), passwordField.getText(), nameField.getText(), lastNameField.getText());
+    	LongUser utente = new LongUser(usernameField.getText(), nameField.getText(), lastNameField.getText());
+    	utente.setPassword(passwordField.getText());
     	utente.setPropicFile(Utilities.getByteArrFromFile(selectedImage));
     	
     	if(Client.getInstance().requestRegistration(utente)) {

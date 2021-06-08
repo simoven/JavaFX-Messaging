@@ -5,35 +5,18 @@ import java.io.Serializable;
 public class User implements Serializable {
 	
 	private static final long serialVersionUID = 1714223638602693321L;
+
+	protected String username;
+	protected String status;
+	protected byte [] proPic;
 	
-	private String name;
-	private String lastName;
-	private String username;
-	private String password;
-	private byte [] proPic;
-	
-	public User(String username, String password, String name, String lastName) {
-		this.name = name;
-		this.lastName = lastName;
+	public User(String username) {
 		this.username = username;
-		this.password = password;
 		this.proPic = null;
 	}
 	
 	public void setPropicFile(byte[] arr) {
 		proPic = arr;
-	}
-	
-	public void setPassword(String password) {
-		this.password = password;
-	}
-	
-	public String getLastName() {
-		return lastName;
-	}
-	
-	public String getName() {
-		return name;
 	}
 	
 	public byte[] getProPic() {
@@ -44,7 +27,12 @@ public class User implements Serializable {
 		return username;
 	}
 	
-	public String getPassword() {
-		return password;
+	public String getStatus() {
+		return status;
 	}
+	
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	
 }

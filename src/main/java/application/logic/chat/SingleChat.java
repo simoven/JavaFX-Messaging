@@ -14,4 +14,20 @@ public class SingleChat extends Chat {
 	public Contact getChattingWith() {
 		return chattingWith;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(this == obj)
+			return true;
+		
+		if(obj == null)
+			return false;
+		
+		if(this.getClass() != obj.getClass())
+			return false;
+		
+		SingleChat chat = (SingleChat) obj;
+		
+		return chattingWith.equals(chat.getChattingWith());
+	}
 }

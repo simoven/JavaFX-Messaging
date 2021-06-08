@@ -61,6 +61,12 @@ public class Utilities {
 		return parti [1].split("\\.") [0];
 	}
 	
+	public static String getHourFromStringTrimmed(String date) {
+		String hour = getHourFromString(date);
+		String [] split = hour.split(":");
+		return split [0] + ":" + split [1];
+	}
+	
 	public static String checkIfUsernameValid(String username) {
 		if(username == null || username.length() < 4)
 			return USERNAME_TOO_SHORT;

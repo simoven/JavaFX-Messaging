@@ -52,6 +52,11 @@ public class Chat implements Comparable <Chat>{
 		unreadedMessage = true;
 	}
 	
+	public void addMessage(Message m) {
+		listMessaggi.add(m);
+		unreadedMessage = false;
+	}
+	
 	public long getLastMessageTimeStamp() {
 		if(listMessaggi.isEmpty())
 			return 0;
@@ -73,10 +78,10 @@ public class Chat implements Comparable <Chat>{
 	@Override
 	public int compareTo(Chat o) {
 		if(getLastMessageTimeStamp() > o.getLastMessageTimeStamp())
-			return 1;
+			return -1;
 		
 		if(getLastMessageTimeStamp() < o.getLastMessageTimeStamp())
-			return -1;
+			return 1;
 		
 		return 0;
 	}

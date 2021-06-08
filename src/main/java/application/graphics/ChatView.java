@@ -13,6 +13,7 @@ import application.logic.contacts.Contact;
 import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
 import application.logic.messages.Message;
+import application.net.misc.Protocol;
 import application.net.misc.Utilities;
 import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
@@ -76,7 +77,7 @@ public class ChatView {
 		ChatMessage chatMsg = (ChatMessage) msg;
 		
 		HBox container = new HBox();
-    	container.prefWidthProperty().bind(chatPaneController.getChatScrollPane().widthProperty());
+    	container.prefWidthProperty().bind(chatPaneController.getChatVbox().widthProperty());
     	VBox box = new VBox();
     	box.setMaxWidth(chatPaneController.getChatScrollPane().getWidth() * 0.8);
     	
@@ -110,13 +111,13 @@ public class ChatView {
     	
     	container.getChildren().add(box);
     	chatPaneController.getChatVbox().getChildren().add(container);
-    	//if(isMyMessage)
-    		//VBox.setMargin(container, new Insets(20, 5, 0, 20));
-    	//else
-    		//VBox.setMargin(container, new Insets(5, 0, 5, 0));
+    	if(isMyMessage) 
+    		VBox.setMargin(container, new Insets(2, 5, 0, 0));
+    	else
+    		VBox.setMargin(container, new Insets(2, 0, 0, 5));
 	}
 	
-	public void appendContactInChoiceScreen(SingleContact contact) {
+	public void appendContactInChoiceScreen(SingleContact contact, boolean isGlobalContact) {
 		HBox container = new HBox();
 		container.prefWidthProperty().bind(chatChooserController.getAlluserScrollpane().widthProperty());
 		Circle shape = new Circle();
@@ -143,6 +144,18 @@ public class ChatView {
 		
 		container.getChildren().add(textContainer);
 		chatChooserController.getAllUsersVbox().getChildren().add(container);
+		
+		if(isGlobalContact) {
+			Image world = new Image(getClass().getResourceAsStream("/application/images/world.png"), 200, 200, true, true);
+			ImageView view = new ImageView(world);
+			Pane spacer = new Pane();
+			view.setFitHeight(20);
+			view.setFitWidth(20);
+			container.getChildren().add(spacer);
+			container.getChildren().add(view);
+			HBox.setHgrow(spacer, Priority.ALWAYS);
+			HBox.setMargin(view, new Insets(30, 10, 20, 10));
+		}
 		
 		container.addEventHandler(MouseEvent.MOUSE_CLICKED, chatChooserController);
 	}
@@ -225,6 +238,17 @@ public class ChatView {
 		
 		chatMainController.getAllChatVbox().getChildren().add(container);
 		container.addEventHandler(MouseEvent.MOUSE_CLICKED, chatMainController);
+	}
+
+	public void updateOnlineStatus(String status) {
+		if(status.equals("null"))
+			status = "Mai";
+		
+		if(status.equals(Protocol.USER_ONLINE))
+			chatPaneController.getLastAccessLabel().setText("Online");
+		else 
+			chatPaneController.getLastAccessLabel().setText("Ultimo accesso : " + status);
+		
 	}
 	
 }

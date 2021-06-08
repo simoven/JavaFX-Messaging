@@ -1,18 +1,16 @@
 package application.net.server;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.SocketException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
 import application.logic.messages.ChatMessage;
 import application.logic.messages.InformationMessage;
 import application.logic.messages.Message;
+import application.net.misc.LongUser;
 import application.net.misc.Protocol;
 import application.net.misc.User;
 import application.net.misc.Utilities;
@@ -67,7 +65,7 @@ public class ServerListener implements Runnable {
 			}
 			
 			//Adesso sono loggato
-			server.addOnlineUser(serverUsername, socket);
+			server.addOnlineUser(serverUsername, outputStream);
 			
 			//Prima di iniziare a gestire le richieste controllo se ci sono messaggi inviati quando il client era offline
 			checkPendingMessage();
@@ -86,6 +84,10 @@ public class ServerListener implements Runnable {
 						
 					case Protocol.GROUP_MESSAGE_SEND_REQUEST:
 						handleSendMessage(true);
+						break;
+						
+					case Protocol.CONTACTS_SEARCH:
+						handleContactSearch();
 						break;
 						
 					default:
@@ -111,7 +113,7 @@ public class ServerListener implements Runnable {
 			return;
 		}
 	}
-	
+
 	private void disconnect() {
 		try {
 			if(server.disconnectUser(serverUsername))
@@ -137,16 +139,23 @@ public class ServerListener implements Runnable {
 		String userToCheck = (String) inputStream.readObject();
 		try {
 			InformationMessage info = new InformationMessage();
+			info.setInformation(Protocol.ONLINE_STATUS_REQUEST);
 			
 			sendMessage(Protocol.ONLINE_STATUS_REQUEST);
 			
-			if(server.checkIsUserLogged(userToCheck))
-				info.setInformation(Protocol.USER_ONLINE);
+			if(server.checkIsUserLogged(userToCheck)) 
+				info.setPacket(userToCheck + ";" + Protocol.USER_ONLINE);	
 			else {
 				String date = DatabaseHandler.getInstance().getLastAccess(userToCheck);
-				info.setInformation(date);
-				//TODO change date format
 				System.out.println(date);
+				if(date == null) 
+					info.setPacket(userToCheck + ";" + null);		
+				else {
+					String dayDate = Utilities.getDateFromString(date);
+					String hour = Utilities.getHourFromStringTrimmed(date);
+					info.setPacket(userToCheck + ";" + dayDate + " " + hour);
+					//TODO change date format
+				}
 			}
 			
 			sendObject(info);
@@ -155,20 +164,35 @@ public class ServerListener implements Runnable {
 		}
 	}
 	
+	private void handleContactSearch() throws ClassNotFoundException, IOException, SQLException {
+		try {
+			String subUsername = (String) inputStream.readObject();
+			ArrayList <User> listaRicercati = DatabaseHandler.getInstance().searchUsers(subUsername);
+			if(listaRicercati.size() > 0) {
+				InformationMessage msg = new InformationMessage();
+				msg.setPacket(listaRicercati);
+				msg.setInformation(Protocol.CONTACTS_SEARCH);
+				
+				sendMessage(Protocol.CONTACTS_SEARCH);
+				sendObject(msg);
+			}
+			
+		} catch (NullPointerException e) {
+			return;
+		}
+	}
+
+	
 	private void handleSingleMessageSend(String receiver, ChatMessage msg) throws IOException, SQLException {
-		Socket recSocket = server.getSocket(receiver);
+		ObjectOutputStream destStream = server.getStream(receiver);
 		
-		if(recSocket == null) {
+		if(destStream == null) {
 			DatabaseHandler.getInstance().addPendingMessage(msg, receiver);
 		}
 		else {
-			System.out.println(socket);
-			System.out.println(recSocket);
-			ObjectOutputStream out = new ObjectOutputStream(recSocket.getOutputStream());
-			
-			out.writeObject(Protocol.MESSAGE_SEND_REQUEST);
-			out.writeObject(msg);
-			out.flush();
+			destStream.writeObject(Protocol.MESSAGE_SEND_REQUEST);
+			destStream.writeObject(msg);
+			destStream.flush();
 		}
 	}
 
@@ -214,6 +238,7 @@ public class ServerListener implements Runnable {
 		
 		if(server.checkIsUserLogged(username)) {
 			sendMessage(Protocol.USER_ALREADY_LOGGED);
+			System.out.println("Gia loggato");
 			return false;
 		}	
 		
@@ -233,7 +258,7 @@ public class ServerListener implements Runnable {
 	}
 	
 	private boolean handleRegistration() throws IOException, ClassNotFoundException, SQLException {
-		User utente = retrieveUser();
+		LongUser utente = (LongUser) retrieveUser();
 		
 		if(!Utilities.checkIfUsernameValid(utente.getUsername()).equals(Utilities.USERNAME_VALID) ||
 		   !Utilities.checkIfPasswordValid(utente.getPassword()).equals(Utilities.PASSWORD_VALID)) {

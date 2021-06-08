@@ -61,6 +61,7 @@ public class ChatPaneController {
     	settingsButton.setImage(img);
     	chatVbox.setSpacing(2);
     	chatVbox.heightProperty().addListener(observable -> chatScrollPane.setVvalue(1D));
+    	chatVbox.prefWidthProperty().bind(chatScrollPane.widthProperty());
     	bottomHBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
     	ChatView.getInstance().setChatPaneController(this);
     }
@@ -92,7 +93,7 @@ public class ChatPaneController {
     	msg.setSentHour(Utilities.getHourFromString(Utilities.getCurrentISODate()));
     	messageTextArea.setText("");
     	if(Client.getInstance().sendChatMessage(msg)) 
-    		ChatView.getInstance().appendMessageInChat(msg, true);
+    		ChatLogic.getInstance().addMessageInChat(msg);
     }
 
 }

@@ -26,4 +26,5 @@ public class Protocol {
 	public static final String ADDED_NEW_GROUP = "User added to a new Group";
 	public static final String MESSAGES_RETRIEVED = "Messages retrieved from server";
 	public static final String MESSAGES_LIST = "Lista messaggi";
+	public static final String CONTACTS_SEARCH = "Searching contacts";
 }

@@ -24,4 +24,20 @@ public class Contact {
 	public byte[] getProfilePic() {
 		return profilePic;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == this)
+			return true;
+		
+		if(obj == null)
+			return false;
+		
+		if(this.getClass() != obj.getClass())
+			return false;
+		
+		Contact contact = (Contact) obj;
+		
+		return username.equals(contact.getUsername());
+	}
 }

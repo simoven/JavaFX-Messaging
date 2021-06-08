@@ -1,15 +1,15 @@
 package application.net.client;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.sql.SQLException;
 
 import application.logic.messages.ChatMessage;
 import application.logic.messages.InformationMessage;
 import application.logic.messages.Message;
+import application.net.misc.LongUser;
 import application.net.misc.Protocol;
 import application.net.misc.User;
 import javafx.concurrent.Service;
@@ -69,18 +69,19 @@ public class Client extends Service <Message> {
 			outputStream.flush();
 			return true;
 		} catch (IOException e) {
+			e.printStackTrace();
 			//TODO show Error
 		}
 		
 		return false;
 	}
 	
-	public User requestLogin(String username, String password) {
+	public LongUser requestLogin(String username, String password) {
 		sendMessage(Protocol.REQUEST_LOGIN);
 		sendMessage(username);
 		sendMessage(password);
 		
-		User utente = null;
+		LongUser utente = null;
 		
 		try {
 			if(inputStream == null)
@@ -89,7 +90,7 @@ public class Client extends Service <Message> {
 			String response = (String) inputStream.readObject();
 
 			if(response.equals(Protocol.REQUEST_SUCCESSFUL))
-				utente = (User) inputStream.readObject();
+				utente = (LongUser) inputStream.readObject();
 			else {
 				//showError(response)
 			}
@@ -127,7 +128,27 @@ public class Client extends Service <Message> {
 			sendMessage(Protocol.MESSAGE_SEND_REQUEST);
 		
 		
-		return sendObject(msg);
+		if(sendObject(msg)) {
+			try {
+				LocalDatabaseHandler.getInstance().addMessage((ChatMessage) msg);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public void requestSearch(String subUsername) {
+		sendMessage(Protocol.CONTACTS_SEARCH);
+		sendMessage(subUsername);
+	}
+	
+	public void requestOnlineStatus(String userToCheck) {
+		sendMessage(Protocol.ONLINE_STATUS_REQUEST);
+		sendMessage(userToCheck);
 	}
 
 	@Override
@@ -136,7 +157,6 @@ public class Client extends Service <Message> {
 			
 			@Override
 			protected Message call() throws Exception {
-				inputStream = new ObjectInputStream(socket.getInputStream());
 				String requestIncoming = (String) inputStream.readObject();
 				Message msg = null;
 				
@@ -144,9 +164,12 @@ public class Client extends Service <Message> {
 					if(requestIncoming.equals(Protocol.MESSAGE_SEND_REQUEST)) 
 						msg = (ChatMessage) inputStream.readObject();
 					
-					else if(requestIncoming.equals(Protocol.ONLINE_STATUS_REQUEST)) 
+					else if(requestIncoming.equals(Protocol.CONTACTS_SEARCH))
 						msg = (InformationMessage) inputStream.readObject();
 					
+					else if(requestIncoming.equals(Protocol.ONLINE_STATUS_REQUEST)) 
+						msg = (InformationMessage) inputStream.readObject();
+										
 					else if(requestIncoming.equals(Protocol.MESSAGES_RETRIEVED))
 						msg = (InformationMessage) inputStream.readObject();
 					
@@ -158,5 +181,4 @@ public class Client extends Service <Message> {
 			}
 		};
 	}
-
 }
