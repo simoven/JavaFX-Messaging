@@ -2,9 +2,9 @@ package application.graphics;
 
 import java.io.ByteArrayInputStream;
 
-import application.controller.ChatChooserController;
 import application.controller.ChatMainController;
 import application.controller.ChatPaneController;
+import application.controller.ImageViewController;
 import application.logic.ChatLogic;
 import application.logic.chat.Chat;
 import application.logic.chat.GroupChat;
@@ -15,6 +15,8 @@ import application.logic.messages.ChatMessage;
 import application.logic.messages.Message;
 import application.net.misc.Protocol;
 import application.net.misc.Utilities;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.control.Label;
@@ -30,12 +32,13 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 
+//Questa classe si occupa di gestire la visualizzazione di tutte le chat a sinistra e della singola chat a destra
 public class ChatView {
 
 	private static ChatView instance = null;
 	private ChatPaneController chatPaneController = null;
 	private ChatMainController chatMainController = null;
-	private ChatChooserController chatChooserController = null;
+	private ImageViewController imageViewController = null;
 	
 	private ChatView() {}
 	
@@ -52,25 +55,26 @@ public class ChatView {
 	public void setChatMainController(ChatMainController chatMainController) {
 		this.chatMainController = chatMainController; }
 	
-	public void setChatChooserController(ChatChooserController chatChooserController) { 
-		this.chatChooserController = chatChooserController; }
+	public void setImageViewController(ImageViewController imageViewController) {
+		this.imageViewController = imageViewController;
+	}
 	
 	public ChatMainController getChatMainController() { return chatMainController; }
-	
-	public ChatChooserController getChatChooserController() { return chatChooserController; }
 	
 	public ChatPaneController getChatPaneController() { return chatPaneController; }
 	
 	public void updateInformation() {
+		//Questo metodo aggiorna la mia immagine di profilo nel pannello principale
 		Image img;
-		if(ChatLogic.getInstance().getMyInformation().getProPic() != null)
-			img = new Image(new ByteArrayInputStream(ChatLogic.getInstance().getMyInformation().getProPic()), 100, 100, true, true);
+		if(ChatLogic.getInstance().getMyInformation().getProfilePic() != null)
+			img = new Image(new ByteArrayInputStream(ChatLogic.getInstance().getMyInformation().getProfilePic()), 100, 100, true, true);
 		else
 			img = new Image(getClass().getResource("/application/images/defaultSinglePic.jpeg").toExternalForm(), 100, 100, true, true);
 		chatMainController.getMyPropicCircle().setFill(new ImagePattern(img));
 	}
 	
 	public void appendMessageInChat(Message msg, boolean isMyMessage) {
+		//Questo metodo aggiunge un messaggio alla schermata della chat
 		if(!(msg instanceof ChatMessage))
 			return;
 		
@@ -79,7 +83,7 @@ public class ChatView {
 		HBox container = new HBox();
     	container.prefWidthProperty().bind(chatPaneController.getChatVbox().widthProperty());
     	VBox box = new VBox();
-    	box.setMaxWidth(chatPaneController.getChatScrollPane().getWidth() * 0.8);
+    	box.setMaxWidth(chatPaneController.getChatVbox().getPrefWidth() * 0.8);
     	
     	if(isMyMessage) {
     		container.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
@@ -92,6 +96,10 @@ public class ChatView {
     	
     	if(chatMsg.getImage() != null) {
     		ImageView img = new ImageView(new Image(new ByteArrayInputStream(chatMsg.getImage()), 250, 250, true, true));
+    		img.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<Event>() {
+    			public void handle(Event event) {
+    				imageViewController.handleClick(chatMsg.getImage()); };
+			});
     		box.getChildren().add(img);
     		VBox.setMargin(img, new Insets(5, 10, 5, 10));
     	}
@@ -104,7 +112,7 @@ public class ChatView {
     		VBox.setMargin(field, new Insets(5, 10, 5, 10));
     	}
     	
-    	Text time = new Text(msg.getSentHourTrimmed());
+    	Text time = new Text(Utilities.getHourFromStringTrimmed(msg.getTimestamp()));
     	time.getStyleClass().add("messageTime");
     	box.getChildren().add(time);
     	VBox.setMargin(time, new Insets(0, 10, 5, 10));
@@ -117,62 +125,103 @@ public class ChatView {
     		VBox.setMargin(container, new Insets(2, 0, 0, 5));
 	}
 	
-	public void appendContactInChoiceScreen(SingleContact contact, boolean isGlobalContact) {
+	public void appendGroupMessageInChat(Message msg, boolean isMyMessage, String lastUser) {
+		if(!(msg instanceof ChatMessage))
+			return;
+		
+		ChatMessage chatMsg = (ChatMessage) msg;
+		
+		if(chatMsg.getSender().equals("null")) {
+			//Il messaggio è informativo
+			Label information = new Label(chatMsg.getText());
+			information.getStyleClass().add("genericChatInformation");
+			information.setPadding(new Insets(5));
+			//TODO
+			chatPaneController.getChatVbox().getChildren().add(information);
+			return;
+		}
+	
 		HBox container = new HBox();
-		container.prefWidthProperty().bind(chatChooserController.getAlluserScrollpane().widthProperty());
-		Circle shape = new Circle();
-		shape.setRadius(30);
-		Image img;
-		if(contact.getProfilePic() != null)
-			img = new Image(new ByteArrayInputStream(contact.getProfilePic()), 100, 100, true, true);
-		else
-			img = new Image(getClass().getResource("/application/images/defaultSinglePic.jpeg").toExternalForm(), 100, 100, true, true);
-			
-		shape.setFill(new ImagePattern(img));
-		container.getChildren().add(shape);
-		HBox.setMargin(shape, new Insets(10));
-		
-		VBox textContainer = new VBox();
-		Label username = new Label(contact.getUsername());
-		textContainer.getChildren().add(username);
-		VBox.setMargin(username, new Insets(10, 10, 5, 0));
-		if(contact.getStatus() != null) {
-			Label status = new Label(contact.getStatus());
-			textContainer.getChildren().add(status);
-			VBox.setMargin(status, new Insets(0, 10, 5, 0));
-		}
-		
-		container.getChildren().add(textContainer);
-		chatChooserController.getAllUsersVbox().getChildren().add(container);
-		
-		if(isGlobalContact) {
-			Image world = new Image(getClass().getResourceAsStream("/application/images/world.png"), 200, 200, true, true);
-			ImageView view = new ImageView(world);
-			Pane spacer = new Pane();
-			view.setFitHeight(20);
-			view.setFitWidth(20);
-			container.getChildren().add(spacer);
-			container.getChildren().add(view);
-			HBox.setHgrow(spacer, Priority.ALWAYS);
-			HBox.setMargin(view, new Insets(30, 10, 20, 10));
-		}
-		
-		container.addEventHandler(MouseEvent.MOUSE_CLICKED, chatChooserController);
+    	container.prefWidthProperty().bind(chatPaneController.getChatVbox().widthProperty());
+    	VBox box = new VBox();
+    	box.setMaxWidth(chatPaneController.getChatVbox().getPrefWidth() * 0.8);
+    	
+    	if(isMyMessage) {
+    		container.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
+    		box.getStyleClass().add("rightMessageVBox");
+    	}
+    	else {
+    		container.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
+    		if(!lastUser.equals(msg.getSender()) && !isMyMessage)
+    			box.getStyleClass().add("leftMessageVBox");
+    		else
+    			box.getStyleClass().add("leftMessageVBoxFull");
+    	}
+    	
+    	if(!lastUser.equals(msg.getSender()) && !isMyMessage) {
+    		Label name = new Label(msg.getSender());
+    		name.getStyleClass().add("groupUserLabel");
+    		box.getChildren().add(name);
+    		VBox.setMargin(name, new Insets(5, 10, 4, 10));
+    	}
+    	
+    	if(chatMsg.getImage() != null) {
+    		ImageView img = new ImageView(new Image(new ByteArrayInputStream(chatMsg.getImage()), 250, 250, true, true));
+    		img.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<Event>() {
+    			public void handle(Event event) {
+    				imageViewController.handleClick(chatMsg.getImage()); };
+			});
+    		box.getChildren().add(img);
+    		VBox.setMargin(img, new Insets(5, 10, 5, 10));
+    	}
+  
+    	if(chatMsg.getText() != null) {
+    		Label field = new Label(chatMsg.getText()); 
+    		field.setWrapText(true);
+    		field.getStyleClass().add("messageText");
+    		box.getChildren().add(field);
+    		VBox.setMargin(field, new Insets(5, 10, 2, 10));
+    	}
+    	
+    	Text time = new Text(Utilities.getHourFromStringTrimmed(msg.getTimestamp()));
+    	time.getStyleClass().add("messageTime");
+    	box.getChildren().add(time);
+    	VBox.setMargin(time, new Insets(0, 10, 5, 10));
+    	
+    	container.getChildren().add(box);
+    	chatPaneController.getChatVbox().getChildren().add(container);
+    	
+    	int topMargin = 1;
+    	if(!lastUser.equals(msg.getSender()) && !isMyMessage)
+    		topMargin = 3;
+    	
+    	if(isMyMessage) 
+    		VBox.setMargin(container, new Insets(topMargin, 5, 0, 0));
+    	else
+    		VBox.setMargin(container, new Insets(topMargin, 0, 0, 5));
 	}
 
-	public void showContactInformation(Contact activeContact) {
+	public void showContactInformation(Contact activeContact, int groupMemberNumber) {
+		//Questo metodo mostra le informazioni del contatto con cui sto chattando
 		Image img;
 		if(activeContact.getProfilePic() != null)
 			img = new Image(new ByteArrayInputStream(activeContact.getProfilePic()), 100, 100, true, true);
-		else
-			img = new Image(getClass().getResource("/application/images/defaultSinglePic.jpeg").toExternalForm(), 100, 100, true, true);
+		else {
+			if(activeContact instanceof SingleContact)
+				img = new Image(getClass().getResource("/application/images/defaultSinglePic.jpeg").toExternalForm(), 100, 100, true, true);
+			else 
+				img = new Image(getClass().getResource("/application/images/defaultGroup.png").toExternalForm(), 100, 100, true, true);
+		}
 		
 		chatPaneController.getPropicCircle().setFill(new ImagePattern(img));
 		chatPaneController.getUsernameLabel().setText(activeContact.getUsername());
-		//chatPaneController.getLastAccessLabel().setText(Client.getInstance().getLastAccess(activeContact.getUsername()));
+		
+		if(groupMemberNumber != -1)
+			chatPaneController.getLastAccessLabel().setText("Membri : " + groupMemberNumber);
 	}
 
 	public void appendChatInMainPanel(Chat chat) {
+		//Questo metodo aggiunge una chat nela pannello sulla sinistra con tutte le chat
 		HBox container = new HBox();
 
 		if(chat.getUnreadedMessage()) {
@@ -190,6 +239,9 @@ public class ChatView {
 		Image img;
 		Label chatName;
 		Label lastMessage;
+		Label groupId = new Label("-1");
+		groupId.setMaxSize(1, 1);
+		groupId.setVisible(false);
 		
 		if(chat instanceof SingleChat) {
 			SingleChat sinChat = (SingleChat) chat;
@@ -204,27 +256,36 @@ public class ChatView {
 		//istanza di groupChat
 		else {
 			GroupChat groChat = (GroupChat) chat;
+			if(groChat.getGroupInfo().getGroupId() == -1)
+				return;
+			
 			if(groChat.getGroupInfo().getProfilePic() != null)
 				img = new Image(new ByteArrayInputStream(groChat.getGroupInfo().getProfilePic()), 100, 100, true, true);
 			else
-				img = new Image(getClass().getResource("/application/images/defaultgroup").toExternalForm(), 100, 100, true, true);
+				img = new Image(getClass().getResource("/application/images/defaultGroup.png").toExternalForm(), 100, 100, true, true);
 			
 			chatName = new Label(groChat.getGroupInfo().getUsername());
 			lastMessage = new Label(groChat.getLastMessage());
+			groupId.setText(Integer.toString(groChat.getGroupInfo().getGroupId()));
+			groupId.setMaxSize(1, 1);
+			groupId.setVisible(false);
 		}
 		
 		lastMessage.getStyleClass().add("lastMessageInChat");
 		textContainer.getChildren().add(chatName);
 		textContainer.getChildren().add(lastMessage);
+		textContainer.getChildren().add(groupId);
 		VBox.setMargin(textContainer.getChildren().get(0), new Insets(10, 10, 5, 0));
 		VBox.setMargin(textContainer.getChildren().get(1), new Insets(0, 10, 5, 0));
 		
 		shape.setFill(new ImagePattern(img));
-		String data;
-		if(chat.getListMessaggi().lastElement().getSentDate().equals(Utilities.getTodayDate()))
-			data = chat.getListMessaggi().lastElement().getSentHourTrimmed();
-		else
-			data = chat.getListMessaggi().lastElement().getSentDate();
+		String data = "null";
+		if(!chat.getListMessaggi().isEmpty()) {
+			if(chat.getListMessaggi().lastElement().getSentDate().equals(Utilities.getTodayDate()))
+				data = Utilities.getHourFromStringTrimmed(chat.getListMessaggi().lastElement().getTimestamp());
+			else
+				data = chat.getListMessaggi().lastElement().getSentDate();
+		}
 		
 		Text dataUltimoMessaggio = new Text(data);
 		Pane spacer = new Pane();
@@ -241,6 +302,7 @@ public class ChatView {
 	}
 
 	public void updateOnlineStatus(String status) {
+		//Questo metodo aggiorna l'ultimo accesso
 		if(status.equals("null"))
 			status = "Mai";
 		

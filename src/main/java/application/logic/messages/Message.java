@@ -2,20 +2,29 @@ package application.logic.messages;
 
 import java.io.Serializable;
 
+import application.net.misc.Utilities;
+
 public class Message implements Serializable {
 	
 	private static final long serialVersionUID = 8665807362461072828L;
 	
 	protected String sender;
 	protected String receiver;
-	protected String sentDate;
-	protected String sentHour;
+	protected String timestamp;
 	protected int groupId;
 	protected boolean isGroupMessage;
 	
 	public Message(String sender, String receiver) {
 		this.sender = sender;
 		this.receiver = receiver;
+	}
+	
+	public void setReceiver(String receiver) {
+		this.receiver = receiver;
+	}
+	
+	public void setSender(String sender) {
+		this.sender = sender;
 	}
 	
 	public String getSender() {
@@ -26,12 +35,20 @@ public class Message implements Serializable {
 		return receiver;
 	}
 	
+	public String getTimestamp() {
+		return timestamp;
+	}
+	
+	public void setTimestamp(String timestamp) {
+		this.timestamp = timestamp;
+	}
+	
 	public String getSentDate() {
-		return sentDate;
+		return Utilities.getDateFromString(timestamp);
 	}
 	
 	public String getSentHour() {
-		return sentHour;
+		return Utilities.getHourFromString(timestamp);
 	}
 	
 	public int getGroupId() {
@@ -46,20 +63,7 @@ public class Message implements Serializable {
 		this.isGroupMessage = isGroupMessage;
 	}
 	
-	public void setSentDate(String sentDate) {
-		this.sentDate = sentDate;
-	}
-	
-	public void setSentHour(String sentHour) {
-		this.sentHour = sentHour;
-	}
-	
 	public boolean isAGroupMessage() {
 		return isGroupMessage;
-	}
-
-	public String getSentHourTrimmed() {
-		String [] split = sentHour.split(":");
-		return split [0] + ":" + split [1];
 	}
 }

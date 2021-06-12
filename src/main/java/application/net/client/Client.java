@@ -6,6 +6,8 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.sql.SQLException;
 
+import application.logic.chat.GroupChat;
+import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
 import application.logic.messages.InformationMessage;
 import application.logic.messages.Message;
@@ -122,11 +124,7 @@ public class Client extends Service <Message> {
 	}
 	
 	public boolean sendChatMessage(Message msg) {
-		if(msg.isAGroupMessage())
-			sendMessage(Protocol.GROUP_MESSAGE_SEND_REQUEST);
-		else 
-			sendMessage(Protocol.MESSAGE_SEND_REQUEST);
-		
+		sendMessage(Protocol.MESSAGE_SEND_REQUEST);
 		
 		if(sendObject(msg)) {
 			try {
@@ -150,6 +148,46 @@ public class Client extends Service <Message> {
 		sendMessage(Protocol.ONLINE_STATUS_REQUEST);
 		sendMessage(userToCheck);
 	}
+	
+	public boolean createGroup(GroupChat groupChat) {
+		sendMessage(Protocol.GROUP_CREATION);
+		sendMessage(groupChat.getGroupInfo().getUsername());
+		sendMessage(groupChat.getGroupInfo().getOwner());
+		byte [] arr = groupChat.getGroupInfo().getProfilePic();
+		try {
+			if(arr == null)
+				sendMessage(Protocol.IMAGE_NULL);
+			else {
+				sendMessage(Protocol.IMAGE_NOT_NULL);
+				outputStream.write(groupChat.getGroupInfo().getProfilePic());
+			}
+		} catch (IOException e) {
+			return false;
+		}
+		
+		for(SingleContact user : groupChat.getListUtenti()) {
+			sendMessage(Protocol.GROUP_PARTECIPANT);
+			sendMessage(user.getUsername());
+		}
+		
+		sendMessage(Protocol.GROUP_CREATION_DONE);
+		return true;
+	}
+	
+	public void requestContactInformation(String user) {
+		sendMessage(Protocol.CONTACT_INFORMATION_REQUEST);
+		sendMessage(user);
+	}
+
+	public void requestGroupInformation(int groupId) {
+		sendMessage(Protocol.GROUP_INFORMATION_REQUEST);
+		sendMessage(Integer.toString(groupId));
+	}
+	
+	public void requestGroupMembers(int groupId) {
+		sendMessage(Protocol.GROUP_PARTECIPANT_REQUEST);
+		sendMessage(Integer.toString(groupId));
+	}
 
 	@Override
 	protected Task <Message> createTask() {
@@ -158,19 +196,20 @@ public class Client extends Service <Message> {
 			@Override
 			protected Message call() throws Exception {
 				String requestIncoming = (String) inputStream.readObject();
+				System.out.println(requestIncoming);
 				Message msg = null;
 				
 				try {
 					if(requestIncoming.equals(Protocol.MESSAGE_SEND_REQUEST)) 
 						msg = (ChatMessage) inputStream.readObject();
 					
-					else if(requestIncoming.equals(Protocol.CONTACTS_SEARCH))
-						msg = (InformationMessage) inputStream.readObject();
-					
-					else if(requestIncoming.equals(Protocol.ONLINE_STATUS_REQUEST)) 
-						msg = (InformationMessage) inputStream.readObject();
-										
-					else if(requestIncoming.equals(Protocol.MESSAGES_RETRIEVED))
+					else if(requestIncoming.equals(Protocol.CONTACTS_SEARCH) ||
+							requestIncoming.equals(Protocol.ONLINE_STATUS_REQUEST) ||
+							requestIncoming.equals(Protocol.MESSAGES_RETRIEVED) ||
+							requestIncoming.equals(Protocol.GROUP_CREATION_DONE) ||
+							requestIncoming.equals(Protocol.CONTACT_INFORMATION_REQUEST) ||
+							requestIncoming.equals(Protocol.GROUP_INFORMATION_REQUEST) ||
+							requestIncoming.equals(Protocol.GROUP_PARTECIPANT_REQUEST))
 						msg = (InformationMessage) inputStream.readObject();
 					
 				} catch(ClassNotFoundException e) {

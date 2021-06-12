@@ -8,6 +8,7 @@ public class User implements Serializable {
 
 	protected String username;
 	protected String status;
+	protected String gpOwner;
 	protected byte [] proPic;
 	
 	public User(String username) {
@@ -17,6 +18,14 @@ public class User implements Serializable {
 	
 	public void setPropicFile(byte[] arr) {
 		proPic = arr;
+	}
+	
+	public void setGpOwner(String gpOwner) {
+		this.gpOwner = gpOwner;
+	}
+	
+	public String getGpOwner() {
+		return gpOwner;
 	}
 	
 	public byte[] getProPic() {

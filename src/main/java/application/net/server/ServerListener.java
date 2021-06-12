@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Vector;
 
 import application.logic.messages.ChatMessage;
 import application.logic.messages.InformationMessage;
@@ -14,6 +15,7 @@ import application.net.misc.LongUser;
 import application.net.misc.Protocol;
 import application.net.misc.User;
 import application.net.misc.Utilities;
+import javafx.util.Pair;
 
 public class ServerListener implements Runnable {
 
@@ -75,19 +77,31 @@ public class ServerListener implements Runnable {
 				
 				switch (request) {
 					case Protocol.MESSAGE_SEND_REQUEST:
-						handleSendMessage(false);
+						handleSendMessage();
 						break;
 						
 					case Protocol.ONLINE_STATUS_REQUEST:
 						handleOnlineStatusRequest();
 						break;
 						
-					case Protocol.GROUP_MESSAGE_SEND_REQUEST:
-						handleSendMessage(true);
-						break;
-						
 					case Protocol.CONTACTS_SEARCH:
 						handleContactSearch();
+						break;
+						
+					case Protocol.GROUP_CREATION:
+						handleGroupCreation();
+						break;
+						
+					case Protocol.CONTACT_INFORMATION_REQUEST:
+						handleContactInformation();
+						break;
+						
+					case Protocol.GROUP_INFORMATION_REQUEST:
+						handleGroupInformation();
+						break;
+						
+					case Protocol.GROUP_PARTECIPANT_REQUEST:
+						handleGroupPartecipants();
 						break;
 						
 					default:
@@ -134,6 +148,48 @@ public class ServerListener implements Runnable {
 		msg.setInformation(Protocol.MESSAGES_LIST);
 		sendObject(msg);
 	}
+	
+	private void handleGroupPartecipants() throws SQLException, ClassNotFoundException, IOException {
+		int groupId = Integer.parseInt((String) inputStream.readObject());
+		ArrayList <String> utenti = DatabaseHandler.getInstance().getGroupPartecipants(groupId);
+		
+		if(utenti != null) {
+			InformationMessage msg = new InformationMessage();
+			msg.setInformation(Protocol.GROUP_PARTECIPANT_REQUEST);
+			msg.setGroupId(groupId);
+			msg.setPacket(utenti);
+			sendMessage(Protocol.GROUP_PARTECIPANT_REQUEST);
+			sendObject(msg);
+		}	
+	}
+	
+	private void handleGroupInformation() throws ClassNotFoundException, IOException, SQLException {
+		int groupId = Integer.parseInt((String) inputStream.readObject());
+		User group = DatabaseHandler.getInstance().getGroupInfo(groupId);
+		
+		if(group != null) {
+			InformationMessage msg = new InformationMessage();
+			msg.setInformation(Protocol.GROUP_INFORMATION_REQUEST);
+			msg.setPacket(group);
+			msg.setGroupId(groupId);
+			sendMessage(Protocol.GROUP_INFORMATION_REQUEST);
+			sendObject(msg);
+		}
+	}
+
+	private void handleContactInformation() throws ClassNotFoundException, IOException, SQLException {
+		String userToCheck = (String) inputStream.readObject();
+		User utente = DatabaseHandler.getInstance().getUserInfo(userToCheck);
+		
+		if(utente != null) {
+			InformationMessage msg = new InformationMessage();
+			msg.setInformation(Protocol.CONTACT_INFORMATION_REQUEST);
+			msg.setPacket(utente);
+			sendMessage(Protocol.CONTACT_INFORMATION_REQUEST);
+			sendObject(msg);
+		}
+		
+	}
 		
 	private void handleOnlineStatusRequest() throws IOException, SQLException, ClassNotFoundException {
 		String userToCheck = (String) inputStream.readObject();
@@ -147,7 +203,6 @@ public class ServerListener implements Runnable {
 				info.setPacket(userToCheck + ";" + Protocol.USER_ONLINE);	
 			else {
 				String date = DatabaseHandler.getInstance().getLastAccess(userToCheck);
-				System.out.println(date);
 				if(date == null) 
 					info.setPacket(userToCheck + ";" + null);		
 				else {
@@ -186,41 +241,38 @@ public class ServerListener implements Runnable {
 	private void handleSingleMessageSend(String receiver, ChatMessage msg) throws IOException, SQLException {
 		ObjectOutputStream destStream = server.getStream(receiver);
 		
-		if(destStream == null) {
+		if(destStream == null) 
 			DatabaseHandler.getInstance().addPendingMessage(msg, receiver);
-		}
 		else {
+			System.out.println(destStream);
 			destStream.writeObject(Protocol.MESSAGE_SEND_REQUEST);
 			destStream.writeObject(msg);
 			destStream.flush();
 		}
 	}
 
-	private void handleSendMessage(boolean isGroupMessage) throws IOException, ClassNotFoundException, SQLException {
+	private void handleSendMessage() throws IOException, ClassNotFoundException, SQLException {
 		try {
 			Message msg = (Message) inputStream.readObject();
-			
-			if(!(msg instanceof ChatMessage)) {
-				sendMessage(Protocol.BAD_REQUEST);
-				return;
-			}
-			
-			ChatMessage chatMsg = (ChatMessage) msg;
-			
-			String receiver = msg.getReceiver();
-			
-			if(!isGroupMessage) {
+						
+			if(msg.isAGroupMessage()) {
 				//Se è un messaggio singolo prendo il socket della persona e lo invio direttamente a lei
-				handleSingleMessageSend(receiver, chatMsg);
+				handleSingleMessageSend(msg.getReceiver(), (ChatMessage) msg);
 			}
 			else {
 				//Devo prendere tutte le persone che sono nel gruppo e inviarlo singolarmente a ognuno di esse
-				ArrayList <String> groupUsers = DatabaseHandler.getInstance().getGroupPartecipants(chatMsg.getGroupId());
-				for(String partecipant : groupUsers) {
-					handleSingleMessageSend(partecipant, chatMsg);
+				ArrayList <String> groupUsers = DatabaseHandler.getInstance().getGroupPartecipants(msg.getGroupId());
+				for(String partecipant : groupUsers) 
+				{
+					//Evito di mandare il messaggio a me stesso
+					if(partecipant.equals(serverUsername) && !msg.getSender().equals("null"))
+						continue;
+					
+					handleSingleMessageSend(partecipant, (ChatMessage) msg);
 				}
 			}
-		} catch (NullPointerException e) {
+		} catch (Exception e) {
+			e.printStackTrace();
 			sendMessage(Protocol.BAD_REQUEST);
 			return;
 		}
@@ -238,6 +290,7 @@ public class ServerListener implements Runnable {
 		
 		if(server.checkIsUserLogged(username)) {
 			sendMessage(Protocol.USER_ALREADY_LOGGED);
+			//TODO Show error
 			System.out.println("Gia loggato");
 			return false;
 		}	
@@ -273,6 +326,34 @@ public class ServerListener implements Runnable {
 		
 		sendMessage(Protocol.REQUEST_SUCCESSFUL);
 		return true;
+	}
+	
+	private void handleGroupCreation() throws ClassNotFoundException, IOException, SQLException {
+		String groupName = (String) inputStream.readObject();
+		String owner = (String) inputStream.readObject();
+		String imageType = (String) inputStream.readObject();
+		
+		byte [] imgProfilo = null;
+		if(imageType.equals(Protocol.IMAGE_NOT_NULL))
+			imgProfilo = inputStream.readAllBytes();
+		
+		String request = (String) inputStream.readObject();
+		Vector <String> partecipants = new Vector <String>();
+		while(!request.equals(Protocol.GROUP_CREATION_DONE)) {
+			partecipants.add((String) inputStream.readObject());
+			request = (String) inputStream.readObject();
+		}
+		
+		InformationMessage msg = new InformationMessage();
+		int groupID = DatabaseHandler.getInstance().createGroup(groupName, owner, imgProfilo);
+		msg.setInformation(Protocol.GROUP_CREATION_DONE);
+		msg.setPacket(new Pair<String, Integer>(groupName, groupID));
+		
+		if(groupID != -1)
+			DatabaseHandler.getInstance().addPartecipantsToGroup(groupID, partecipants);
+		
+		sendMessage(Protocol.GROUP_CREATION_DONE);
+		sendObject(msg);
 	}
 	
 	private void sendMessage(String message) {

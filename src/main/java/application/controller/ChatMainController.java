@@ -7,7 +7,6 @@ import application.net.client.Client;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -29,6 +28,9 @@ public class ChatMainController implements EventHandler <MouseEvent>{
 
     @FXML
     private ScrollPane leftScrollPane;
+    
+    @FXML
+    private HBox topHbox;
 
     @FXML
     private Button newChatButton;
@@ -61,7 +63,8 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     void initialize() {
     	ChatView.getInstance().setChatMainController(this);
     	leftVbox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.2));
-    	buttonBox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.2));
+    	topHbox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
+    	leftScrollPane.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.8));
     	buttonBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
     }
     
@@ -95,7 +98,25 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     	
     	VBox vBox = (VBox) box.getChildren().get(1);
     	Label username = (Label) vBox.getChildren().get(0);
-    	ChatLogic.getInstance().setSingleActiveChat(username.getText());
-    	Client.getInstance().requestOnlineStatus(username.getText());
+    	
+    	Label groupId = (Label) vBox.getChildren().get(2);
+    	//Significa che è una chat di gruppo
+    	if(!groupId.getText().equals("-1"))
+    		ChatLogic.getInstance().setGroupChatActive(Integer.parseInt(groupId.getText()));
+    	else {
+    		ChatLogic.getInstance().setSingleActiveChat(username.getText());
+    		Client.getInstance().requestOnlineStatus(username.getText());
+    	}
+    }
+    
+    @FXML
+    void createGroup(MouseEvent event) {
+    	if(layoutHBox.getChildren().get(1).equals(SceneHandler.getInstance().getCreateGroupPane()))
+    		return;
+    	
+    	layoutHBox.getChildren().remove(1);
+    	layoutHBox.getChildren().add(SceneHandler.getInstance().getCreateGroupPane());
+    	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
+    	ChatLogic.getInstance().showContactForGroupCreation();
     }
 }

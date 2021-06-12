@@ -3,25 +3,26 @@ package application.controller;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.LinkedList;
+import java.util.List;
 
 import application.graphics.SceneHandler;
+import application.misc.FXUtilities;
 import application.net.client.Client;
 import application.net.misc.LongUser;
-import application.net.misc.User;
 import application.net.misc.Utilities;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 
 public class RegisterController {
 
@@ -72,9 +73,7 @@ public class RegisterController {
     	selectedImage = null;
     	Image img = new Image(getClass().getResource("/application/images/defaultSinglePic.jpeg").toExternalForm(), 100, 100, true, true);
     	picChooserCircle.setFill(new ImagePattern(img));
-    	
-    	picChooserCircle.addEventHandler(MouseEvent.MOUSE_CLICKED, new PicChooser(this));
-    	editPicLabel.addEventHandler(MouseEvent.MOUSE_CLICKED, new PicChooser(this));
+    
     	usernameLabel.setText("");
     	passwordLabel.setText("");
     	nameLabel.setVisible(false);
@@ -124,6 +123,22 @@ public class RegisterController {
     	else {
     		Client.getInstance().resetClient();
     	}
+    }
+    
+    @FXML
+    void setPicture(MouseEvent event) {
+		File file = FXUtilities.chooseImage();
+		
+		if(file != null) {
+			try
+			{
+				Image img2 = new Image(new FileInputStream(file.getAbsolutePath()), 100, 100, true, true);
+				picChooserCircle.setFill(new ImagePattern(img2));
+				selectedImage = file;
+			} catch (FileNotFoundException e) {
+				//show error
+			}
+		}
     }
     
     @FXML

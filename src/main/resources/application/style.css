@@ -13,8 +13,40 @@
 	-fx-background-color: #636566;
 }
 
-#hLine {
-	-fx-background-color: #46474A;
+.horizontaLine {
+	-fx-background-color: #9DA7A7;
+}
+
+.groupUserLabel {
+	-fx-background-color: transparent;
+	-fx-text-fill: red;
+}
+
+.genericChatInformation {
+	-fx-background-color: #9DA7A7;
+    -fx-background-radius: 15;
+    -fx-text-fill: white;
+}
+
+#chatScrollPane {
+	-fx-background: #bcd2be;
+	-fx-background-color: #bcd2be;
+}
+
+#messageTextArea {
+    -fx-background-color: transparent;
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-border-width: 1;
+    -fx-border-color: #c6c6c6;
+}
+
+#messageTextArea .viewport{
+    -fx-background-color: transparent;
+}
+
+#messageTextArea .content{
+    -fx-background-color: transparent;
 }
 
 .lastMessageInChat {
@@ -37,6 +69,13 @@
     -fx-font-family: Arial;
 }
 
+.leftMessageVBoxFull {
+	-fx-background-color: #636566;
+   	-fx-background-radius: 15;
+    -fx-text-fill: #eeeeee;
+    -fx-font-family: Arial;
+}
+
 .messageText {
 	-fx-text-fill: white; 
 	-fx-font-size: 1.2em;
@@ -47,30 +86,9 @@
 	-fx-font-size: 0.8em;
 }
 
-#messageTextArea {
-    -fx-background-color: transparent;
-    -fx-background-radius: 15;
-    -fx-border-radius: 15;
-    -fx-border-width: 1;
-    -fx-border-color: #c6c6c6;
-}
-
-#messageTextArea .viewport{
-    -fx-background-color: transparent;
-}
-
-#messageTextArea .content{
-    -fx-background-color: transparent;
-}
-
 /*#chatProfileHBox {
 	-fx-background-color: #636566;
 }*/
-
-#chatScrollPane {
-	-fx-background: #bcd2be;
-	-fx-background-color: #bcd2be;
-}
 
 /*#newGroupButton {
 

@@ -1,25 +1,11 @@
 package application.graphics;
 
-import java.io.ByteArrayInputStream;
-
-import application.controller.ChatPaneController;
-import application.logic.ChatLogic;
-import application.logic.messages.ChatMessage;
-import application.logic.messages.InformationMessage;
-import application.logic.messages.Message;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.NodeOrientation;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 public class SceneHandler {
@@ -31,6 +17,9 @@ public class SceneHandler {
 	private BorderPane contactsPane;
 	private AnchorPane loginPane;
 	private AnchorPane registerPane;
+	private AnchorPane imageViewPane;
+	private StackPane chatPaneStackPane;
+	private AnchorPane createGroupPane;
 	
 	private static SceneHandler instance = null;
 	
@@ -47,6 +36,22 @@ public class SceneHandler {
 		return windowFrame;
 	}
 	
+	public AnchorPane getImageViewPane() {
+		return imageViewPane;
+	}
+	
+	public BorderPane getChatPane() {
+		return chatPane;
+	}		
+	
+	public BorderPane getContactsPane() {
+		return contactsPane;
+	}
+	
+	public AnchorPane getCreateGroupPane() {
+		return createGroupPane;
+	}
+	
 	public void init(Stage primaryStage) throws Exception {
 		windowFrame = primaryStage;
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("/application/fxml/ChatPane.fxml"));
@@ -59,7 +64,10 @@ public class SceneHandler {
 		loginPane = (AnchorPane) loader.load();
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/Registration.fxml"));
 		registerPane = (AnchorPane) loader.load();
-		ChatLogic.getInstance();
+		loader = new FXMLLoader(getClass().getResource("/application/fxml/ImageViewer.fxml"));
+		imageViewPane = (AnchorPane) loader.load();
+		loader = new FXMLLoader(getClass().getResource("/application/fxml/CreateGroup.fxml"));
+		createGroupPane = (AnchorPane) loader.load();
 		
 		scene = new Scene(loginPane, 800, 600);
 		windowFrame.setMinHeight(600);
@@ -79,20 +87,21 @@ public class SceneHandler {
 		scene.setRoot(registerPane);
 	}
 	
-	public void setChatScene() {
-		scene.setRoot(mainChat);
-		windowFrame.hide();
-		windowFrame.setMinHeight(800);
-		windowFrame.setMinWidth(1200);
-		windowFrame.setResizable(true);
-		windowFrame.show();
+	public void setImageScene() {
+		chatPaneStackPane = (StackPane) chatPane.getCenter();
+		chatPane.setCenter(imageViewPane);
 	}
 	
-	public BorderPane getChatPane() {
-		return chatPane;
-	}		
+	public void closeImageScene() {
+		chatPane.setCenter(chatPaneStackPane);
+	}
 	
-	public BorderPane getContactsPane() {
-		return contactsPane;
+	public void setChatScene() {
+		windowFrame.hide();
+		windowFrame.setMinHeight(640);
+		windowFrame.setMinWidth(1080);
+		windowFrame.setResizable(true);
+		scene.setRoot(mainChat);
+		windowFrame.show();
 	}
 }

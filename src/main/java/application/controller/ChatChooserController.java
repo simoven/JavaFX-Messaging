@@ -1,11 +1,7 @@
 package application.controller;
 
-import java.util.ArrayList;
-
-import application.graphics.ChatView;
+import application.graphics.CreateChatView;
 import application.logic.ChatLogic;
-import application.logic.chat.SingleChat;
-import application.logic.contacts.SingleContact;
 import application.net.client.Client;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -17,8 +13,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.ImagePattern;
-import javafx.scene.shape.Circle;
 
 public class ChatChooserController implements EventHandler <MouseEvent> {
 
@@ -36,7 +30,7 @@ public class ChatChooserController implements EventHandler <MouseEvent> {
     
     @FXML
     void initialize() {
-    	ChatView.getInstance().setChatChooserController(this);
+    	CreateChatView.getInstance().setChatChooserController(this);
     }
     
     public ScrollPane getAlluserScrollpane() {

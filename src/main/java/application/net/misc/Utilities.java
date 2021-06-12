@@ -109,4 +109,12 @@ public class Utilities {
 	public static String getTodayDate() {
 		return getDateFromString(getCurrentISODate());
 	}
+	
+	public static boolean checkIfGroupNameValid(String name) {
+		if(name == null || name.isBlank())
+			return false;
+		
+		String regex = "[a-zA-Z0-9\\s]+";
+		return Pattern.matches(regex, name);
+	}
 }

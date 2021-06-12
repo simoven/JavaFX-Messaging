@@ -1,31 +1,30 @@
 package application.controller;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 import application.graphics.ChatView;
 import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
-import application.logic.contacts.SingleContact;
-import application.logic.messages.ChatMessage;
-import application.net.client.Client;
-import application.net.misc.User;
-import application.net.misc.Utilities;
-import javafx.concurrent.WorkerStateEvent;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
+import application.misc.FXUtilities;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 
 public class ChatPaneController {
+
+	@FXML
+    private VBox chatVbox;
 
     @FXML
     private Circle propicCircle;
@@ -34,25 +33,30 @@ public class ChatPaneController {
     private ImageView settingsButton;
 
     @FXML
+    private HBox chatProfileHBox;
+
+    @FXML
+    private TextArea messageTextArea;
+
+    @FXML
+    private Circle attachImageButton;
+
+    @FXML
     private Label usernameLabel;
 
     @FXML
     private Label lastAccessLabel;
 
     @FXML
-    private TextArea messageTextArea;
+    private HBox bottomHBox;
 
     @FXML
     private ScrollPane chatScrollPane;
-    
-    @FXML
-    private VBox chatVbox;
 
     @FXML
-    private Button sendButton;
+    private Circle sendButton;
     
-    @FXML
-    private HBox bottomHBox;
+    private File attachedImage = null;
     
     @FXML
     void initialize() {
@@ -60,9 +64,16 @@ public class ChatPaneController {
     			settingsButton.getFitWidth(), settingsButton.getFitHeight(), true, true);
     	settingsButton.setImage(img);
     	chatVbox.setSpacing(2);
+    	chatVbox.setAlignment(Pos.CENTER);
     	chatVbox.heightProperty().addListener(observable -> chatScrollPane.setVvalue(1D));
-    	chatVbox.prefWidthProperty().bind(chatScrollPane.widthProperty());
+    	chatProfileHBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
+    	chatScrollPane.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
+    	chatVbox.prefWidthProperty().bind(chatScrollPane.prefWidthProperty());
     	bottomHBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
+    	sendButton.radiusProperty().bind(bottomHBox.prefHeightProperty().multiply(0.45));
+    	attachImageButton.radiusProperty().bind(bottomHBox.prefHeightProperty().multiply(0.45));
+    	sendButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/arrow2.png"), 100, 100, true, true)));
+    	attachImageButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/attachIcon.png"), 100, 100, true, true)));
     	ChatView.getInstance().setChatPaneController(this);
     }
     
@@ -77,23 +88,41 @@ public class ChatPaneController {
     public Label getLastAccessLabel() { return lastAccessLabel; }
     
     @FXML
-    void sendMessage(ActionEvent event) {
+    void sendMessage(MouseEvent event) {
     	String text = messageTextArea.getText();
-    	if(text == null || text.equals(""))
+    	if((text == null || text.equals("")) && attachedImage == null)
     		return;
     	
-    	ChatMessage msg = null;
-    	if(ChatLogic.getInstance().getActiveContact() instanceof SingleContact) {
-    		msg = new ChatMessage(ChatLogic.getInstance().getMyUsername(), ChatLogic.getInstance().getActiveContact().getUsername());
-    		msg.setGroupMessage(false);
-    	}
-    	msg.setGroupMessage(false);
-    	msg.setText(messageTextArea.getText());
-    	msg.setSentDate(Utilities.getDateFromString(Utilities.getCurrentISODate()));
-    	msg.setSentHour(Utilities.getHourFromString(Utilities.getCurrentISODate()));
-    	messageTextArea.setText("");
-    	if(Client.getInstance().sendChatMessage(msg)) 
-    		ChatLogic.getInstance().addMessageInChat(msg);
-    }
+    	ChatLogic.getInstance().sendMessage(text, attachedImage);
+    	if(attachedImage != null) 
+    		removeImage();
 
+    	messageTextArea.setText("");
+    }
+    
+    @FXML
+    void attachImage(MouseEvent event) {
+    	if(attachedImage != null) {
+    		removeImage();
+    		return;
+    	}
+    	
+    	File file = FXUtilities.chooseImage();
+		
+		if(file != null) {
+			try
+			{
+				Image img2 = new Image(new FileInputStream(file.getAbsolutePath()), 100, 100, true, true);
+				attachImageButton.setFill(new ImagePattern(img2));
+				attachedImage = file;
+			} catch (FileNotFoundException e) {
+				//TODO show error
+			}
+		}
+    }
+    
+    private void removeImage() {
+    	attachedImage = null;
+		attachImageButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/attachIcon.png"), 100, 100, true, true)));
+    }
 }

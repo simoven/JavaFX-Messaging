@@ -7,10 +7,10 @@ public class Protocol {
 	public static final String REQUEST_SUCCESSFUL = "Ok";
 	
 	public static final String MESSAGE_SEND_REQUEST = "Sending message";
-	public static final String GROUP_MESSAGE_SEND_REQUEST = "Sending group message";
-	//public static final String IMAGE_SEND_REQUEST = "Sending image";
-	//public static final String GROUP_IMAGE_SEND_REQUEST = "Sending group image";
 	public static final String ONLINE_STATUS_REQUEST = "Request the online status of the user";
+	public static final String GROUP_CREATION = "Creating group";
+	public static final String GROUP_PARTECIPANT = "Adding new partecipants";
+	public static final String GROUP_CREATION_DONE = "Done";
 	
 	public static final String SEND_FAILED = "Error while sending the message";
 	public static final String USER_DISCONNECTED = "User is offline";
@@ -22,9 +22,15 @@ public class Protocol {
 	public static final String SERVER_ERROR = "A server error happened";
 	public static final String BAD_REQUEST = "A bad request was generated";
 	public static final String USER_ONLINE = "User is online";
+	public static final String IMAGE_NULL = "Image is null";
+	public static final String IMAGE_NOT_NULL = "Image is not null";
 	
 	public static final String ADDED_NEW_GROUP = "User added to a new Group";
 	public static final String MESSAGES_RETRIEVED = "Messages retrieved from server";
 	public static final String MESSAGES_LIST = "Lista messaggi";
 	public static final String CONTACTS_SEARCH = "Searching contacts";
+	
+	public static final String CONTACT_INFORMATION_REQUEST = "Requesting info";
+	public static final String GROUP_INFORMATION_REQUEST = "Request group info";
+	public static final String GROUP_PARTECIPANT_REQUEST = "Request group partecipants";
 }

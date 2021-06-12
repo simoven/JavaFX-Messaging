@@ -11,9 +11,9 @@
    <children>
       <HBox fx:id="layoutHBox" layoutX="244.0" layoutY="269.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <VBox fx:id="leftVbox" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefWidth="250.0">
+            <VBox fx:id="leftVbox" minHeight="-Infinity" minWidth="-Infinity">
                <children>
-                  <HBox prefHeight="63.0" prefWidth="199.0">
+                  <HBox fx:id="topHbox" prefHeight="63.0" prefWidth="199.0">
                      <children>
                         <TextField fx:id="searchField" maxWidth="1.7976931348623157E308" promptText="Cerca.." HBox.hgrow="ALWAYS">
                            <HBox.margin>
@@ -27,14 +27,15 @@
                         </Circle>
                      </children>
                   </HBox>
-                  <Pane fx:id="hLine" prefHeight="2.0" prefWidth="200.0" />
-                  <ScrollPane fx:id="leftScrollPane" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                  <Pane fx:id="hLine" prefHeight="2.0" prefWidth="200.0" style="-fx-background-color: #46474A;" />
+                  <ScrollPane fx:id="leftScrollPane" fitToHeight="true" hbarPolicy="NEVER" pannable="true" vbarPolicy="NEVER" VBox.vgrow="ALWAYS">
                      <content>
                         <VBox fx:id="allChatVbox" />
-                     </content></ScrollPane>
+                     </content>
+                  </ScrollPane>
                   <HBox fx:id="buttonBox">
                      <children>
-                        <Button fx:id="newGroupButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" prefHeight="40.0" text="Nuovo Gruppo" HBox.hgrow="ALWAYS">
+                        <Button fx:id="newGroupButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" onMouseClicked="#createGroup" prefHeight="40.0" text="Nuovo Gruppo" HBox.hgrow="ALWAYS">
                            <HBox.margin>
                               <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
                            </HBox.margin></Button>
@@ -46,7 +47,7 @@
                   </HBox>
                </children>
             </VBox>
-            <BorderPane fx:id="rightPane" prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+            <BorderPane fx:id="rightPane" HBox.hgrow="ALWAYS" />
          </children>
       </HBox>
    </children>

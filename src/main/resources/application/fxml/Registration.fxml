@@ -28,12 +28,12 @@
                         <Insets bottom="20.0" left="50.0" top="5.0" />
                      </VBox.margin>
                   </Label>
-                  <Circle fx:id="picChooserCircle" fill="DODGERBLUE" radius="30.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                  <Circle fx:id="picChooserCircle" fill="DODGERBLUE" onMouseClicked="#setPicture" radius="30.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
                      <VBox.margin>
                         <Insets bottom="5.0" left="240.0" />
                      </VBox.margin>
                   </Circle>
-                  <Label fx:id="editPicLabel" text="Modifica">
+                  <Label fx:id="editPicLabel" onMouseClicked="#setPicture" text="Modifica">
                      <VBox.margin>
                         <Insets bottom="15.0" left="242.0" />
                      </VBox.margin>

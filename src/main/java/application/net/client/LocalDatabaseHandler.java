@@ -16,8 +16,6 @@ import application.logic.contacts.GroupContact;
 import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
 import application.logic.messages.Message;
-import application.net.misc.LongUser;
-import application.net.misc.User;
 import application.net.misc.Utilities;
 
 //Il database locale è quasi identico a quello sul server 
@@ -26,6 +24,8 @@ import application.net.misc.Utilities;
 		se esiste inizio a recuperare i contatti
 		poi recupero i messaggi con chat singole
 		e poi recupero le informazioni e i massi dei gruppi
+		
+ Il client aggiunge i messaggi al db locale subito dopo averli ricevuti
 */
 public class LocalDatabaseHandler {
 
@@ -90,22 +90,56 @@ public class LocalDatabaseHandler {
 	}
 	
 	public void addMessage(ChatMessage msg) throws SQLException {
-		String dateTime = Utilities.getCurrentISODate();
 		String query;
 		if(msg.isAGroupMessage())
-			query = "INSERT INTO MessaggioDiGruppo Values(null, ?, ?, ?, ?, ?, ?);";
+			query = "INSERT INTO MessaggioDiGruppo Values(null, ?, ?, ?, ?, ?);";
 		else 
 			query = "INSERT INTO Messaggi Values(null, ?, ?, ?, ?, ?);";
 		PreparedStatement stmt = dbConnection.prepareStatement(query);
 		stmt.setString(1, msg.getSender());
-		stmt.setString(2, msg.getReceiver());
-		stmt.setString(3, msg.getText());
-		stmt.setBytes(4, msg.getImage());
-		stmt.setString(5, dateTime);
-		if(msg.isAGroupMessage())
+		if(msg.isAGroupMessage()) {
+			stmt.setString(2, msg.getText());
+			stmt.setBytes(3, msg.getImage());
+			stmt.setString(4, msg.getTimestamp());
 			stmt.setInt(5, msg.getGroupId());
+		}
+		else {
+			stmt.setString(2, msg.getReceiver());
+			stmt.setString(3, msg.getText());
+			stmt.setBytes(4, msg.getImage());
+			stmt.setString(5, msg.getTimestamp());
+		}
 		stmt.executeUpdate();
 		stmt.close();
+	}
+	
+	public boolean createGroup(GroupContact gpContact) throws SQLException {
+		String query = "INSERT INTO Gruppo VALUES (?, ?, ?, ?);";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setInt(1, gpContact.getGroupId());
+		stm.setString(2, gpContact.getUsername());
+		stm.setBytes(3, gpContact.getProfilePic());
+		stm.setString(4, gpContact.getOwner());
+		
+		if(stm.executeUpdate() == 0)
+			return false;
+		
+		stm.close();
+		
+		return true;
+	}
+
+	public void addPartecipantsToGroup(int groupID, Vector<String> partecipants) throws SQLException {
+		String query = "INSERT INTO UtenteInGruppo VALUES (?,?, null);";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		
+		for(String user : partecipants) {
+			stm.setString(1, user);
+			stm.setInt(2, groupID);
+			stm.executeUpdate();
+		}
+		
+		stm.close();
 	}
 	
 	private Vector <Message> retrieveMessageFromChat(String dest) throws SQLException {
@@ -120,9 +154,7 @@ public class LocalDatabaseHandler {
 			ChatMessage msg = new ChatMessage(rs.getString("Sender"), rs.getString("Receiver"));
 			msg.setText(rs.getString("Message_text"));
 			msg.setImage(rs.getBytes("Image"));
-			msg.setSentDate(Utilities.getDateFromString(rs.getString("Date")));
-			msg.setSentHour(Utilities.getHourFromString(rs.getString("Date")));
-			
+			msg.setTimestamp(rs.getString("Date"));
 			msgList.add(msg);
 		}
 		
@@ -155,19 +187,18 @@ public class LocalDatabaseHandler {
 	
 	private Vector <Message> retrieveMessageFromGroupChat(int groupId) throws SQLException {
 		Vector <Message> msgList = new Vector <Message>();
-		String query = "SELECT * FROM MessaggioDiGruppo;";
+		String query = "SELECT * FROM MessaggioDiGruppo WHERE Group_id=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setInt(1, groupId);
 		ResultSet rs = stm.executeQuery();
 		
 		while(rs.next()) {
-			ChatMessage msg = new ChatMessage(rs.getString("Sender"), rs.getString("Receiver"));
-			msg.setText(rs.getString("Message_text"));
+			ChatMessage msg = new ChatMessage(rs.getString("Sender"), "");
+			msg.setText(rs.getString("MessageText"));
 			msg.setImage(rs.getBytes("Image"));
 			msg.setGroupMessage(true);
 			msg.setGroupId(rs.getInt("Group_id"));
-			msg.setSentDate(Utilities.getDateFromString(rs.getString("Date")));
-			msg.setSentHour(Utilities.getHourFromString(rs.getString("Date")));
-			
+			msg.setTimestamp(rs.getString("Date"));
 			msgList.add(msg);
 		}
 		
@@ -191,33 +222,29 @@ public class LocalDatabaseHandler {
 		return tmp;
 	}
 	
-	public Vector <Chat> retriveGroupChat(Vector <Contact> contactList) throws SQLException {
+	public Vector <Chat> retriveGroupChat(Vector <Contact> myContactList) throws SQLException {
 		Vector <Chat> groupChatArr = new Vector <Chat>();
 		//Per ogni contatto gruppo salvato, recupero la lista dei membri e dei messaggi e la associo ai miei contatti
-		for(Contact contact : contactList) {
+		for(Contact contact : myContactList) {
 			if(!(contact instanceof GroupContact))
 				continue;
 			
 			GroupContact gpContact = (GroupContact) contact;
 			GroupChat chat = new GroupChat(gpContact);
 			chat.setUnreadedMessage(false);
-			Vector <SingleContact> listContatti = new Vector <SingleContact>();
-			Vector <String> listUser = retriveGroupPartecipants(gpContact.getGroupId());
+			Vector <SingleContact> groupContactList = new Vector <SingleContact>();
+			Vector <String> groupUsername = retriveGroupPartecipants(gpContact.getGroupId());
 			//Per ogni stringa username, cerco il contatto a cui è associato
-			for(String user : listUser) {
-				for(Contact c : contactList) {
+			for(String user : groupUsername) {
+				for(Contact c : myContactList) {
 					if(c instanceof SingleContact && c.getUsername().equals(user)) {
-						listContatti.add((SingleContact) c);
-						//Se in un gruppo è presente un contatto che non c'è nella mia lista, lo aggiungo
-						if(contactList.indexOf(c) == -1)
-							contactList.add((SingleContact) c);
-		
+						groupContactList.add((SingleContact) c);
 						break;
 					}
 				}
 			}
 			
-			chat.setListUtenti(listContatti);
+			chat.setListUtenti(groupContactList);
 			chat.setListMessaggi(retrieveMessageFromGroupChat(gpContact.getGroupId()));
 			groupChatArr.add(chat);
 		}
@@ -271,9 +298,10 @@ public class LocalDatabaseHandler {
 	
 	private void createGruppo() throws SQLException {
 		String query = "CREATE TABLE IF NOT EXISTS \"Gruppo\" (\n"
-				+ "	\"Id_gruppo\"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n"
+				+ "	\"Id_gruppo\"	INTEGER NOT NULL PRIMARY KEY,\n"
 				+ "	\"Nome\"	TEXT NOT NULL,\n"
-				+ "	\"ProPic\"	BLOB\n"
+				+ "	\"ProPic\"	BLOB,\n"
+				+ "	\"Owner\"	TEXT NOT NULL\n"
 				+ ")";
 		Statement stm = dbConnection.createStatement();
 		stm.executeUpdate(query);

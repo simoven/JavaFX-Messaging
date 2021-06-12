@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Vector;
 
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
@@ -100,7 +101,6 @@ public class DatabaseHandler {
 	}
 	
 	public synchronized void addPendingMessage(ChatMessage msg, String receiver) throws SQLException {
-		String dateTime = Utilities.getCurrentISODate();
 		String query;
 		if(msg.isAGroupMessage())
 			query = "INSERT INTO MessaggioDiGruppo Values(null, ?, ?, ?, ?, ?, ?);";
@@ -111,11 +111,11 @@ public class DatabaseHandler {
 		stmt.setString(2, receiver);
 		stmt.setString(3, msg.getText());
 		stmt.setBytes(4, msg.getImage());
-		stmt.setString(5, dateTime);
+		stmt.setString(5, msg.getTimestamp());
 		//Nel caso del messaggio di gruppo il receiver è un intero : l'id del gruppo
 		//uso la string receiver in modo da capire qual è l'username della persona che non ha ricevuto il messaggio
 		if(msg.isAGroupMessage())
-			stmt.setInt(5, Integer.parseInt(msg.getReceiver()));
+			stmt.setInt(6, msg.getGroupId());
 		stmt.executeUpdate();
 		stmt.close();
 	}
@@ -170,8 +170,7 @@ public class DatabaseHandler {
 			msg.setText(rs.getString("Message_text"));
 			msg.setImage(rs.getBytes("Image"));
 			msg.setGroupMessage(false);
-			msg.setSentDate(Utilities.getDateFromString(rs.getString("Date")));
-			msg.setSentHour(Utilities.getHourFromString(rs.getString("Date")));
+			msg.setTimestamp(rs.getString("Date"));
 			lista.add(msg);
 		}
 		
@@ -190,8 +189,7 @@ public class DatabaseHandler {
 			msg.setImage(rs.getBytes("Image"));
 			msg.setGroupMessage(true);
 			msg.setGroupId(rs.getInt("Group_id"));
-			msg.setSentDate(Utilities.getDateFromString(rs.getString("Date")));
-			msg.setSentHour(Utilities.getHourFromString(rs.getString("Date")));
+			msg.setTimestamp(rs.getString("Date"));
 			lista.add(msg);
 		}
 		
@@ -233,5 +231,77 @@ public class DatabaseHandler {
 		stm.close();
 		
 		return lista;
+	}
+
+	public int createGroup(String groupName, String owner, byte[] imgProfilo) throws SQLException {
+		String query = "INSERT INTO Gruppo VALUES (null, ?, ?, ?);";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setString(1, groupName);
+		stm.setBytes(2, imgProfilo);
+		stm.setString(3, owner);
+		
+		if(stm.executeUpdate() == 0)
+			return -1;
+		
+		stm.close();
+		
+		query = "SELECT * FROM Gruppo WHERE Id_gruppo IN (SELECT max(Id_gruppo) FROM Gruppo);";
+		stm = dbConnection.prepareStatement(query);
+		ResultSet rs = stm.executeQuery();
+		int group_id = -1;
+		if(rs.next()) {
+			group_id = rs.getInt("Id_gruppo");
+		}
+		
+		rs.close();
+		stm.close();
+		
+		return group_id;
+	}
+
+	public void addPartecipantsToGroup(int groupID, Vector<String> partecipants) throws SQLException {
+		String query = "INSERT INTO UtenteInGruppo VALUES (?,?, null);";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		
+		for(String user : partecipants) {
+			stm.setString(1, user);
+			stm.setInt(2, groupID);
+			stm.executeUpdate();
+		}
+	}
+
+	public User getUserInfo(String userToCheck) throws SQLException {
+		User user = null;
+		String query = "SELECT * FROM Utente WHERE Username=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setString(1, userToCheck);
+		ResultSet rs = stm.executeQuery();
+		if(rs.next()) {
+			user = new User(rs.getString("Username"));
+			user.setPropicFile(rs.getBytes("Img_profilo"));
+			user.setStatus(rs.getString("Status"));
+		}
+		
+		rs.close();
+		stm.close();
+		return user;
+	}
+
+	public User getGroupInfo(int groupId) throws SQLException {
+		User user = null;
+		String query = "SELECT * FROM Gruppo WHERE Id_gruppo=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setInt(1, groupId);
+		ResultSet rs = stm.executeQuery();
+		if(rs.next()) {
+			user = new User(rs.getString("Nome"));
+			user.setPropicFile(rs.getBytes("Propic"));
+			user.setGpOwner(rs.getString("Owner"));
+		}
+		
+		stm.close();
+		rs.close();
+		
+		return user;
 	}
 } 

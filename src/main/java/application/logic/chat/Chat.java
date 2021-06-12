@@ -35,6 +35,9 @@ public class Chat implements Comparable <Chat>{
 	}
 	
 	public String getLastMessage() {
+		if(listMessaggi.isEmpty())
+			return "";
+		
 		if(listMessaggi.lastElement() instanceof ChatMessage) {
 			ChatMessage msg = (ChatMessage) listMessaggi.lastElement();
 			

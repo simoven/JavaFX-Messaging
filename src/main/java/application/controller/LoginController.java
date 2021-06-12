@@ -1,13 +1,10 @@
 package application.controller;
 
-import application.graphics.ChatView;
 import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
-import application.logic.contacts.Contact;
 import application.logic.contacts.SingleContact;
 import application.net.client.Client;
 import application.net.misc.LongUser;
-import application.net.misc.User;
 import application.net.misc.Utilities;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -64,15 +61,19 @@ public class LoginController {
     		return;
     	
     	LongUser user = Client.getInstance().requestLogin(usernameField.getText(), passwordField.getText());
+    	//LongUser user = Client.getInstance().requestLogin("simoven", "Rn31tnj6@");
     	
     	if(user == null) {
-    	//	SceneHandler.showError("La combinazione username/password è sbagliata");
+    	    //SceneHandler.showError("La combinazione username/password è sbagliata");
     		Client.getInstance().resetClient();
     		return;
     	}
     	
-    	ChatLogic.getInstance().setMyInformation(user);
     	SceneHandler.getInstance().setChatScene();
+    	SingleContact myContact = new SingleContact(user.getUsername());
+    	myContact.setProfilePic(user.getProPic());
+    	myContact.setStatus(user.getStatus());
+    	ChatLogic.getInstance().setMyInformation(myContact);
     	
     	Client.getInstance().setOnFailed(new ClientFailedController());
     	Client.getInstance().setOnSucceeded(new ClientSucceedController());
