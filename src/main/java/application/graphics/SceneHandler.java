@@ -5,6 +5,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -20,6 +22,7 @@ public class SceneHandler {
 	private AnchorPane imageViewPane;
 	private StackPane chatPaneStackPane;
 	private AnchorPane createGroupPane;
+	private ScrollPane chatPaneScrollPane;
 	
 	private static SceneHandler instance = null;
 	
@@ -30,6 +33,18 @@ public class SceneHandler {
 			instance = new SceneHandler();
 		
 		return instance;
+	}
+	
+	public void setChatPaneScrollPane(ScrollPane chatPaneScrollPane) {
+		this.chatPaneScrollPane = chatPaneScrollPane;
+	}
+	
+	public ScrollPane getChatPaneScrollPane() {
+		return chatPaneScrollPane;
+	}
+	
+	public void setChatPaneStackPane(StackPane chatPaneStackPane) {
+		this.chatPaneStackPane = chatPaneStackPane;
 	}
 	
 	public Stage getWindowFrame() {
@@ -88,12 +103,17 @@ public class SceneHandler {
 	}
 	
 	public void setImageScene() {
-		chatPaneStackPane = (StackPane) chatPane.getCenter();
-		chatPane.setCenter(imageViewPane);
+		chatPaneStackPane.getChildren().add(imageViewPane);
 	}
 	
 	public void closeImageScene() {
-		chatPane.setCenter(chatPaneStackPane);
+		chatPaneStackPane.getChildren().remove(chatPaneStackPane.getChildren().size() - 1);
+	}
+	
+	//Questo metodo controlla se il pannello per la visualizzazione dell'imagine è rimasto aperto e, in caso, lo chiude
+	public void checkImageSceneActive() {
+		if(chatPaneStackPane.getChildren().get(chatPaneStackPane.getChildren().size() - 1) instanceof AnchorPane)
+			closeImageScene();
 	}
 	
 	public void setChatScene() {
@@ -103,5 +123,16 @@ public class SceneHandler {
 		windowFrame.setResizable(true);
 		scene.setRoot(mainChat);
 		windowFrame.show();
+	}
+
+	public void showGroupCreationPane() {
+		HBox layoutHBox = (HBox) mainChat.getChildren().get(0);
+		if(layoutHBox.getChildren().get(1).equals(SceneHandler.getInstance().getCreateGroupPane()))
+    		return;
+    	
+    	layoutHBox.getChildren().remove(1);
+    	layoutHBox.getChildren().add(SceneHandler.getInstance().getCreateGroupPane());
+    	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
+		
 	}
 }

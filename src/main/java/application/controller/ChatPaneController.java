@@ -17,6 +17,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -49,6 +50,9 @@ public class ChatPaneController {
 
     @FXML
     private HBox bottomHBox;
+    
+    @FXML
+    private StackPane chatStackPane;
 
     @FXML
     private ScrollPane chatScrollPane;
@@ -63,7 +67,6 @@ public class ChatPaneController {
     	Image img = new Image(getClass().getResource("/application/images/3dot_2.png").toExternalForm(), 
     			settingsButton.getFitWidth(), settingsButton.getFitHeight(), true, true);
     	settingsButton.setImage(img);
-    	chatVbox.setSpacing(2);
     	chatVbox.setAlignment(Pos.CENTER);
     	chatVbox.heightProperty().addListener(observable -> chatScrollPane.setVvalue(1D));
     	chatProfileHBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
@@ -74,6 +77,8 @@ public class ChatPaneController {
     	attachImageButton.radiusProperty().bind(bottomHBox.prefHeightProperty().multiply(0.45));
     	sendButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/arrow2.png"), 100, 100, true, true)));
     	attachImageButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/attachIcon.png"), 100, 100, true, true)));
+    	SceneHandler.getInstance().setChatPaneStackPane(chatStackPane);
+    	SceneHandler.getInstance().setChatPaneScrollPane(chatScrollPane);
     	ChatView.getInstance().setChatPaneController(this);
     }
     

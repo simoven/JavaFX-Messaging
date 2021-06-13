@@ -64,7 +64,7 @@
       </HBox>
    </top>
    <center>
-      <StackPane fx:id="chatStackPane" prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <StackPane fx:id="chatStackPane" BorderPane.alignment="CENTER">
          <children>
             <ScrollPane fx:id="chatScrollPane" hbarPolicy="NEVER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" vbarPolicy="NEVER">
                <content>

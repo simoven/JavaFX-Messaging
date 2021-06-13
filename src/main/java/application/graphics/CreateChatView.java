@@ -46,7 +46,7 @@ public class CreateChatView {
 	public CreateGroupController getCreateGroupController() {
 		return createGroupController; }
 	
-	//Questo metodo aggiunge i miei contatti nel pannello di selezione di una nuova chat
+	//Questo metodo aggiunge i miei contatti nel pannello di selezione di una nuova chat oppure per la creazione di un gruppo
 	public void appendContactInChoiceScreen(SingleContact contact, boolean isGlobalContact, boolean isForGroupCreation) {
 		HBox container = new HBox();
 		container.prefWidthProperty().bind(chatChooserController.getAlluserScrollpane().widthProperty());
@@ -64,16 +64,19 @@ public class CreateChatView {
 		
 		VBox textContainer = new VBox();
 		Label username = new Label(contact.getUsername());
+		username.getStyleClass().add("contactUsernameLabel");
 		textContainer.getChildren().add(username);
 		VBox.setMargin(username, new Insets(10, 10, 5, 0));
 		if(contact.getStatus() != null) {
 			Label status = new Label(contact.getStatus());
+			status.getStyleClass().add("contactStatusLabel");
 			textContainer.getChildren().add(status);
 			VBox.setMargin(status, new Insets(0, 10, 5, 0));
 		}
 		
 		container.getChildren().add(textContainer);
 		
+		//Se è per la creazione di un gruppo, aggiungo la checkbox
 		if(isForGroupCreation) {
 			Pane spacer = new Pane();
 			CheckBox checkBox = new CheckBox();
@@ -83,6 +86,7 @@ public class CreateChatView {
 			HBox.setMargin(checkBox, new Insets(20, 20, 20, 10));
 		}
 		
+		//Se invece è un contatto uscito da una ricerca globale, aggiungo una icona del mondo
 		if(isGlobalContact && !isForGroupCreation) {
 			Image world = new Image(getClass().getResourceAsStream("/application/images/world.png"), 200, 200, true, true);
 			ImageView view = new ImageView(world);

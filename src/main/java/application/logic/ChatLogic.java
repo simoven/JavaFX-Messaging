@@ -147,6 +147,7 @@ public class ChatLogic {
 			}
 		}
 		
+		Client.getInstance().requestOnlineStatus(username);
 		displayCurrentChat();
 	}
 	
@@ -326,7 +327,7 @@ public class ChatLogic {
 			
 			chat.addNewMessage(msg);
 		
-			if(activeChat == chat) {
+			if(activeChat == chat) {		
 				ChatView.getInstance().appendGroupMessageInChat(msg, false, ((GroupChat) chat).getUserOfLastMessage());
 				((GroupChat) chat).setUserOfLastMessage(msg.getSender());
 			}
@@ -395,7 +396,15 @@ public class ChatLogic {
 
 	//Questo metodo aggiorna il groupId del gruppo che ho creato, dopo la risposta del server
 	public void updateGroup(String name, Integer groupID) {
-		GroupContact gpContact = searchContact(groupID);
+		GroupContact gpContact = null;
+		for(int i = 0; i < contactList.size(); ++i) {
+			if(contactList.get(i) instanceof GroupContact && contactList.get(i).getUsername().equals(name)) {
+				if(((GroupContact) contactList.get(i)).getGroupId() == -1) {
+					gpContact = (GroupContact) contactList.get(i);
+					break;
+				}
+			}
+		}
 		
 		if(groupID == -1) {
 			//Significa che c'è stato un errore nella creazione del gruppo e lo devo rimuovere

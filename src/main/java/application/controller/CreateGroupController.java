@@ -2,7 +2,6 @@ package application.controller;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 import application.graphics.CreateChatView;
@@ -10,7 +9,6 @@ import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
 import application.misc.FXUtilities;
 import application.net.misc.Utilities;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -30,7 +28,7 @@ public class CreateGroupController {
 	private AnchorPane root;
 	
     @FXML
-    private HBox topHBox;
+    private HBox topHbox;
     
     @FXML
     private TextField groupNameLabel;
@@ -45,10 +43,14 @@ public class CreateGroupController {
     private Circle createGroupButton;
 
     @FXML
-    private ScrollPane partecipantScrollPane;
+    private ScrollPane alluserScrollpane;
     
     @FXML
     private Label invalidNameLabel;
+    
+    private Image buttonDefault;
+    
+    private Image buttonPressed;
     
     private File selectedImage;
     
@@ -56,13 +58,17 @@ public class CreateGroupController {
 
     @FXML
     void initialize() {
-    	createGroupButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/approveTicker.png"), 100, 100, true, true)));
+    	buttonDefault = new Image(getClass().getResourceAsStream("/application/images/approveTicker.png"), 100, 100, true, true);
+    	buttonPressed = new Image(getClass().getResourceAsStream("/application/images/approveTickerPressed.png"), 100, 100, true, true);
+    	createGroupButton.setFill(new ImagePattern(buttonDefault));
+    	
     	root.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
-    	//topHBox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
-    	partecipantScrollPane.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
+    	alluserScrollpane.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
     	partecipantsVBox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
     	invalidNameLabel.setVisible(false);
     	groupProfilePic.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/defaultGroup.png"), 100, 100, true, true)));
+    	partecipantsVBox.getStyleClass().add("transparent");
+    	groupNameLabel.getStyleClass().add("searchTextField");
     	CreateChatView.getInstance().setCreateGroupController(this);
     }
     
@@ -111,9 +117,18 @@ public class CreateGroupController {
     		i = i + 2;
     	}
     	
-    	if(selectedContactsName.size() > 0) {
+    	if(selectedContactsName.size() > 0)
     		ChatLogic.getInstance().createGroup(name, selectedImage, selectedContactsName);
-    	}
+    }
+    
+    @FXML
+    void buttonPressed(MouseEvent event) {
+    	createGroupButton.setFill(new ImagePattern(buttonPressed));
+    }
+
+    @FXML
+    void buttonReleased(MouseEvent event) {
+    	createGroupButton.setFill(new ImagePattern(buttonDefault));
     }
 
 }

@@ -6,27 +6,39 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="496.0" prefWidth="814.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.controller.ChatChooserController">
-   <top>
-      <HBox prefHeight="64.0" prefWidth="777.0" BorderPane.alignment="CENTER">
-         <children>
-            <TextField fx:id="searchUserField" prefHeight="25.0" prefWidth="266.0" promptText="Cerca utente..">
-               <HBox.margin>
-                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-               </HBox.margin>
-            </TextField>
-            <Button fx:id="searchUserButton" mnemonicParsing="false" onAction="#searchUser" text="Go">
-               <HBox.margin>
-                  <Insets bottom="10.0" left="10.0" top="10.0" />
-               </HBox.margin>
-            </Button>
-         </children>
-      </HBox>
-   </top>
    <center>
-      <ScrollPane fx:id="alluserScrollpane" hbarPolicy="NEVER" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
+      <ScrollPane fx:id="alluserScrollpane" hbarPolicy="NEVER" style="-fx-background: #E6E9EF;" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
          <content>
-            <VBox fx:id="allUsersVbox" />
+            <VBox fx:id="allUsersVbox" style="-fx-background-color: transparent;" />
          </content>
       </ScrollPane>
    </center>
+   <top>
+      <VBox fx:id="topVbox" prefWidth="814.0" BorderPane.alignment="CENTER">
+         <children>
+            <HBox fx:id="topHbox" prefWidth="777.0">
+               <children>
+                  <Pane prefWidth="2.0" style="-fx-background-color: #46474A;" />
+                  <TextField fx:id="searchField" prefWidth="266.0" promptText="Cerca utente..">
+                     <HBox.margin>
+                        <Insets bottom="14.0" left="10.0" right="10.0" top="20.0" />
+                     </HBox.margin>
+                  </TextField>
+                  <Button fx:id="searchUserButton" mnemonicParsing="false" onAction="#searchUser" text="Cerca">
+                     <HBox.margin>
+                        <Insets bottom="14.0" left="10.0" top="20.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Pane prefHeight="1.0" HBox.hgrow="ALWAYS" />
+                  <Button fx:id="newGroupButton" mnemonicParsing="false" onMouseClicked="#createGroup" text="Nuovo Gruppo">
+                     <HBox.margin>
+                        <Insets right="10.0" top="20.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+            </HBox>
+            <Pane prefHeight="2.0" prefWidth="4000.0" style="-fx-background-color: #46474A;" />
+         </children>
+      </VBox>
+   </top>
 </BorderPane>

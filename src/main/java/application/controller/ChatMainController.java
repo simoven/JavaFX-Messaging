@@ -11,11 +11,13 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 
 public class ChatMainController implements EventHandler <MouseEvent>{
@@ -33,7 +35,7 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     private HBox topHbox;
 
     @FXML
-    private Button newChatButton;
+    private Circle newChatButton;
     
     @FXML
     private VBox leftVbox;
@@ -43,15 +45,16 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     
     @FXML
     private HBox layoutHBox;
-
-    @FXML
-    private Button newGroupButton;
     
     @FXML
     private HBox buttonBox;
 
     @FXML
     private Circle myPropicCircle;
+    
+    private Image buttonDefault;
+    
+    private Image buttonPressed;
     
     public VBox getLeftVbox() { return leftVbox; }
     
@@ -65,7 +68,12 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     	leftVbox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.2));
     	topHbox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
     	leftScrollPane.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.8));
-    	buttonBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
+    	buttonBox.maxHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
+    	buttonBox.getStyleClass().add("transparent");
+    	searchField.getStyleClass().add("searchTextField");
+    	buttonDefault = new Image(getClass().getResourceAsStream("/application/images/chatIconDefault.png"), 100, 100, true, true);
+    	buttonPressed = new Image(getClass().getResourceAsStream("/application/images/chatIconPressed.png"), 100, 100, true, true);
+    	newChatButton.setFill(new ImagePattern(buttonDefault));
     }
     
     public void setChatPane() {	
@@ -75,7 +83,17 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     }
     
     @FXML
-    void newChat(ActionEvent event) {
+    void buttonReleased(MouseEvent event) {
+    	newChatButton.setFill(new ImagePattern(buttonDefault));
+    }
+    
+    @FXML
+    void buttonClicked(MouseEvent event) {
+    	newChatButton.setFill(new ImagePattern(buttonPressed));
+    }
+    
+    @FXML
+    void newChat(MouseEvent event) {
     	//Significa che il pannello è già attivo
     	if(layoutHBox.getChildren().get(1).equals(SceneHandler.getInstance().getContactsPane()))
     		return;
@@ -88,6 +106,7 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     
     @Override
     public void handle(MouseEvent event) {
+    	SceneHandler.getInstance().checkImageSceneActive();
     	//Questo metodo gestisce il click su una chat
     	HBox box = (HBox) event.getSource();
     	//Se c'è il pallino di notifica, lo tolgo
@@ -103,20 +122,7 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     	//Significa che è una chat di gruppo
     	if(!groupId.getText().equals("-1"))
     		ChatLogic.getInstance().setGroupChatActive(Integer.parseInt(groupId.getText()));
-    	else {
+    	else 
     		ChatLogic.getInstance().setSingleActiveChat(username.getText());
-    		Client.getInstance().requestOnlineStatus(username.getText());
-    	}
-    }
-    
-    @FXML
-    void createGroup(MouseEvent event) {
-    	if(layoutHBox.getChildren().get(1).equals(SceneHandler.getInstance().getCreateGroupPane()))
-    		return;
-    	
-    	layoutHBox.getChildren().remove(1);
-    	layoutHBox.getChildren().add(SceneHandler.getInstance().getCreateGroupPane());
-    	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
-    	ChatLogic.getInstance().showContactForGroupCreation();
     }
 }

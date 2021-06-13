@@ -196,7 +196,7 @@ public class DatabaseHandler {
 		rs.close();
 		stm.close();
 		
-		/*query = "DELETE FROM Messaggi WHERE Receiver=?;";
+		query = "DELETE FROM Messaggi WHERE Receiver=?;";
 		stm = dbConnection.prepareStatement(query);
 		stm.setString(1, username);
 		stm.executeUpdate();
@@ -208,7 +208,7 @@ public class DatabaseHandler {
 		stm.setString(1, username);
 		stm.executeUpdate();
 		
-		stm.close();*/
+		stm.close();
 		
 		return lista;
 	}

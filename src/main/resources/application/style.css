@@ -2,7 +2,16 @@
 	-fx-background-color: #636566;
 }
 
-#searchField {
+#topHbox {
+	-fx-background-color: #636566;
+}
+
+/*è l'hbox che contiene il label "aggiungi partecipanti" */
+#labelHbox {
+	-fx-background-color: #636566;
+}
+
+.searchTextField {
 	-fx-background-color: #46474A;
 	-fx-background-radius: 100px;
 	-fx-text-fill: white;
@@ -11,6 +20,33 @@
 #leftScrollPane {
 	-fx-background: #636566;
 	-fx-background-color: #636566;
+}
+
+/* è il bottone chiudi per le immagini*/
+#closeButton {
+	-fx-background-color: #46474A;
+	-fx-background-radius: 15;
+	-fx-text-fill: white;
+}
+
+/* è lo scrollpane dove escono i contatti*/
+#alluserScrollpane {
+	-fx-background: #E6E9EF;
+}
+
+/* è il bottone di ricerca contatti */
+#searchUserButton {
+	-fx-background-radius: 15;
+	-fx-text-fill: white;
+	-fx-background-color: #7289da;
+}
+
+#searchUserButton: hover {
+	-fx-background-color: #6477C1;
+}
+
+#searchUserButton: pressed {
+	-fx-background-color: #5A6BAF;
 }
 
 .horizontaLine {
@@ -55,7 +91,7 @@
 
 .rightMessageVBox {
 	-fx-background-color: #128c7e;
-   	-fx-background-radius: 15 15 15 0;
+   	-fx-background-radius: 10 10 10 0;
     -fx-text-fill: #eeeeee;
     -fx-font-family: Arial;
 }
@@ -64,14 +100,14 @@
 
 .leftMessageVBox {
 	-fx-background-color: #636566;
-   	-fx-background-radius: 15 15 15 0;
+   	-fx-background-radius: 10 10 10 0;
     -fx-text-fill: #eeeeee;
     -fx-font-family: Arial;
 }
 
 .leftMessageVBoxFull {
 	-fx-background-color: #636566;
-   	-fx-background-radius: 15;
+   	-fx-background-radius: 10;
     -fx-text-fill: #eeeeee;
     -fx-font-family: Arial;
 }
@@ -86,22 +122,52 @@
 	-fx-font-size: 0.8em;
 }
 
-/*#chatProfileHBox {
-	-fx-background-color: #636566;
-}*/
-
-/*#newGroupButton {
-
+.contactUsernameLabel {
+	-fx-text-fill: black;
+	-fx-font-size: 1.2em;
 }
 
-#newChatButton {
-
+.contactStatusLabel {
+	-fx-text-fill: grey;
+	-fx-font-size: 0.9em;
 }
 
-.newMessageRight {
-
+.transparent {
+	-fx-background-color: transparent;
 }
 
-.newMessageLeft {
+.halfTransparent {
+	-fx-background-color: rgba(100, 100, 100, 0.7);
+}
 
-}*/
+.newChatButtons {
+	-fx-background-color: #7289da;
+	-fx-text-fill: white;
+	-fx-background-radius: 15;
+}
+
+.newChatButtons: hover {
+	-fx-background-color: #6477C1;
+}
+
+.newChatButtons: pressed {
+	-fx-background-color: #5A6BAF;
+}
+
+.check-box .box {
+	-fx-background-color: white;
+	-fx-border-color: grey;
+	-fx-background-radius: 15;
+	-fx-border-radius: 15; 
+}
+.check-box:hover .box{
+	-fx-background-color: #7289da;
+}
+
+.check-box:selected .mark {
+	-fx-background-color: white;
+}
+
+.check-box:selected .box {
+	-fx-background-color: #28a3f4;
+}

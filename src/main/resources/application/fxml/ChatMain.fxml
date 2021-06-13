@@ -28,23 +28,27 @@
                      </children>
                   </HBox>
                   <Pane fx:id="hLine" prefHeight="2.0" prefWidth="200.0" style="-fx-background-color: #46474A;" />
-                  <ScrollPane fx:id="leftScrollPane" fitToHeight="true" hbarPolicy="NEVER" pannable="true" vbarPolicy="NEVER" VBox.vgrow="ALWAYS">
-                     <content>
-                        <VBox fx:id="allChatVbox" />
-                     </content>
-                  </ScrollPane>
-                  <HBox fx:id="buttonBox">
+                  <StackPane prefHeight="150.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
                      <children>
-                        <Button fx:id="newGroupButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" onMouseClicked="#createGroup" prefHeight="40.0" text="Nuovo Gruppo" HBox.hgrow="ALWAYS">
-                           <HBox.margin>
-                              <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
-                           </HBox.margin></Button>
-                        <Button fx:id="newChatButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="-Infinity" mnemonicParsing="false" onAction="#newChat" prefHeight="40.0" text="Nuova Chat" HBox.hgrow="ALWAYS">
-                           <HBox.margin>
-                              <Insets bottom="1.0" left="1.0" right="1.0" top="1.0" />
-                           </HBox.margin></Button>
+                        <ScrollPane fx:id="leftScrollPane" fitToHeight="true" hbarPolicy="NEVER" pannable="true" vbarPolicy="NEVER">
+                           <content>
+                              <VBox fx:id="allChatVbox" />
+                           </content>
+                        </ScrollPane>
+                        <HBox fx:id="buttonBox" nodeOrientation="RIGHT_TO_LEFT" StackPane.alignment="BOTTOM_RIGHT">
+                           <children>
+                              <Circle fx:id="newChatButton" fill="DODGERBLUE" onMouseClicked="#newChat" onMouseExited="#buttonReleased" onMousePressed="#buttonClicked" onMouseReleased="#buttonReleased" radius="24.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                                 <HBox.margin>
+                                    <Insets bottom="20.0" left="10.0" />
+                                 </HBox.margin>
+                              </Circle>
+                           </children>
+                           <StackPane.margin>
+                              <Insets />
+                           </StackPane.margin>
+                        </HBox>
                      </children>
-                  </HBox>
+                  </StackPane>
                </children>
             </VBox>
             <BorderPane fx:id="rightPane" HBox.hgrow="ALWAYS" />

@@ -4,12 +4,15 @@ import java.io.ByteArrayInputStream;
 
 import application.graphics.ChatView;
 import application.graphics.SceneHandler;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 
 public class ImageViewController {
 
@@ -20,10 +23,20 @@ public class ImageViewController {
     private ImageView imageView;
     
     @FXML
+    private VBox paneVBox;
+    
+    @FXML
+    private AnchorPane root;
+    
+    @FXML
     void initialize() {
-    	imageView.fitWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
     	ChatView.getInstance().setImageViewController(this);
-    	//imageView.fitHeightProperty().bind();
+    	paneVBox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
+    	paneVBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.81));
+    	paneVBox.setAlignment(Pos.CENTER);
+    	imageView.fitWidthProperty().bind(paneVBox.prefWidthProperty().multiply(0.95));
+    	imageView.fitHeightProperty().bind(paneVBox.prefHeightProperty().multiply(0.9));
+    	paneVBox.getParent().getStyleClass().add("halfTransparent");
     }
     
     @FXML
@@ -32,9 +45,8 @@ public class ImageViewController {
     }
 
 	public void handleClick(byte[] image) {
-		imageView.setImage(new Image(new ByteArrayInputStream(image), 500, 500, true, true));
-    	SceneHandler.getInstance().setImageScene();
-		
+		imageView.setImage(new Image(new ByteArrayInputStream(image), paneVBox.getPrefWidth() * 1.5, paneVBox.getPrefHeight() * 1.5, true, true));
+    	SceneHandler.getInstance().setImageScene(); 
 	}
 
 }

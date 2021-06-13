@@ -101,7 +101,7 @@ public class ChatView {
     				imageViewController.handleClick(chatMsg.getImage()); };
 			});
     		box.getChildren().add(img);
-    		VBox.setMargin(img, new Insets(5, 10, 5, 10));
+    		VBox.setMargin(img, new Insets(10, 10, 0, 10));
     	}
   
     	if(chatMsg.getText() != null) {
@@ -125,6 +125,7 @@ public class ChatView {
     		VBox.setMargin(container, new Insets(2, 0, 0, 5));
 	}
 	
+	//TODO fixare il bug che assegna il leftStyle ai messaggi miei
 	public void appendGroupMessageInChat(Message msg, boolean isMyMessage, String lastUser) {
 		if(!(msg instanceof ChatMessage))
 			return;
@@ -138,6 +139,7 @@ public class ChatView {
 			information.setPadding(new Insets(5));
 			//TODO
 			chatPaneController.getChatVbox().getChildren().add(information);
+			VBox.setMargin(information, new Insets(2));
 			return;
 		}
 	
@@ -152,17 +154,21 @@ public class ChatView {
     	}
     	else {
     		container.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
-    		if(!lastUser.equals(msg.getSender()) && !isMyMessage)
-    			box.getStyleClass().add("leftMessageVBox");
-    		else
-    			box.getStyleClass().add("leftMessageVBoxFull");
+    		box.getStyleClass().add("leftMessageVBox");
+    		if(lastUser.equals(msg.getSender())) {
+    			int actualBox = chatPaneController.getChatVbox().getChildren().size();
+    			VBox box2 = (VBox) ((HBox) chatPaneController.getChatVbox().getChildren().get(actualBox - 1)).getChildren().get(0); 
+    			box2.getStyleClass().remove(0);
+    			box2.getStyleClass().add("leftMessageVBoxFull");
+    			//((HBox) chatPaneController.getChatVbox().getChildren().get(actualBox - 1)).setMaxWidth(chatPaneController.getChatVbox().getPrefWidth() * 0.8);
+    		}
     	}
     	
     	if(!lastUser.equals(msg.getSender()) && !isMyMessage) {
     		Label name = new Label(msg.getSender());
     		name.getStyleClass().add("groupUserLabel");
     		box.getChildren().add(name);
-    		VBox.setMargin(name, new Insets(5, 10, 4, 10));
+    		VBox.setMargin(name, new Insets(5, 10, 2, 10));
     	}
     	
     	if(chatMsg.getImage() != null) {
@@ -180,7 +186,7 @@ public class ChatView {
     		field.setWrapText(true);
     		field.getStyleClass().add("messageText");
     		box.getChildren().add(field);
-    		VBox.setMargin(field, new Insets(5, 10, 2, 10));
+    		VBox.setMargin(field, new Insets(5, 10, 4, 10));
     	}
     	
     	Text time = new Text(Utilities.getHourFromStringTrimmed(msg.getTimestamp()));
@@ -191,9 +197,9 @@ public class ChatView {
     	container.getChildren().add(box);
     	chatPaneController.getChatVbox().getChildren().add(container);
     	
-    	int topMargin = 1;
+    	int topMargin = 2;
     	if(!lastUser.equals(msg.getSender()) && !isMyMessage)
-    		topMargin = 3;
+    		topMargin = 4;
     	
     	if(isMyMessage) 
     		VBox.setMargin(container, new Insets(topMargin, 5, 0, 0));

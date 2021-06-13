@@ -254,8 +254,9 @@ public class ServerListener implements Runnable {
 	private void handleSendMessage() throws IOException, ClassNotFoundException, SQLException {
 		try {
 			Message msg = (Message) inputStream.readObject();
+			System.out.println(msg);
 						
-			if(msg.isAGroupMessage()) {
+			if(!msg.isAGroupMessage()) {
 				//Se è un messaggio singolo prendo il socket della persona e lo invio direttamente a lei
 				handleSingleMessageSend(msg.getReceiver(), (ChatMessage) msg);
 			}
@@ -264,7 +265,7 @@ public class ServerListener implements Runnable {
 				ArrayList <String> groupUsers = DatabaseHandler.getInstance().getGroupPartecipants(msg.getGroupId());
 				for(String partecipant : groupUsers) 
 				{
-					//Evito di mandare il messaggio a me stesso
+					//Evito di mandare il messaggio a me stesso, a meno che non sia un messaggio informativo
 					if(partecipant.equals(serverUsername) && !msg.getSender().equals("null"))
 						continue;
 					
