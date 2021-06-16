@@ -1,6 +1,9 @@
 package application.logic.messages;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import application.net.misc.Utilities;
 
@@ -10,6 +13,7 @@ public class Message implements Serializable {
 	
 	protected String sender;
 	protected String receiver;
+	//Timestamp in formato : YYYY-MM-DDTHH:MM:SS:mmmmmmm
 	protected String timestamp;
 	protected int groupId;
 	protected boolean isGroupMessage;
@@ -65,5 +69,21 @@ public class Message implements Serializable {
 	
 	public boolean isAGroupMessage() {
 		return isGroupMessage;
+	}
+	
+	public long getMessageDateStamp() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		String dateStr = getSentDate();
+		Date date;
+		
+		try {
+			date = sdf.parse(dateStr);
+			long millis = date.getTime();
+			return millis;
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
+		return 0;
 	}
 }

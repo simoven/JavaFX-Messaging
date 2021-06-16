@@ -7,7 +7,9 @@ import java.util.Collections;
 import java.util.Vector;
 
 import application.graphics.ChatView;
+import application.graphics.ContactInfoView;
 import application.graphics.CreateChatView;
+import application.graphics.SceneHandler;
 import application.logic.chat.Chat;
 import application.logic.chat.GroupChat;
 import application.logic.chat.SingleChat;
@@ -64,6 +66,10 @@ public class ChatLogic {
 		return myInformation;
 	}
 	
+	public Chat getActiveChat() {
+		return activeChat;
+	}
+	
 	public String getMyUsername() {
 		return myInformation.getUsername();
 	}
@@ -91,26 +97,35 @@ public class ChatLogic {
 	//Mostro la chat selezionata sul pannello a destra
 	private void displayCurrentChat() {
 		boolean isGroupChat = false;
-		ChatView.getInstance().getChatMainController().setChatPane();
+		SceneHandler.getInstance().setChatPane();
 		ChatView.getInstance().getChatPaneController().getChatVbox().getChildren().clear();
 		if(activeChat instanceof SingleChat)
 			ChatView.getInstance().showContactInformation(activeContact, -1);
 		else {
 			ChatView.getInstance().showContactInformation(activeContact, ((GroupChat) activeChat).getListUtenti().size());
+			((GroupChat) activeChat).setRandomColors();
 			isGroupChat = true;
 		}
 		
+		activeChat.setUnreadedMessage(false);
 		String lastUser = "";
+		long lastMessageDateStamp = 0;
 		for(Message msg : activeChat.getListMessaggi()) {
 			boolean isMyMessage = true;
 			if(!msg.getSender().equals(myInformation.getUsername()))
 				isMyMessage = false;
+				
+			if(msg.getMessageDateStamp() > lastMessageDateStamp) {
+				ChatView.getInstance().appendMessageInChat(createInformationMessage(msg.getSentDate()), false, "");
+				lastMessageDateStamp = msg.getMessageDateStamp();
+			}
 			
 			if(!isGroupChat)	
-				ChatView.getInstance().appendMessageInChat(msg, isMyMessage);
+				ChatView.getInstance().appendMessageInChat(msg, isMyMessage, "");
 			else {
-				ChatView.getInstance().appendGroupMessageInChat(msg, isMyMessage, lastUser);
+				ChatView.getInstance().appendMessageInChat(msg, isMyMessage, lastUser);
 				lastUser = msg.getSender();
+				((GroupChat) activeChat).setUserOfLastMessage(lastUser);
 			}
 		}
 	}
@@ -129,18 +144,23 @@ public class ChatLogic {
 		}
 		//Se il contatto non è presente nei miei contatti, allora significa che ho cliccato su un contatto da una ricerca globale 
 		else {
-			if(lastSearchContacts == null)
-				return; 
-			
+			if(lastSearchContacts == null) 
+				return;
+
 			for(SingleContact contact : lastSearchContacts) {
 				if(contact.getUsername().equals(username)) {
 					activeContact = contact;
-					contactList.add(activeContact);
-					activeChat = createChat(activeContact);
-					try {
-						LocalDatabaseHandler.getInstance().registerUser(contact);
-					} catch (SQLException e) {
-						//TODO Mostra errore 
+					activeContact.setVisible(false);
+					SingleChat sChat = (SingleChat) searchChat(contact);
+					if(sChat == null) 
+						activeChat = createChat(activeContact);
+					else
+						activeChat = createChat(activeContact);
+					
+					if(contactList.indexOf(contact) == -1) {
+						contactList.add(contact);
+						registerUser(contact, false);
+						contact.setVisible(false);
 					}
 					break;
 				}
@@ -158,6 +178,9 @@ public class ChatLogic {
 		else {
 			msg.setGroupMessage(true);
 			msg.setGroupId(((GroupContact) activeContact).getGroupId());
+			
+			if(!((GroupChat) activeChat).getListUtenti().contains(myInformation))
+				return;
 		}
     	
     	msg.setText(text);
@@ -167,8 +190,14 @@ public class ChatLogic {
    
     	//Aggiungo il messaggio alla chat
     	if(Client.getInstance().sendChatMessage(msg)) {
+    		if(msg.getMessageDateStamp() > activeChat.getLastMessageDateStamp()) 
+				ChatView.getInstance().appendMessageInChat(createInformationMessage(msg.getSentDate()), false, "");
+    		
     		activeChat.addMessage(msg);
-    		ChatView.getInstance().appendMessageInChat(msg, true);
+    		ChatView.getInstance().appendMessageInChat(msg, true, "");
+    		if(activeChat instanceof GroupChat)
+    			((GroupChat) activeChat).setUserOfLastMessage(msg.getSender());
+    		
     		displayAllChat();
     	}
     	//else
@@ -177,38 +206,52 @@ public class ChatLogic {
 	
 	//Questo metodo manda i messaggi informativi di una chat di gruppo, tipo : "si è unito"...
 	private void sendInformationMessage(int groupId, String text) {
+		ChatMessage msg = createInformationMessage(text);
+		msg.setGroupId(groupId);
+		msg.setGroupMessage(true);
+		Client.getInstance().sendChatMessage(msg);
+	}
+	
+	private ChatMessage createInformationMessage(String text) {
 		ChatMessage msg = new ChatMessage("null", "null");
 		msg.setTimestamp(Utilities.getCurrentISODate());
 		msg.setSender("null");
-		msg.setGroupId(groupId);
 		msg.setText(text);
-		msg.setGroupMessage(true);
-		Client.getInstance().sendChatMessage(msg);
+		return msg;
 	}
 	
 	//Mostro tutti i miei contatti 
 	public void showContactsChoice() {
 		CreateChatView.getInstance().getChatChooserController().getAllUsersVbox().getChildren().clear();
 		for(Contact contact : ChatLogic.getInstance().getContactList()) {
+			if(!contact.isVisible())
+				continue;
+			
 			if(contact instanceof SingleContact && !contact.getUsername().equals(myInformation.getUsername())) 
-				CreateChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact, false, false);
+				CreateChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact, false, false, false);
 		}
 	}
 	
 	public void showContactForGroupCreation() {
 		CreateChatView.getInstance().getCreateGroupController().getPartecipantsVBox().getChildren().clear();
 		for(Contact contact : ChatLogic.getInstance().getContactList()) {
+			if(!contact.isVisible())
+				continue;
+			
 			if(contact instanceof SingleContact && !contact.getUsername().equals(myInformation.getUsername())) 
-				CreateChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact, false, true);
+				CreateChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact, false, true, false);
 		}
 	}
 	
 	//Mostro i contatti, filtrati per pezzi di username
-	public void showContactsChoiceFiltered(String subUsername) {
+	public void showContactsChoiceFiltered(String subUsername, boolean isForGroupAdd) {
 		CreateChatView.getInstance().getChatChooserController().getAllUsersVbox().getChildren().clear();
 		for(Contact contact : ChatLogic.getInstance().getContactList()) {
+			if(!contact.isVisible())
+				continue;
+			
 			if(contact instanceof SingleContact && contact.getUsername().contains(subUsername)) 
-				CreateChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact, false, false);
+				CreateChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact, false, false, isForGroupAdd);
 		}
 	}
 	
@@ -217,12 +260,15 @@ public class ChatLogic {
 		lastSearchContacts = globalContact;
 		filterMyContacts();
 		for(SingleContact contact : globalContact)
-			CreateChatView.getInstance().appendContactInChoiceScreen(contact, true, false);
+			CreateChatView.getInstance().appendContactInChoiceScreen(contact, true, false, false);
 	}
 	
 	private void filterMyContacts() {
 		//Rimuovo dalla ricerca i contatti già miei
 		for(Contact c : contactList) {
+			if(!c.isVisible())
+				continue;
+			
 			int idx = lastSearchContacts.indexOf(c);
 			if(idx != -1)
 				lastSearchContacts.remove(idx);
@@ -247,14 +293,14 @@ public class ChatLogic {
 	
 	private SingleContact createContact(String sender) {
 		//Poichè non è nei miei contatti, richiedo informazioni su di esso
-		Client.getInstance().requestContactInformation(sender);
+		Client.getInstance().requestContactInformation(sender, false);
 		SingleContact c = new SingleContact(sender);
 		contactList.add(c);
 		return c;
 	}
 	
 	private GroupContact createGroupContact(int groupId) {
-		GroupContact gp = new GroupContact("", groupId);
+		GroupContact gp = new GroupContact("Gruppo", groupId);
 		contactList.add(gp);
 		Client.getInstance().requestGroupInformation(groupId);
 		return gp;
@@ -297,74 +343,112 @@ public class ChatLogic {
 	//Aggiungo alla chat un messaggio in arrivo
 	public void addIncomingMessage(ChatMessage msg) {
 		Chat chat = null;
+		
+		Contact contact;
 		if(!msg.isAGroupMessage()) {
-			
 			if(!msg.getReceiver().equals(myInformation.getUsername()))
 				return;
 			
-			String sender = msg.getSender();
-			SingleContact contact = searchContact(sender);
-			if(contact == null) 
-				contact = createContact(sender);
-			
-			chat = searchChat(contact);
-			if(chat == null) 
-				chat = createChat(contact);
-			
-			chat.addNewMessage(msg);
-			
-			if(activeChat == chat)
-				ChatView.getInstance().appendMessageInChat(msg, false);
-		}			
+			contact = searchContact(msg.getSender());
+			if(contact == null)
+				contact = createContact(msg.getSender());
+		}
 		else {
-			GroupContact contact = searchContact(msg.getGroupId());
+			contact = searchContact(msg.getGroupId());
 			if(contact == null)
 				contact = createGroupContact(msg.getGroupId());
-			
-			chat = searchChat(contact);
-			if(chat == null)
-				chat = createChat(contact);
-			
-			chat.addNewMessage(msg);
-		
-			if(activeChat == chat) {		
-				ChatView.getInstance().appendGroupMessageInChat(msg, false, ((GroupChat) chat).getUserOfLastMessage());
-				((GroupChat) chat).setUserOfLastMessage(msg.getSender());
-			}
 		}
+			
+		chat = searchChat(contact);
+		if(chat == null) 
+			chat = createChat(contact);
+		
+		if(chat instanceof GroupChat && ((GroupChat) chat).getListUtenti().indexOf(myInformation) == -1)
+			((GroupChat) chat).getListUtenti().add(myInformation);
+			
+		if(msg.getMessageDateStamp() > chat.getLastMessageDateStamp()) 
+			if(activeChat == chat)
+				ChatView.getInstance().appendMessageInChat(createInformationMessage(msg.getSentDate()), false, "");
+		
+			
+		chat.addNewMessage(msg);
+			
+		if(activeChat == chat) {
+			if(chat instanceof SingleChat)
+				ChatView.getInstance().appendMessageInChat(msg, false, "");
+			else
+				ChatView.getInstance().appendMessageInChat(msg, false, ((GroupChat) chat).getUserOfLastMessage());
+		}
+		
+		if(chat instanceof GroupChat)
+			((GroupChat) chat).setUserOfLastMessage(msg.getSender());		
 		
 		displayAllChat();
 	}
 
+	//Controllo se nei messaggi che mi sono arrivati ci sono messaggi dal server, tipo "utente x è stato rimosso dal gruppo"
+	private void checkGroupMsgText(ChatMessage msg) {
+		GroupContact contact = searchContact(msg.getGroupId());
+		if(contact == null)
+			return;
+		
+		GroupChat chat = (GroupChat) searchChat(contact);
+		if(chat == null)
+			return;
+		
+		if(msg.getText().contains(":")) {
+			String [] split = msg.getText().split(":");
+			if(split [0].equals("REMOVED")) {
+				if(split [1].equals(ChatLogic.getInstance().getMyInformation().getUsername())) {
+					msg.setText("Sei stato rimosso");
+					removeFromGroup(chat, myInformation.getUsername(), msg);
+				}
+				else {
+					msg.setText(split [1] + " è stato rimosso");
+					removeFromGroup(chat, split [1], msg);
+				}
+			}
+			else if(split [0].equals("ADDED")) {
+				if(split [1].equals(ChatLogic.getInstance().getMyInformation().getUsername())) {
+					msg.setText("Sei stato aggiunto");
+					addedToGroup(myInformation.getUsername(), chat, msg);
+				}
+				else {
+					msg.setText(split [1] + " è stato aggiunto");
+					addedToGroup(split [1], chat, msg);
+				}
+			}
+		}
+	}
+	
 	//recupero i messaggi che mi sono arrivati quando ero offline
 	public void retrievePendingMessage(ArrayList <Message> listMessaggi) {
 		for(Message msg : listMessaggi) {
+			Chat chat;
+			Contact msgContact;
+			
 			if(!msg.isAGroupMessage()) {
-				SingleContact sender = searchContact(msg.getSender());
-				if(sender == null)
-					sender = createContact(msg.getSender());
-				
-				SingleChat chat = (SingleChat) searchChat(sender);
-				if(chat == null) 
-					chat = (SingleChat) createChat(sender);
-				
-				chat.addNewMessage(msg);
+				msgContact = searchContact(msg.getSender());
+				if(msgContact == null)
+					msgContact = createContact(msg.getSender());
 			}
 			else {
-				GroupContact groupInfo = searchContact(msg.getGroupId());
-				if(groupInfo == null)
-					groupInfo = createGroupContact(msg.getGroupId());
+				msgContact = searchContact(msg.getGroupId());
+				if(msgContact == null)
+					msgContact = createGroupContact(msg.getGroupId());
 				
-				GroupChat chat = (GroupChat) searchChat(groupInfo);
-				if(chat == null)
-					chat = (GroupChat) createChat(groupInfo);
-				
-				chat.addNewMessage(msg);
+				if(msg instanceof ChatMessage && msg.getSender().equals("null"))
+					checkGroupMsgText((ChatMessage) msg);
 			}
+				
+			chat = searchChat(msgContact);
+			if(chat == null) 
+				chat = createChat(msgContact);
+			
+			chat.addNewMessage(msg);
 		}
 		
-		displayAllChat();
-		
+		displayAllChat();	
 	}
 
 	//Se l'online status che mi è arrivato dal server è quello del contatto con cui sto chattando, lo mostro
@@ -386,6 +470,7 @@ public class ChatLogic {
 		contactList.add(contact);
 		contact.setProfilePic(Utilities.getByteArrFromFile(selectedImage));
 		contact.setOwner(myInformation.getUsername());
+		contact.setCreationDate(Utilities.getDateFromString(Utilities.getCurrentISODate()));
 		
 		GroupChat groupChat = new GroupChat(contact);
 		chatList.add(groupChat);
@@ -423,7 +508,6 @@ public class ChatLogic {
 				//TODO show error
 			}
 			
-			sendInformationMessage(groupID, Utilities.getDateFromString(Utilities.getCurrentISODate()));
 			sendInformationMessage(groupID, "Il gruppo è stato creato");
 		}
 		
@@ -441,7 +525,7 @@ public class ChatLogic {
 
 	//Questo metodo aggiorna le informazioni su un gruppo e viene chiamato quando un utente riceve per la prima volta un messaggio
 	//da un certo gruppo e quindi ha bisogno delle sue informazioni
-	public void updateGroupInfo(int groupId, String username, String gpOwner, byte[] proPic) {
+	public void updateGroupInfo(int groupId, String username, String gpOwner, byte[] proPic, String creationDate) {
 		GroupContact gpContact = searchContact(groupId);
 		if(gpContact == null)
 			gpContact = createGroupContact(groupId);
@@ -449,6 +533,7 @@ public class ChatLogic {
 		gpContact.setUsername(username);
 		gpContact.setOwner(gpOwner);
 		gpContact.setProfilePic(proPic);
+		gpContact.setCreationDate(creationDate);
 		displayAllChat();
 		
 		try {
@@ -463,15 +548,20 @@ public class ChatLogic {
 	//Viene inoltre aggiunto ai nostri contatti
 	public void updateUser(String username, String status, byte[] proPic) {
 		SingleContact user = searchContact(username);
-		if(user == null)
+		if(user == null) 
 			user = createContact(username);
 		
 		user.setStatus(status);
 		user.setProfilePic(proPic);
+		user.setVisible(false);
+		registerUser(user, false);
+		System.out.println("Sto registrando " + username + " nel db locale");
 		displayAllChat();
-		
+	}
+
+	private void registerUser(SingleContact user, boolean visible) {
 		try {
-			LocalDatabaseHandler.getInstance().registerUser(user);
+			LocalDatabaseHandler.getInstance().registerUser(user, visible);
 		} catch (SQLException e) {
 			//TODO show error
 			e.printStackTrace();
@@ -502,5 +592,177 @@ public class ChatLogic {
 			//TODO show error
 			e.printStackTrace();
 		}
+	}
+
+	public void showChatFiltered(String subText) {
+		for(Chat chat : chatList) {
+			String name;
+			
+			if(chat instanceof SingleChat)
+				name = ((SingleChat) chat).getChattingWith().getUsername();
+			else
+				name = ((GroupChat) chat).getGroupInfo().getUsername();
+			
+			if(name.toLowerCase().contains(subText.toLowerCase()))
+				ChatView.getInstance().appendChatInMainPanel(chat);
+		}
+	}
+	
+	//Richiede informazioni per mostrare il contatto sulla schermata ddi info
+	public void requestInfoForContactPane() {
+		if(activeContact instanceof SingleContact)
+			Client.getInstance().requestContactInformation(activeContact.getUsername(), true);
+		else {
+			boolean iAmRemoved = false;
+			if(!((GroupChat) activeChat).getListUtenti().contains(myInformation))
+				iAmRemoved = true;
+			
+			boolean iAmOwner = true;
+			if(!((GroupContact) activeContact).getOwner().equals(myInformation.getUsername()))
+				iAmOwner = false;
+			
+			ContactInfoView.getInstance().showGroupInfo((GroupChat) activeChat, iAmOwner, iAmRemoved);
+		}		
+	}
+
+	public void showUserInfo(String username, String name, String lastName, String status, byte[] proPic) {
+		boolean isSavedContact = true;
+		if(!searchContact(username).isVisible())
+			isSavedContact = false;
+			
+		ContactInfoView.getInstance().showInfo(username, name, lastName, status, proPic, isSavedContact);
+	}
+
+	public void setContactVisibility(String substring, boolean isVisible) {
+		SingleContact contact = searchContact(substring);
+		contact.setVisible(isVisible);
+		if(isVisible)
+			LocalDatabaseHandler.getInstance().setVisible(substring);
+		else
+			LocalDatabaseHandler.getInstance().setInvisible(substring);
+	}
+	
+	public void requestRimotion(GroupChat chat, SingleContact contact) {
+		if(chat.getListUtenti().indexOf(contact) != -1)
+			Client.getInstance().removeFromGroup(chat.getGroupInfo().getGroupId(), myInformation.getUsername(), contact.getUsername());
+	}
+
+	public boolean removeFromGroup(GroupChat chat, String username, ChatMessage msg) {
+		SingleContact contact = searchContact(username);
+		if(contact == null)
+			return false;
+		
+		if(chat.getListUtenti() == null)
+			return false;
+		
+		int idx = chat.getListUtenti().indexOf(contact);
+		if(idx != -1)
+			chat.getListUtenti().remove(idx);
+		
+		try {
+			LocalDatabaseHandler.getInstance().addMessage(msg);
+			LocalDatabaseHandler.getInstance().removeFromGroup(username, chat.getGroupInfo().getGroupId());
+		} catch (SQLException e) {
+			return false;
+		}
+		
+		return true;
+	}
+
+	public void handleGroupRimotion(String userRemoved, Integer groupId) {
+		GroupContact contact = searchContact(groupId);
+		GroupChat chat = (GroupChat) searchChat(contact);
+		
+		//In base a chi è stato rimosso, preparo il messaggio da mostrare
+		ChatMessage msg;
+		if(userRemoved.equals(myInformation.getUsername()))
+			msg = createInformationMessage("Sei stato rimosso");
+		else
+			msg = createInformationMessage(userRemoved + " è stato rimosso");
+		
+		msg.setGroupId(groupId);
+		msg.setGroupMessage(true);
+		
+		//Se la rimozione è avvenuta correttamente, mostro il messaggio 
+		if(removeFromGroup(chat, userRemoved, msg)) {
+			chat.addNewMessage(msg);
+			displayAllChat();
+			
+			if(activeChat.equals(chat)) {
+				ChatView.getInstance().appendMessageInChat(msg, false, "null");
+				ChatView.getInstance().showContactInformation(contact, chat.getListUtenti().size());
+			}
+		}
+	}
+
+	//Questo metodo mostra i contatti che non sono in un gruppo nella schermata per aggiungerli
+	public void requestAddToGroup(GroupChat chat) {
+		SceneHandler.getInstance().setAllContactsPane();
+		CreateChatView.getInstance().changeButtonUse(true);
+		CreateChatView.getInstance().setGroupIdForAdd(chat.getGroupInfo().getGroupId());
+		ArrayList <SingleContact> contactsToAdd = new ArrayList <SingleContact>();
+		for(Contact contact : contactList)
+			if(contact instanceof SingleContact && chat.getListUtenti().indexOf(contact) == -1)
+				contactsToAdd.add((SingleContact) contact);
+		
+		CreateChatView.getInstance().clearContactVBox();
+		for(SingleContact contact : contactsToAdd)
+			CreateChatView.getInstance().appendContactInChoiceScreen(contact, false, true, true);
+	}
+
+	public void addContactsToGroup(Vector <String> selectedContacts, int groupIdForAdd) {
+		Client.getInstance().requestGroupAdd(myInformation.getUsername(), selectedContacts, groupIdForAdd);
+	}
+	
+	private boolean addedToGroup(String user, GroupChat chat, ChatMessage msg) {
+		SingleContact contactToAdd = searchContact(user);
+		if(contactToAdd == null) {
+			contactToAdd = createContact(user);
+			registerUser(contactToAdd, false);
+		}
+		
+		if(chat == null)
+			return false;
+		
+		if(chat.getListUtenti() == null)
+			return false;
+		
+		chat.getListUtenti().add(contactToAdd);
+		
+		try {
+			LocalDatabaseHandler.getInstance().addMessage(msg);
+			LocalDatabaseHandler.getInstance().addPartecipantToGroup(chat.getGroupInfo().getGroupId(), user);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
+	}
+
+	public void handleGroupAdd(String userAdded, Integer groupId) {
+		CreateChatView.getInstance().changeButtonUse(false);
+		GroupContact contact = searchContact(groupId);
+		GroupChat chat = (GroupChat) searchChat(contact);
+		
+		ChatMessage msg;
+		if(!userAdded.equals(myInformation.getUsername()))
+			msg = createInformationMessage(userAdded + " è stato aggiunto");
+		else
+			msg = createInformationMessage("Sei stato aggiunto");
+		
+		msg.setGroupId(groupId);
+		msg.setGroupMessage(true);
+		
+		if(addedToGroup(userAdded, chat, msg)) {
+			chat.addNewMessage(msg);
+			displayAllChat();
+			
+			if(activeChat.equals(chat)) {
+				ChatView.getInstance().appendMessageInChat(msg, false, "null");
+				ChatView.getInstance().showContactInformation(contact, chat.getListUtenti().size());
+			}
+		}
+		
 	}
 }

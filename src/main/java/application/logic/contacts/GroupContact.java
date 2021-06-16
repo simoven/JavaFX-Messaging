@@ -4,6 +4,7 @@ public class GroupContact extends Contact {
 
 	private int groupId;
 	private String owner;
+	private String creationDate;
 	
 	public GroupContact(String groupName, int id) {
 		super(groupName);
@@ -12,6 +13,14 @@ public class GroupContact extends Contact {
 	
 	public int getGroupId() {
 		return groupId;
+	}
+	
+	public void setCreationDate(String creationDate) {
+		this.creationDate = creationDate;
+	}
+	
+	public String getCreationDate() {
+		return creationDate;
 	}
 	
 	public void setOwner(String owner) {

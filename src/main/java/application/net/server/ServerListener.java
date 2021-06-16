@@ -93,7 +93,11 @@ public class ServerListener implements Runnable {
 						break;
 						
 					case Protocol.CONTACT_INFORMATION_REQUEST:
-						handleContactInformation();
+						handleContactInformation(false);
+						break;
+						
+					case Protocol.CONTACT_FULL_INFORMATION_REQUEST:
+						handleContactInformation(true);
 						break;
 						
 					case Protocol.GROUP_INFORMATION_REQUEST:
@@ -102,6 +106,14 @@ public class ServerListener implements Runnable {
 						
 					case Protocol.GROUP_PARTECIPANT_REQUEST:
 						handleGroupPartecipants();
+						break;
+						
+					case Protocol.GROUP_MEMBER_RIMOTION:
+						handleGroupRimotion();
+						break;
+						
+					case Protocol.GROUP_MEMBER_ADD:
+						handleGroupAdd();
 						break;
 						
 					default:
@@ -136,6 +148,51 @@ public class ServerListener implements Runnable {
 		closeStreams();
 	}
 	
+	@SuppressWarnings("unchecked")
+	private void handleGroupAdd() throws IOException, SQLException, ClassNotFoundException {
+		String requester = (String) inputStream.readObject();
+		int groupId = Integer.parseInt((String) inputStream.readObject());
+		Vector <String> users = (Vector <String>) inputStream.readObject();
+		
+		if(!requester.equals(DatabaseHandler.getInstance().getGroupInfo(groupId).getGpOwner()))
+			return;
+		
+		ArrayList <String> listPartecipanti = DatabaseHandler.getInstance().getGroupPartecipants(groupId);
+		if(listPartecipanti.indexOf(requester) == -1) {
+			System.out.println("owner not in group");
+			return;
+		}
+		
+		listPartecipanti.addAll(users);
+		
+		DatabaseHandler.getInstance().addPartecipantsToGroup(groupId, users);
+		InformationMessage msg;
+		ChatMessage infMsg;
+		for(String added : users) {
+			msg = new InformationMessage();
+			msg.setInformation(Protocol.GROUP_MEMBER_ADD);
+			msg.setPacket(new Pair <String, Integer>(added, groupId));
+			
+			for(String receiver : listPartecipanti) {
+				ObjectOutputStream destOutput = server.getStream(receiver);
+				//Se è offline lascio la richiesta in sospeso
+				if(destOutput == null) {
+					infMsg = new ChatMessage("null", receiver);
+					infMsg.setGroupMessage(true);
+					infMsg.setText("ADDED:" + added);
+					infMsg.setTimestamp(Utilities.getCurrentISODate());
+					infMsg.setGroupId(groupId);
+					DatabaseHandler.getInstance().addPendingMessage(infMsg, receiver);
+				}
+				else {
+					//Se l'utente è online gli notifico subito l'aggiunta di un partecipante al gruppo
+					destOutput.writeObject(Protocol.GROUP_MEMBER_ADD);
+					destOutput.writeObject(msg);
+				}
+			}
+		}
+	}
+	
 	private void checkPendingMessage() throws SQLException {
 		ArrayList <Message> listMessaggi = DatabaseHandler.getInstance().getPendingMessages(serverUsername);
 		if(listMessaggi.isEmpty())
@@ -148,6 +205,44 @@ public class ServerListener implements Runnable {
 		msg.setInformation(Protocol.MESSAGES_LIST);
 		sendObject(msg);
 	}
+	
+	private void handleGroupRimotion() throws ClassNotFoundException, IOException, SQLException {
+		int groupId = Integer.parseInt((String) inputStream.readObject());
+		String members = (String) inputStream.readObject();
+		String [] split = members.split(":");
+		String requester = split [0];
+		String memberRemoved = split [1];
+		
+		if(!requester.equals(DatabaseHandler.getInstance().getGroupInfo(groupId).getGpOwner()))
+			return;
+		
+		ArrayList <String> listPartecipanti = DatabaseHandler.getInstance().getGroupPartecipants(groupId);
+		if(listPartecipanti.indexOf(requester) == -1) {
+			System.out.println("owner not in group");
+			return;
+		}
+		
+		DatabaseHandler.getInstance().removeUserFromGroup(groupId, memberRemoved);
+		InformationMessage msg = new InformationMessage();
+		msg.setInformation(Protocol.GROUP_MEMBER_RIMOTION);
+		msg.setPacket(new Pair <String, Integer>(memberRemoved, groupId));
+		for(String receiver : listPartecipanti) {
+			ObjectOutputStream destOutput = server.getStream(receiver);
+			if(destOutput == null) {
+				ChatMessage infMsg = new ChatMessage("null", receiver);
+				infMsg.setGroupMessage(true);
+				infMsg.setText("REMOVED:" + memberRemoved);
+				infMsg.setTimestamp(Utilities.getCurrentISODate());
+				infMsg.setGroupId(groupId);
+				DatabaseHandler.getInstance().addPendingMessage(infMsg, receiver);
+			}
+			else {
+				destOutput.writeObject(Protocol.GROUP_MEMBER_RIMOTION);
+				destOutput.writeObject(msg);
+			}
+		}
+	}
+
 	
 	private void handleGroupPartecipants() throws SQLException, ClassNotFoundException, IOException {
 		int groupId = Integer.parseInt((String) inputStream.readObject());
@@ -177,15 +272,21 @@ public class ServerListener implements Runnable {
 		}
 	}
 
-	private void handleContactInformation() throws ClassNotFoundException, IOException, SQLException {
+	private void handleContactInformation(boolean fullInfo) throws ClassNotFoundException, IOException, SQLException {
 		String userToCheck = (String) inputStream.readObject();
 		User utente = DatabaseHandler.getInstance().getUserInfo(userToCheck);
-		
+	
 		if(utente != null) {
 			InformationMessage msg = new InformationMessage();
-			msg.setInformation(Protocol.CONTACT_INFORMATION_REQUEST);
 			msg.setPacket(utente);
-			sendMessage(Protocol.CONTACT_INFORMATION_REQUEST);
+			if(!fullInfo) {
+				msg.setInformation(Protocol.CONTACT_INFORMATION_REQUEST);
+				sendMessage(Protocol.CONTACT_INFORMATION_REQUEST);
+			}
+			else {
+				msg.setInformation(Protocol.CONTACT_FULL_INFORMATION_REQUEST);
+				sendMessage(Protocol.CONTACT_FULL_INFORMATION_REQUEST);
+			}
 			sendObject(msg);
 		}
 		
@@ -244,7 +345,6 @@ public class ServerListener implements Runnable {
 		if(destStream == null) 
 			DatabaseHandler.getInstance().addPendingMessage(msg, receiver);
 		else {
-			System.out.println(destStream);
 			destStream.writeObject(Protocol.MESSAGE_SEND_REQUEST);
 			destStream.writeObject(msg);
 			destStream.flush();
@@ -254,7 +354,6 @@ public class ServerListener implements Runnable {
 	private void handleSendMessage() throws IOException, ClassNotFoundException, SQLException {
 		try {
 			Message msg = (Message) inputStream.readObject();
-			System.out.println(msg);
 						
 			if(!msg.isAGroupMessage()) {
 				//Se è un messaggio singolo prendo il socket della persona e lo invio direttamente a lei

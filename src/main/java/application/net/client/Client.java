@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.Vector;
 
 import application.logic.chat.GroupChat;
 import application.logic.contacts.SingleContact;
@@ -98,6 +99,7 @@ public class Client extends Service <Message> {
 			}
 		} catch (IOException | ClassNotFoundException e) {
 			//showError(Protocol.COMMUNICATION_ERROR)
+			resetClient();
 			e.printStackTrace();
 		}
 		
@@ -174,8 +176,12 @@ public class Client extends Service <Message> {
 		return true;
 	}
 	
-	public void requestContactInformation(String user) {
-		sendMessage(Protocol.CONTACT_INFORMATION_REQUEST);
+	public void requestContactInformation(String user, boolean fullInfo) {
+		if(!fullInfo) 
+			sendMessage(Protocol.CONTACT_INFORMATION_REQUEST);
+		else 
+			sendMessage(Protocol.CONTACT_FULL_INFORMATION_REQUEST);
+	
 		sendMessage(user);
 	}
 
@@ -187,6 +193,19 @@ public class Client extends Service <Message> {
 	public void requestGroupMembers(int groupId) {
 		sendMessage(Protocol.GROUP_PARTECIPANT_REQUEST);
 		sendMessage(Integer.toString(groupId));
+	}
+	
+	public void removeFromGroup(int groupId, String myUser, String username) {
+		sendMessage(Protocol.GROUP_MEMBER_RIMOTION);
+		sendMessage(Integer.toString(groupId));
+		sendMessage(myUser + ":" + username);
+	}
+	
+	public void requestGroupAdd(String requester, Vector <String> users, int groupIdForAdd) {
+		sendMessage(Protocol.GROUP_MEMBER_ADD);
+		sendMessage(requester);
+		sendMessage(Integer.toString(groupIdForAdd));
+		sendObject(users);
 	}
 
 	@Override
@@ -209,7 +228,10 @@ public class Client extends Service <Message> {
 							requestIncoming.equals(Protocol.GROUP_CREATION_DONE) ||
 							requestIncoming.equals(Protocol.CONTACT_INFORMATION_REQUEST) ||
 							requestIncoming.equals(Protocol.GROUP_INFORMATION_REQUEST) ||
-							requestIncoming.equals(Protocol.GROUP_PARTECIPANT_REQUEST))
+							requestIncoming.equals(Protocol.GROUP_PARTECIPANT_REQUEST) ||
+							requestIncoming.equals(Protocol.CONTACT_FULL_INFORMATION_REQUEST) || 
+							requestIncoming.equals(Protocol.GROUP_MEMBER_RIMOTION) ||
+							requestIncoming.equals(Protocol.GROUP_MEMBER_ADD))
 						msg = (InformationMessage) inputStream.readObject();
 					
 				} catch(ClassNotFoundException e) {
@@ -221,3 +243,4 @@ public class Client extends Service <Message> {
 		};
 	}
 }
+

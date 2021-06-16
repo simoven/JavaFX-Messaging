@@ -26,13 +26,13 @@ public class ImageViewController {
     private VBox paneVBox;
     
     @FXML
-    private AnchorPane root;
+    private StackPane root;
     
     @FXML
     void initialize() {
     	ChatView.getInstance().setImageViewController(this);
-    	paneVBox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
-    	paneVBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.81));
+    	paneVBox.prefWidthProperty().bind(SceneHandler.getInstance().getChatPaneStackPane().widthProperty());
+    	paneVBox.prefHeightProperty().bind(SceneHandler.getInstance().getChatPaneStackPane().heightProperty());
     	paneVBox.setAlignment(Pos.CENTER);
     	imageView.fitWidthProperty().bind(paneVBox.prefWidthProperty().multiply(0.95));
     	imageView.fitHeightProperty().bind(paneVBox.prefHeightProperty().multiply(0.9));
@@ -48,5 +48,4 @@ public class ImageViewController {
 		imageView.setImage(new Image(new ByteArrayInputStream(image), paneVBox.getPrefWidth() * 1.5, paneVBox.getPrefHeight() * 1.5, true, true));
     	SceneHandler.getInstance().setImageScene(); 
 	}
-
 }

@@ -47,7 +47,7 @@ public class CreateChatView {
 		return createGroupController; }
 	
 	//Questo metodo aggiunge i miei contatti nel pannello di selezione di una nuova chat oppure per la creazione di un gruppo
-	public void appendContactInChoiceScreen(SingleContact contact, boolean isGlobalContact, boolean isForGroupCreation) {
+	public void appendContactInChoiceScreen(SingleContact contact, boolean isGlobalContact, boolean showCheckBox, boolean isForGroupAdd) {
 		HBox container = new HBox();
 		container.prefWidthProperty().bind(chatChooserController.getAlluserScrollpane().widthProperty());
 		Circle shape = new Circle();
@@ -56,7 +56,7 @@ public class CreateChatView {
 		if(contact.getProfilePic() != null)
 			img = new Image(new ByteArrayInputStream(contact.getProfilePic()), 100, 100, true, true);
 		else
-			img = new Image(getClass().getResource("/application/images/defaultSinglePic.jpeg").toExternalForm(), 100, 100, true, true);
+			img = new Image(getClass().getResource("/application/images/defaultSinglePic.png").toExternalForm(), 100, 100, true, true);
 			
 		shape.setFill(new ImagePattern(img));
 		container.getChildren().add(shape);
@@ -77,7 +77,7 @@ public class CreateChatView {
 		container.getChildren().add(textContainer);
 		
 		//Se è per la creazione di un gruppo, aggiungo la checkbox
-		if(isForGroupCreation) {
+		if(showCheckBox) {
 			Pane spacer = new Pane();
 			CheckBox checkBox = new CheckBox();
 			container.getChildren().add(spacer);
@@ -87,7 +87,7 @@ public class CreateChatView {
 		}
 		
 		//Se invece è un contatto uscito da una ricerca globale, aggiungo una icona del mondo
-		if(isGlobalContact && !isForGroupCreation) {
+		if(isGlobalContact && !showCheckBox) {
 			Image world = new Image(getClass().getResourceAsStream("/application/images/world.png"), 200, 200, true, true);
 			ImageView view = new ImageView(world);
 			Pane spacer = new Pane();
@@ -103,7 +103,7 @@ public class CreateChatView {
 		horizontaLine.getStyleClass().add("horizontaLine");
 		horizontaLine.setPrefHeight(1);
 		
-		if(isForGroupCreation) {
+		if(showCheckBox && !isForGroupAdd) {
 			createGroupController.getPartecipantsVBox().getChildren().add(container);
 			createGroupController.getPartecipantsVBox().getChildren().add(horizontaLine);
 		}
@@ -114,5 +114,17 @@ public class CreateChatView {
 		}
 		
 		VBox.setMargin(horizontaLine, new Insets(0, 10, 0, 10));
+	}
+
+	public void changeButtonUse(boolean isForAddingTogroup) {
+		chatChooserController.setButtonsForGroupAdd(isForAddingTogroup);
+	}
+
+	public void setGroupIdForAdd(int groupId) {
+		chatChooserController.setGroupIdForAdd(groupId);
+	}
+
+	public void clearContactVBox() {
+		chatChooserController.getAllUsersVbox().getChildren().clear();
 	}
 }

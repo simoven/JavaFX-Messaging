@@ -37,6 +37,8 @@ public class LoginController {
     void initialize() {
     	usernameLabel.setText("");
     	passwordLabel.setText("");
+    	registerButton.getStyleClass().add("loginRegistrationButtons");
+    	loginButton.getStyleClass().add("loginRegistrationButtons");
     }
     
     @FXML

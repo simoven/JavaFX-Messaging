@@ -16,7 +16,6 @@ import application.logic.contacts.GroupContact;
 import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
 import application.logic.messages.Message;
-import application.net.misc.Utilities;
 
 //Il database locale è quasi identico a quello sul server 
 /*step dopo il login :
@@ -73,15 +72,19 @@ public class LocalDatabaseHandler {
 		return result;
 	}
 	
-	public boolean registerUser(SingleContact utente) throws SQLException {
+	public boolean registerUser(SingleContact utente, boolean visible) throws SQLException {
 		if(checkUserExist(utente.getUsername()))
 			return false;
 		
-		String query = "INSERT INTO Utente VALUES(?,?,?);";
+		String query = "INSERT INTO Utente VALUES(?, ?, ?, ?);";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setString(1, utente.getUsername());
 		stm.setBytes(2, utente.getProfilePic());
 		stm.setString(3, utente.getStatus());
+		if(visible)
+			stm.setInt(4, 1);
+		else
+			stm.setInt(4, 0);
 		
 		int res = stm.executeUpdate();
 		stm.close();
@@ -114,19 +117,30 @@ public class LocalDatabaseHandler {
 	}
 	
 	public boolean createGroup(GroupContact gpContact) throws SQLException {
-		String query = "INSERT INTO Gruppo VALUES (?, ?, ?, ?);";
+		String query = "INSERT INTO Gruppo VALUES (?, ?, ?, ?, ?);";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setInt(1, gpContact.getGroupId());
 		stm.setString(2, gpContact.getUsername());
 		stm.setBytes(3, gpContact.getProfilePic());
 		stm.setString(4, gpContact.getOwner());
+		stm.setString(5, gpContact.getCreationDate());
 		
 		if(stm.executeUpdate() == 0)
 			return false;
 		
 		stm.close();
 		
+		System.out.println("Gruppo salvato nel db");
 		return true;
+	}
+	
+	public void addPartecipantToGroup(int groupID, String partecipant) throws SQLException {
+		String query = "INSERT INTO UtenteInGruppo VALUES (?,?, null);";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setString(1, partecipant);
+		stm.setInt(2, groupID);
+		stm.executeUpdate();
+		stm.close();
 	}
 
 	public void addPartecipantsToGroup(int groupID, Vector<String> partecipants) throws SQLException {
@@ -261,7 +275,8 @@ public class LocalDatabaseHandler {
 			SingleContact contact = new SingleContact(rs.getString("Username"));
 			contact.setProfilePic(rs.getBytes("Img_profilo"));
 			contact.setStatus(rs.getString("Status"));
-			
+			if(rs.getInt("Visible") == 0)
+				contact.setVisible(false);
 			listContatti.add(contact);
 		}
 		
@@ -274,7 +289,8 @@ public class LocalDatabaseHandler {
 		while(rs.next()) {
 			GroupContact contact = new GroupContact(rs.getString("Nome"), rs.getInt("Id_gruppo"));
 			contact.setProfilePic(rs.getBytes("ProPic"));
-			
+			contact.setOwner(rs.getString("Owner"));
+			contact.setCreationDate(rs.getString("Data_creazione"));
 			listContatti.add(contact);
 		}
 		
@@ -284,11 +300,57 @@ public class LocalDatabaseHandler {
 		return listContatti;
 	}
 	
+	public void setInvisible(String user) {
+		try {
+			String query = "UPDATE Utente SET Visible=0 WHERE Username=?;";
+			PreparedStatement stm = dbConnection.prepareStatement(query);
+			stm.setString(1, user);
+			stm.executeUpdate();
+			stm.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void setVisible(String user) {
+		try {
+			String query = "UPDATE Utente SET Visible=1 WHERE Username=?;";
+			PreparedStatement stm = dbConnection.prepareStatement(query);
+			stm.setString(1, user);
+			stm.executeUpdate();
+			stm.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void removeFromGroup(String user, Integer groupId) throws SQLException {
+		String query = "DELETE FROM UtenteInGruppo WHERE User_utente=? AND Id_gruppo=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setString(1, user);
+		stm.setInt(2, groupId);
+		stm.executeUpdate();
+		stm.close();
+	}	
+	
+	public void removeContact(String substring) {
+		try {
+			String query = "DELETE FROM Utente WHERE Username=?;";
+			PreparedStatement stm = dbConnection.prepareStatement(query);
+			stm.setString(1, substring);
+			stm.executeUpdate();
+			stm.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private void createUtente() throws SQLException {
 		String query = "CREATE TABLE IF NOT EXISTS \"Utente\" (\n"
 				+ "	\"Username\"	TEXT NOT NULL,\n"
 				+ "	\"Img_profilo\"	BLOB,\n"
 				+ "	\"Status\"	TEXT,\n"
+				+ "	\"Visible\"	INTEGER NOT NULL,\n"
 				+ "	PRIMARY KEY(\"Username\")\n"
 				+ ")";
 		Statement stm = dbConnection.createStatement();
@@ -298,10 +360,11 @@ public class LocalDatabaseHandler {
 	
 	private void createGruppo() throws SQLException {
 		String query = "CREATE TABLE IF NOT EXISTS \"Gruppo\" (\n"
-				+ "	\"Id_gruppo\"	INTEGER NOT NULL PRIMARY KEY,\n"
+				+ "	\"Id_gruppo\"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n"
 				+ "	\"Nome\"	TEXT NOT NULL,\n"
 				+ "	\"ProPic\"	BLOB,\n"
-				+ "	\"Owner\"	TEXT NOT NULL\n"
+				+ "	\"Owner\"	TEXT NOT NULL,\n"
+				+ "	\"Data_creazione\"	TEXT NOT NULL\n"
 				+ ")";
 		Statement stm = dbConnection.createStatement();
 		stm.executeUpdate(query);
@@ -349,5 +412,4 @@ public class LocalDatabaseHandler {
 		stm.executeUpdate(query);
 		stm.close();
 	}
-	
 }

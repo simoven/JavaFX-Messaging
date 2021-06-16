@@ -3,15 +3,13 @@ package application.controller;
 import application.graphics.ChatView;
 import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
-import application.net.client.Client;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -76,12 +74,6 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     	newChatButton.setFill(new ImagePattern(buttonDefault));
     }
     
-    public void setChatPane() {	
-    	layoutHBox.getChildren().remove(1);
-    	layoutHBox.getChildren().add(SceneHandler.getInstance().getChatPane());
-    	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
-    }
-    
     @FXML
     void buttonReleased(MouseEvent event) {
     	newChatButton.setFill(new ImagePattern(buttonDefault));
@@ -95,11 +87,7 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     @FXML
     void newChat(MouseEvent event) {
     	//Significa che il pannello è già attivo
-    	if(layoutHBox.getChildren().get(1).equals(SceneHandler.getInstance().getContactsPane()))
-    		return;
-    	
-    	layoutHBox.getChildren().remove(1);
-    	layoutHBox.getChildren().add(SceneHandler.getInstance().getContactsPane());
+    	SceneHandler.getInstance().setAllContactsPane();
     	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
     	ChatLogic.getInstance().showContactsChoice();
     }
@@ -124,5 +112,16 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     		ChatLogic.getInstance().setGroupChatActive(Integer.parseInt(groupId.getText()));
     	else 
     		ChatLogic.getInstance().setSingleActiveChat(username.getText());
+    }
+    
+    @FXML
+    void keySearchTyped(KeyEvent event) {
+    	if(searchField.getText().isBlank()) {
+    		ChatLogic.getInstance().displayAllChat();
+    		return;
+    	}
+    	
+    	allChatVbox.getChildren().clear();
+    	ChatLogic.getInstance().showChatFiltered(searchField.getText());
     }
 }

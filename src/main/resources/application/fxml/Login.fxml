@@ -12,7 +12,7 @@
       <HBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <Pane prefHeight="520.0" prefWidth="241.0" style="-fx-background-color: #46474A;" />
-            <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: #bcd2be;" HBox.hgrow="ALWAYS">
+            <VBox prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                <children>
                   <Pane prefHeight="58.0" prefWidth="447.0" />
                   <Label text="Accedi">
@@ -23,9 +23,9 @@
                         <Insets left="60.0" top="5.0" />
                      </VBox.margin>
                   </Label>
-                  <Label text="Benvenuto! Inserisci i dati per accedere all'applicazione">
+                  <Label fx:id="welcomeLabel" text="Benvenuto! Inserisci i dati per accedere all'applicazione">
                      <VBox.margin>
-                        <Insets bottom="20.0" left="50.0" top="5.0" />
+                        <Insets bottom="30.0" left="50.0" top="5.0" />
                      </VBox.margin>
                   </Label>
                   <TextField fx:id="usernameField" prefHeight="29.0" prefWidth="368.0" promptText="Username">
@@ -52,7 +52,7 @@
                   <Pane prefHeight="61.0" prefWidth="468.0" />
                   <HBox nodeOrientation="RIGHT_TO_LEFT" prefHeight="87.0" prefWidth="468.0">
                      <children>
-                        <Button fx:id="loginButton" mnemonicParsing="false" onAction="#tryLogin" prefHeight="40.0" prefWidth="86.0" text="Accedi">
+                        <Button fx:id="loginButton" mnemonicParsing="false" onAction="#tryLogin" prefHeight="31.0" prefWidth="86.0" text="Accedi">
                            <HBox.margin>
                               <Insets left="50.0" />
                            </HBox.margin>

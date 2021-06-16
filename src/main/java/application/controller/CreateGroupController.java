@@ -111,7 +111,6 @@ public class CreateGroupController {
     				Label usernameLabel = (Label) ((VBox) container.getChildren().get(1)).getChildren().get(0);
     				selectedContactsName.add(usernameLabel.getText());
     			}
-    				
     		}
     		
     		i = i + 2;

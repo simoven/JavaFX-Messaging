@@ -12,7 +12,7 @@
       <HBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <Pane prefHeight="520.0" prefWidth="241.0" style="-fx-background-color: #46474A;" />
-            <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: #bcd2be;" HBox.hgrow="ALWAYS">
+            <VBox prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                <children>
                   <Pane prefHeight="58.0" prefWidth="447.0" />
                   <Label text="Registrati">
@@ -23,14 +23,14 @@
                         <Insets left="60.0" top="20.0" />
                      </VBox.margin>
                   </Label>
-                  <Label text="Benvenuto! Inserisci i dati per completare la registrazione">
+                  <Label fx:id="welcomeLabel" text="Benvenuto! Inserisci i dati per completare la registrazione">
                      <VBox.margin>
                         <Insets bottom="20.0" left="50.0" top="5.0" />
                      </VBox.margin>
                   </Label>
-                  <Circle fx:id="picChooserCircle" fill="DODGERBLUE" onMouseClicked="#setPicture" radius="30.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                  <Circle fx:id="picChooserCircle" fill="#dd7a7a" onMouseClicked="#setPicture" radius="30.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
                      <VBox.margin>
-                        <Insets bottom="5.0" left="240.0" />
+                        <Insets bottom="4.0" left="240.0" />
                      </VBox.margin>
                   </Circle>
                   <Label fx:id="editPicLabel" onMouseClicked="#setPicture" text="Modifica">
@@ -89,18 +89,21 @@
                         </Button>
                      </children>
                   </HBox>
-                  <Pane prefHeight="114.0" prefWidth="447.0" />
+                  <Pane prefHeight="110.0" prefWidth="447.0" />
                   <HBox nodeOrientation="LEFT_TO_RIGHT" prefHeight="100.0" prefWidth="200.0">
                      <children>
                         <Label prefHeight="26.0" prefWidth="145.0" text="Sei già registrato ?">
                            <HBox.margin>
-                              <Insets left="20.0" />
+                              <Insets left="20.0" top="3.0" />
                            </HBox.margin>
                         </Label>
-                        <Button fx:id="loginButton" mnemonicParsing="false" onAction="#setLoginScene" prefHeight="31.0" prefWidth="85.0" text="Accedi" />
+                        <Button fx:id="loginButton" mnemonicParsing="false" onAction="#setLoginScene" prefHeight="31.0" prefWidth="85.0" text="Accedi">
+                           <HBox.margin>
+                              <Insets bottom="5.0" />
+                           </HBox.margin></Button>
                      </children>
                      <VBox.margin>
-                        <Insets bottom="20.0" />
+                        <Insets bottom="22.0" />
                      </VBox.margin>
                   </HBox>
                </children>

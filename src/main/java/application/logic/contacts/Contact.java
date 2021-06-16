@@ -4,13 +4,23 @@ public class Contact {
 	
 	protected String username;
 	protected byte [] profilePic;
+	protected boolean isVisible;
 	
 	public Contact(String username) {
 		this.username = username;
+		this.isVisible = true;
 	}
 	
 	public void setUsername(String username) {
 		this.username = username;
+	}
+	
+	public boolean isVisible() {
+		return isVisible;
+	}
+	
+	public void setVisible(boolean isVisible) {
+		this.isVisible = isVisible;
 	}
 	
 	public void setProfilePic(byte[] profilePic) {

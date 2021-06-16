@@ -42,7 +42,7 @@ public class Chat implements Comparable <Chat>{
 			ChatMessage msg = (ChatMessage) listMessaggi.lastElement();
 			
 			if(msg.getImage() != null)
-				return "Image..";
+				return "Immagine..";
 			else 
 				return msg.getText();
 		}
@@ -64,7 +64,7 @@ public class Chat implements Comparable <Chat>{
 		if(listMessaggi.isEmpty())
 			return 0;
 		
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String dateStr = listMessaggi.lastElement().getSentDate() + " " + listMessaggi.lastElement().getSentHour();
 		Date date;
 		try {
@@ -76,6 +76,13 @@ public class Chat implements Comparable <Chat>{
 		}
 		
 		return 0;
+	}
+	
+	public long getLastMessageDateStamp() {
+		if(listMessaggi.isEmpty())
+			return 0;
+		
+		return listMessaggi.lastElement().getMessageDateStamp();
 	}
 
 	@Override

@@ -3,8 +3,6 @@ package application.controller;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.LinkedList;
-import java.util.List;
 
 import application.graphics.SceneHandler;
 import application.misc.FXUtilities;
@@ -21,8 +19,6 @@ import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
-import javafx.stage.FileChooser;
-import javafx.stage.FileChooser.ExtensionFilter;
 
 public class RegisterController {
 
@@ -64,6 +60,8 @@ public class RegisterController {
     
     private File selectedImage;
     
+    private Image defaultPic;
+    
     public Circle getPicChooserCircle() { return picChooserCircle; }
     
     public void setSelectedImage(File selectedImage) { this.selectedImage = selectedImage; }
@@ -71,12 +69,15 @@ public class RegisterController {
     @FXML
     void initialize() {
     	selectedImage = null;
-    	Image img = new Image(getClass().getResource("/application/images/defaultSinglePic.jpeg").toExternalForm(), 100, 100, true, true);
-    	picChooserCircle.setFill(new ImagePattern(img));
+    	defaultPic = new Image(getClass().getResource("/application/images/defaultSinglePic.png").toExternalForm(), 100, 100, true, true);
+    	picChooserCircle.setFill(new ImagePattern(defaultPic));
     
     	usernameLabel.setText("");
     	passwordLabel.setText("");
     	nameLabel.setVisible(false);
+    	
+    	loginButton.getStyleClass().add("loginRegistrationButtons");
+    	registerButton.getStyleClass().add("loginRegistrationButtons");
     }
     
     @FXML
@@ -127,6 +128,12 @@ public class RegisterController {
     
     @FXML
     void setPicture(MouseEvent event) {
+    	if(selectedImage != null) {
+    		selectedImage = null;
+			picChooserCircle.setFill(new ImagePattern(defaultPic));
+			return;
+    	}
+    	
 		File file = FXUtilities.chooseImage();
 		
 		if(file != null) {

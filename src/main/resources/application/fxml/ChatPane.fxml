@@ -12,7 +12,7 @@
    <bottom>
       <HBox fx:id="bottomHBox" BorderPane.alignment="CENTER">
          <children>
-            <TextArea fx:id="messageTextArea" minHeight="0.0" promptText="Scrivi un messaggio.." HBox.hgrow="ALWAYS">
+            <TextArea fx:id="messageTextArea" minHeight="0.0" promptText="Scrivi un messaggio.." wrapText="true" HBox.hgrow="ALWAYS">
                <HBox.margin>
                   <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
                </HBox.margin></TextArea>
@@ -21,7 +21,7 @@
                   <Insets left="2.0" right="2.0" top="2.0" />
                </HBox.margin>
             </Circle>
-            <Circle fx:id="sendButton" fill="DODGERBLUE" onMouseClicked="#sendMessage" radius="18.0" stroke="BLACK" strokeType="INSIDE">
+            <Circle fx:id="sendButton" fill="DODGERBLUE" onMouseClicked="#sendMessage" radius="18.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
                <HBox.margin>
                   <Insets left="2.0" right="2.0" top="2.0" />
                </HBox.margin>
@@ -30,21 +30,21 @@
       </HBox>
    </bottom>
    <top>
-      <HBox fx:id="chatProfileHBox" prefHeight="63.0" prefWidth="854.0" BorderPane.alignment="CENTER">
+      <HBox fx:id="chatProfileHBox" prefHeight="63.0" BorderPane.alignment="CENTER">
          <children>
-            <Circle fx:id="propicCircle" fill="DODGERBLUE" radius="20.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+            <Circle fx:id="propicCircle" fill="DODGERBLUE" onMouseClicked="#openContactPane" radius="20.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
                <HBox.margin>
                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                </HBox.margin>
             </Circle>
             <VBox prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                <children>
-                  <Label fx:id="usernameLabel" prefHeight="30.0" prefWidth="310.0" text="simoven">
+                  <Label fx:id="usernameLabel" onMouseClicked="#openContactPane" prefHeight="30.0" prefWidth="310.0" text="simoven">
                      <font>
                         <Font size="15.0" />
                      </font>
                      <VBox.margin>
-                        <Insets left="10.0" top="10.0" />
+                        <Insets bottom="3.0" left="10.0" top="10.0" />
                      </VBox.margin>
                   </Label>
                   <Label fx:id="lastAccessLabel" prefHeight="29.0" prefWidth="326.0" text="Ultimo accesso alle 13:40">
@@ -66,9 +66,9 @@
    <center>
       <StackPane fx:id="chatStackPane" BorderPane.alignment="CENTER">
          <children>
-            <ScrollPane fx:id="chatScrollPane" hbarPolicy="NEVER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" vbarPolicy="NEVER">
+            <ScrollPane fx:id="chatScrollPane" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER">
                <content>
-                  <VBox fx:id="chatVbox" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" />
+                  <VBox fx:id="chatVbox" />
                </content>
             </ScrollPane>
          </children>

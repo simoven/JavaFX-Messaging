@@ -6,13 +6,23 @@ public class InformationMessage extends Message {
 	
 	private Object packet;
 	private String information;
+	private boolean addToContacts;
 	
 	public InformationMessage() {
 		super("SERVER", "");
+		addToContacts = false;
 	}
 	
 	public void setInformation(String information) {
 		this.information = information;
+	}
+	
+	public void setAddToContacts(boolean addToContacts) {
+		this.addToContacts = addToContacts;
+	}
+	
+	public boolean getAddToContacts() {
+		return addToContacts;
 	}
 	
 	public void setPacket(Object packet) {

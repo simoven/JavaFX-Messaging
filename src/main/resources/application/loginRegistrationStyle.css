@@ -1,0 +1,29 @@
+.loginRegistrationButtons {
+	-fx-background-color: white;
+	-fx-background-radius: 15;
+	-fx-border-radius:15;
+	-fx-text-fill: #7289da;
+}
+
+.loginRegistrationButtons: hover {
+	-fx-background-color: #EBEBEB;
+}
+
+.text-field {
+	-fx-background-color: rgba(255, 255, 255, 0.5);
+	-fx-background-radius: 30;
+	-fx-text-fill: black;
+	-fx-prompt-text-fill: rgba(255, 255, 255, 0.8);
+}
+
+VBox {
+	-fx-background-color: linear-gradient(to bottom, #7289da, #C998FA);
+}
+
+Label {
+	-fx-text-fill: white;
+}
+
+#welcomeLabel {
+	-fx-text-fill: #EBEBEB;
+}

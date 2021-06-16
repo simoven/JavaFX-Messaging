@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.shape.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.controller.ContactInformationController">
+   <top>
+      <HBox fx:id="topHbox" prefHeight="51.0" BorderPane.alignment="CENTER">
+         <children>
+            <Pane prefWidth="2.0" style="-fx-background-color: #46474A;" />
+            <Circle fx:id="backButton" fill="DODGERBLUE" onMouseClicked="#backButtonPressed" radius="20.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+               <HBox.margin>
+                  <Insets bottom="10.0" left="10.0" top="10.0" />
+               </HBox.margin>
+            </Circle>
+            <Label fx:id="infoLabel" prefHeight="30.0" prefWidth="232.0" style="-fx-text-fill: white;" text="Info sul contatto">
+               <HBox.margin>
+                  <Insets left="10.0" top="15.0" />
+               </HBox.margin>
+            </Label>
+            <Pane HBox.hgrow="ALWAYS" />
+            <MenuButton fx:id="popupMenuButton" mnemonicParsing="false" style="-fx-background-color: transparent;">
+              <items>
+                <MenuItem mnemonicParsing="false" text="Action 1" />
+                <MenuItem mnemonicParsing="false" text="Action 2" />
+              </items>
+               <HBox.margin>
+                  <Insets right="15.0" top="15.0" />
+               </HBox.margin>
+            </MenuButton>
+         </children>
+      </HBox>
+   </top>
+   <center>
+      <StackPane BorderPane.alignment="CENTER">
+         <children>
+            <VBox fx:id="fieldVBox">
+               <children>
+                  <Pane prefHeight="2.0" style="-fx-background-color: #46474A;" />
+                  <HBox VBox.vgrow="NEVER">
+                     <children>
+                        <Circle fx:id="propicCircle" fill="DODGERBLUE" radius="40.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                           <HBox.margin>
+                              <Insets left="20.0" />
+                           </HBox.margin>
+                        </Circle>
+                        <VBox style="-fx-background-color: #7289da; -fx-background-radius: 15;" HBox.hgrow="ALWAYS">
+                           <HBox.margin>
+                              <Insets left="20.0" right="10.0" />
+                           </HBox.margin>
+                           <children>
+                              <TextField fx:id="textField1" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 1.6em;">
+                                 <VBox.margin>
+                                    <Insets left="10.0" right="20.0" top="10.0" />
+                                 </VBox.margin>
+                              </TextField>
+                              <TextField fx:id="textField2" style="-fx-background-color: transparent; -fx-font-size: 1.2em;">
+                                 <VBox.margin>
+                                    <Insets bottom="10.0" left="10.0" right="20.0" top="-5.0" />
+                                 </VBox.margin>
+                              </TextField>
+                              <Label fx:id="myStatusLabel" prefHeight="15.0" prefWidth="90.0" text="Il mio stato">
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" left="10.0" top="2.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <Label fx:id="statusLabel" text="Prova prova prova" wrapText="true">
+                                 <VBox.margin>
+                                    <Insets bottom="10.0" left="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="10.0" top="10.0" />
+                     </VBox.margin>
+                  </HBox>
+                  <ScrollPane fx:id="bottomScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" vbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                     <content>
+                        <VBox fx:id="scrollPaneVBox" />
+                     </content>
+                  </ScrollPane>
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+   </center>
+</BorderPane>

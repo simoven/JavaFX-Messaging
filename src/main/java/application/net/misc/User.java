@@ -9,11 +9,20 @@ public class User implements Serializable {
 	protected String username;
 	protected String status;
 	protected String gpOwner;
+	protected String creationDate;
 	protected byte [] proPic;
 	
 	public User(String username) {
 		this.username = username;
 		this.proPic = null;
+	}
+	
+	public void setCreationDate(String creationDate) {
+		this.creationDate = creationDate;
+	}
+	
+	public String getCreationDate() {
+		return creationDate;
 	}
 	
 	public void setPropicFile(byte[] arr) {

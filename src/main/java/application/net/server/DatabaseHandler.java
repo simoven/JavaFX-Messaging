@@ -234,11 +234,12 @@ public class DatabaseHandler {
 	}
 
 	public int createGroup(String groupName, String owner, byte[] imgProfilo) throws SQLException {
-		String query = "INSERT INTO Gruppo VALUES (null, ?, ?, ?);";
+		String query = "INSERT INTO Gruppo VALUES (null, ?, ?, ?, ?);";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setString(1, groupName);
 		stm.setBytes(2, imgProfilo);
 		stm.setString(3, owner);
+		stm.setString(4, Utilities.getDateFromString(Utilities.getCurrentISODate()));
 		
 		if(stm.executeUpdate() == 0)
 			return -1;
@@ -277,7 +278,7 @@ public class DatabaseHandler {
 		stm.setString(1, userToCheck);
 		ResultSet rs = stm.executeQuery();
 		if(rs.next()) {
-			user = new User(rs.getString("Username"));
+			user = new LongUser(rs.getString("Username"), rs.getString("Nome"), rs.getString("Cognome"));
 			user.setPropicFile(rs.getBytes("Img_profilo"));
 			user.setStatus(rs.getString("Status"));
 		}
@@ -297,6 +298,7 @@ public class DatabaseHandler {
 			user = new User(rs.getString("Nome"));
 			user.setPropicFile(rs.getBytes("Propic"));
 			user.setGpOwner(rs.getString("Owner"));
+			user.setCreationDate(rs.getString("Data_creazione"));
 		}
 		
 		stm.close();
@@ -304,4 +306,13 @@ public class DatabaseHandler {
 		
 		return user;
 	}
-} 
+
+	public void removeUserFromGroup(int groupId, String member) throws SQLException {
+		String query = "DELETE FROM UtenteInGruppo WHERE User_utente=? AND Id_gruppo=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setString(1, member);
+		stm.setInt(2, groupId);
+		stm.executeUpdate();
+		stm.close();
+	}
+}

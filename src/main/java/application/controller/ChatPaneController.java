@@ -8,6 +8,7 @@ import application.graphics.ChatView;
 import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
 import application.misc.FXUtilities;
+import application.net.client.Client;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -66,6 +67,7 @@ public class ChatPaneController {
     void initialize() {
     	Image img = new Image(getClass().getResource("/application/images/3dot_2.png").toExternalForm(), 
     			settingsButton.getFitWidth(), settingsButton.getFitHeight(), true, true);
+    	
     	settingsButton.setImage(img);
     	chatVbox.setAlignment(Pos.CENTER);
     	chatVbox.heightProperty().addListener(observable -> chatScrollPane.setVvalue(1D));
@@ -73,10 +75,13 @@ public class ChatPaneController {
     	chatScrollPane.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
     	chatVbox.prefWidthProperty().bind(chatScrollPane.prefWidthProperty());
     	bottomHBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
+    	
     	sendButton.radiusProperty().bind(bottomHBox.prefHeightProperty().multiply(0.45));
     	attachImageButton.radiusProperty().bind(bottomHBox.prefHeightProperty().multiply(0.45));
-    	sendButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/arrow2.png"), 100, 100, true, true)));
+    	
+    	sendButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/arrow3.png"), 100, 100, true, true)));
     	attachImageButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/attachIcon.png"), 100, 100, true, true)));
+    	
     	SceneHandler.getInstance().setChatPaneStackPane(chatStackPane);
     	SceneHandler.getInstance().setChatPaneScrollPane(chatScrollPane);
     	ChatView.getInstance().setChatPaneController(this);
@@ -129,5 +134,11 @@ public class ChatPaneController {
     private void removeImage() {
     	attachedImage = null;
 		attachImageButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/attachIcon.png"), 100, 100, true, true)));
+    }
+    
+    @FXML
+    void openContactPane(MouseEvent event) {
+    	ChatLogic.getInstance().requestInfoForContactPane();
+    	SceneHandler.getInstance().setContactInformationPane();
     }
 }

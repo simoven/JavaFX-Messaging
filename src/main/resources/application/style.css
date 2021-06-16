@@ -49,13 +49,16 @@
 	-fx-background-color: #5A6BAF;
 }
 
+#usernameLabel {
+	-fx-font-size: 1.4em;
+}
+
 .horizontaLine {
 	-fx-background-color: #9DA7A7;
 }
 
 .groupUserLabel {
 	-fx-background-color: transparent;
-	-fx-text-fill: red;
 }
 
 .genericChatInformation {
@@ -118,7 +121,7 @@
 }
 
 .messageTime {
-	-fx-fill: white; 
+	-fx-fill: #EBEBEB; 
 	-fx-font-size: 0.8em;
 }
 
@@ -160,6 +163,7 @@
 	-fx-background-radius: 15;
 	-fx-border-radius: 15; 
 }
+
 .check-box:hover .box{
 	-fx-background-color: #7289da;
 }
@@ -170,4 +174,16 @@
 
 .check-box:selected .box {
 	-fx-background-color: #28a3f4;
+}
+
+.menu-button > .arrow-button {
+    -fx-padding: 0;
+}
+
+.menu-button > .arrow-button > .arrow {
+    -fx-padding: 0;
+}
+
+.menu-button > .label {
+    -fx-padding: 0;
 }

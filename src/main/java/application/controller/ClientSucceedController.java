@@ -10,6 +10,7 @@ import application.logic.messages.InformationMessage;
 import application.logic.messages.Message;
 import application.net.client.Client;
 import application.net.client.LocalDatabaseHandler;
+import application.net.misc.LongUser;
 import application.net.misc.Protocol;
 import application.net.misc.User;
 import javafx.concurrent.WorkerStateEvent;
@@ -46,7 +47,11 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 						break;
 						
 					case Protocol.CONTACT_INFORMATION_REQUEST:
-						handleContactInformation((InformationMessage) packet);
+						handleContactInformation((InformationMessage) packet, false);
+						break;
+						
+					case Protocol.CONTACT_FULL_INFORMATION_REQUEST:
+						handleContactInformation((InformationMessage) packet, true);
 						break;
 						
 					case Protocol.GROUP_INFORMATION_REQUEST:
@@ -56,6 +61,13 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 					case Protocol.GROUP_PARTECIPANT_REQUEST:
 						handleGroupPartecipants((InformationMessage) packet);
 						break;
+						
+					case Protocol.GROUP_MEMBER_RIMOTION:
+						handlegroupRimotion((InformationMessage) packet);
+						break;
+						
+					case Protocol.GROUP_MEMBER_ADD:
+						handleGroupMemberAdd((InformationMessage) packet);
 						
 					default:
 						break;
@@ -70,6 +82,18 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 	}
 
 	@SuppressWarnings("unchecked")
+	private void handleGroupMemberAdd(InformationMessage packet) {
+		Pair <String, Integer> pair = (Pair<String, Integer>) packet.getPacket();
+		ChatLogic.getInstance().handleGroupAdd(pair.getKey(), pair.getValue());
+	}
+
+	@SuppressWarnings("unchecked")
+	private void handlegroupRimotion(InformationMessage packet) {
+		Pair <String, Integer> pair = (Pair<String, Integer>) packet.getPacket();
+		ChatLogic.getInstance().handleGroupRimotion(pair.getKey(), pair.getValue());
+	}
+
+	@SuppressWarnings("unchecked")
 	private void handleGroupPartecipants(InformationMessage packet) {
 		ArrayList <String> utenti = (ArrayList<String>) packet.getPacket();
 		ChatLogic.getInstance().updateGroupPartecipants(utenti, packet.getGroupId());
@@ -80,14 +104,19 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 	
 		if(packet.getPacket() instanceof User) {
 			group = (User) packet.getPacket();
-			ChatLogic.getInstance().updateGroupInfo(packet.getGroupId(), group.getUsername(), group.getGpOwner(), group.getProPic());
+			ChatLogic.getInstance().updateGroupInfo(packet.getGroupId(), group.getUsername(), group.getGpOwner(), group.getProPic(), group.getCreationDate());
 		}
 	}
 		
 
-	private void handleContactInformation(InformationMessage packet) {
+	private void handleContactInformation(InformationMessage packet, boolean fullInfo) {
 		User utente = (User) packet.getPacket();
-		ChatLogic.getInstance().updateUser(utente.getUsername(), utente.getStatus(), utente.getProPic());
+		if(!fullInfo)
+			ChatLogic.getInstance().updateUser(utente.getUsername(), utente.getStatus(), utente.getProPic());
+		else {
+			LongUser user = (LongUser) utente;
+			ChatLogic.getInstance().showUserInfo(user.getUsername(), user.getName(), user.getLastName(), user.getStatus(), user.getProPic());
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -118,8 +147,9 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 		ChatLogic.getInstance().retrievePendingMessage(listMessaggi);
 		
 		try {
-			for(Message msg : listMessaggi)
+			for(Message msg : listMessaggi) {
 				LocalDatabaseHandler.getInstance().addMessage((ChatMessage) msg);
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

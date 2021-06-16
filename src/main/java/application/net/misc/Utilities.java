@@ -70,6 +70,10 @@ public class Utilities {
 		if(username == null || username.length() < 4)
 			return USERNAME_TOO_SHORT;
 		
+		//null è riservato ai messaggi del server
+		if(username.equals("null"))
+			return USERNAME_NOT_VALID;
+		
 		if(username.length() > 16)
 			return USERNAME_TOO_LONG;
 		

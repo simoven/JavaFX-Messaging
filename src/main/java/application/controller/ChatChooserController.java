@@ -1,5 +1,8 @@
 package application.controller;
 
+import java.util.ArrayList;
+import java.util.Vector;
+
 import application.graphics.CreateChatView;
 import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
@@ -8,6 +11,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -39,6 +43,28 @@ public class ChatChooserController implements EventHandler <MouseEvent> {
     @FXML 
     private HBox topHbox;
     
+    //Questo flag dice se i bottoni servono per creare un gruppo o aggiungere i partecipanti
+    private boolean buttonsForGroupAdd = false;
+    
+    private int groupIdForAdd = -1;
+    
+    public void setGroupIdForAdd(int groupIdForAdd) {
+		this.groupIdForAdd = groupIdForAdd;
+	}
+    
+    public Button getNewGroupButton() {
+		return newGroupButton;
+	}
+    
+    public void setButtonsForGroupAdd(boolean buttonsForGroupAdd) {
+		this.buttonsForGroupAdd = buttonsForGroupAdd;
+		
+		if(buttonsForGroupAdd)
+			newGroupButton.setText("Aggiungi");
+		else
+			newGroupButton.setText("Nuovo gruppo");
+	}
+    
     @FXML
     void initialize() {
     	CreateChatView.getInstance().setChatChooserController(this);
@@ -66,22 +92,46 @@ public class ChatChooserController implements EventHandler <MouseEvent> {
     }
     
     @FXML
+    //Questo metodo cerca gli utenti globali e quelli che sono già miei contatti
     void searchUser(ActionEvent event) {
-    	//Questo metodo cerca gli utenti globali e quelli che sono già miei contatti
     	String subUsername = searchField.getText();
     	if(subUsername.isBlank()) {
     		ChatLogic.getInstance().showContactsChoice();
     		return;
     	}
     	
-    	ChatLogic.getInstance().showContactsChoiceFiltered(subUsername);
-    	Client.getInstance().requestSearch(subUsername);
+    	ChatLogic.getInstance().showContactsChoiceFiltered(subUsername, buttonsForGroupAdd);
+    	
+    	if(!buttonsForGroupAdd)
+    		Client.getInstance().requestSearch(subUsername);
     }
     
     @FXML
     void createGroup(MouseEvent event) {
-    	SceneHandler.getInstance().showGroupCreationPane();
-    	ChatLogic.getInstance().showContactForGroupCreation();
+    	if(!buttonsForGroupAdd) {
+	    	SceneHandler.getInstance().showGroupCreationPane();
+	    	ChatLogic.getInstance().showContactForGroupCreation();
+    	}
+    	else {
+    		Vector <String> selectedContacts = new Vector <String>();
+    		for(int i = 0; i < allUsersVbox.getChildren().size();) {
+    			if(allUsersVbox.getChildren().get(i) instanceof HBox) {
+        			HBox container = (HBox) allUsersVbox.getChildren().get(i);
+        			CheckBox checkBox = (CheckBox) container.getChildren().get(container.getChildren().size() - 1);
+        			if(checkBox.isSelected()) {
+        				Label usernameLabel = (Label) ((VBox) container.getChildren().get(1)).getChildren().get(0);
+        				selectedContacts.add(usernameLabel.getText());
+        			}
+        		}
+    			
+    			i = i + 2;
+    		}
+    		
+    		if(!selectedContacts.isEmpty())
+    			ChatLogic.getInstance().addContactsToGroup(selectedContacts, groupIdForAdd);
+    		
+    		SceneHandler.getInstance().setChatPane();
+    	}
     }
 
 }
