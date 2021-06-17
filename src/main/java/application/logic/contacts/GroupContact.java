@@ -5,10 +5,20 @@ public class GroupContact extends Contact {
 	private int groupId;
 	private String owner;
 	private String creationDate;
+	private boolean deleted;
 	
 	public GroupContact(String groupName, int id) {
 		super(groupName);
 		this.groupId = id;
+		this.deleted = false;
+	}
+	
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
+	}
+	
+	public boolean isDeleted() {
+		return deleted;
 	}
 	
 	public int getGroupId() {

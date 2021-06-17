@@ -94,16 +94,44 @@ public class ChatLogic {
 		}
 	}
 	
+	//Pulisco la chat corrente
+	public void clearCurrentChat() {
+		if(activeChat == null)
+			return;
+		
+		activeChat.clearChat();
+		if(activeChat instanceof GroupChat) {
+			if(((GroupChat) activeChat).getGroupInfo().isDeleted()) {
+				LocalDatabaseHandler.getInstance().deleteGroup(((GroupChat) activeChat).getGroupInfo().getGroupId());
+				contactList.remove(((GroupChat) activeChat).getGroupInfo());
+				chatList.remove(activeChat);
+				activeChat = null;
+			}
+			else
+				LocalDatabaseHandler.getInstance().clearGroupChat(((GroupChat) activeChat).getGroupInfo().getGroupId());
+		}
+		else
+			LocalDatabaseHandler.getInstance().clearChat(((SingleChat) activeChat).getChattingWith().getUsername());
+		
+		displayCurrentChat();
+		displayAllChat();
+	}
+	
 	//Mostro la chat selezionata sul pannello a destra
 	private void displayCurrentChat() {
+		if(activeChat == null)
+			return;
+		
 		boolean isGroupChat = false;
 		SceneHandler.getInstance().setChatPane();
 		ChatView.getInstance().getChatPaneController().getChatVbox().getChildren().clear();
 		if(activeChat instanceof SingleChat)
 			ChatView.getInstance().showContactInformation(activeContact, -1);
 		else {
-			ChatView.getInstance().showContactInformation(activeContact, ((GroupChat) activeChat).getListUtenti().size());
-			((GroupChat) activeChat).setRandomColors();
+			if(((GroupChat) activeChat).getListUtenti() == null)
+				ChatView.getInstance().showContactInformation(activeContact, 0);
+			else
+				ChatView.getInstance().showContactInformation(activeContact, ((GroupChat) activeChat).getListUtenti().size());
 			isGroupChat = true;
 		}
 		
@@ -172,6 +200,9 @@ public class ChatLogic {
 	}
 	
 	public void sendMessage(String text, File attachedImage) {
+		if(activeChat == null)
+			return;
+		
 		ChatMessage msg = new ChatMessage(myInformation.getUsername(), activeContact.getUsername());
 		if(activeContact instanceof SingleContact)
 			msg.setGroupMessage(false);
@@ -180,6 +211,9 @@ public class ChatLogic {
 			msg.setGroupId(((GroupContact) activeContact).getGroupId());
 			
 			if(!((GroupChat) activeChat).getListUtenti().contains(myInformation))
+				return;
+			
+			if(((GroupChat) activeChat).getGroupInfo().isDeleted())
 				return;
 		}
     	
@@ -362,9 +396,6 @@ public class ChatLogic {
 		chat = searchChat(contact);
 		if(chat == null) 
 			chat = createChat(contact);
-		
-		if(chat instanceof GroupChat && ((GroupChat) chat).getListUtenti().indexOf(myInformation) == -1)
-			((GroupChat) chat).getListUtenti().add(myInformation);
 			
 		if(msg.getMessageDateStamp() > chat.getLastMessageDateStamp()) 
 			if(activeChat == chat)
@@ -387,18 +418,17 @@ public class ChatLogic {
 	}
 
 	//Controllo se nei messaggi che mi sono arrivati ci sono messaggi dal server, tipo "utente x è stato rimosso dal gruppo"
+	//La struttura del messaggio è OPERAZIONE:username
 	private void checkGroupMsgText(ChatMessage msg) {
 		GroupContact contact = searchContact(msg.getGroupId());
 		if(contact == null)
 			return;
 		
 		GroupChat chat = (GroupChat) searchChat(contact);
-		if(chat == null)
-			return;
 		
 		if(msg.getText().contains(":")) {
 			String [] split = msg.getText().split(":");
-			if(split [0].equals("REMOVED")) {
+			if(split [0].equals("REMOVED") && chat != null) {
 				if(split [1].equals(ChatLogic.getInstance().getMyInformation().getUsername())) {
 					msg.setText("Sei stato rimosso");
 					removeFromGroup(chat, myInformation.getUsername(), msg);
@@ -408,7 +438,7 @@ public class ChatLogic {
 					removeFromGroup(chat, split [1], msg);
 				}
 			}
-			else if(split [0].equals("ADDED")) {
+			else if(split [0].equals("ADDED") && chat != null) {
 				if(split [1].equals(ChatLogic.getInstance().getMyInformation().getUsername())) {
 					msg.setText("Sei stato aggiunto");
 					addedToGroup(myInformation.getUsername(), chat, msg);
@@ -417,6 +447,29 @@ public class ChatLogic {
 					msg.setText(split [1] + " è stato aggiunto");
 					addedToGroup(split [1], chat, msg);
 				}
+			}
+			else if(split [0].equals("LEFT") && chat != null) {
+				if(split [1].equals(ChatLogic.getInstance().getMyInformation().getUsername())) {
+					msg.setText("Hai abbandonato");
+					removeFromGroup(chat, myInformation.getUsername(), msg);
+				}
+				else {
+					msg.setText(split [1] + " ha abbandonato");
+					removeFromGroup(chat, split [1], msg);
+				}
+			}
+			else if(split [0].equals("DELETED")) {
+				int groupId = Integer.parseInt(split [1]);
+				msg.setText("Il gruppo è stato eliminato");
+				//Significa che il gruppo nemmeno esisteva nelle mie chat (Ero offline tra la creazione e l'eliminazione)
+				if(!handleGroupDeletion(groupId))
+					msg.setGroupId(-2);
+			}
+			else if(split [0].equals("PIC_CHANGED")) {
+				int groupId = Integer.parseInt(split [1]);
+				msg.setText("L' immagine di profilo è stata cambiata");
+				Client.getInstance().requestGroupInformation(groupId);
+				LocalDatabaseHandler.getInstance().addMessage(msg);
 			}
 		}
 	}
@@ -440,7 +493,11 @@ public class ChatLogic {
 				if(msg instanceof ChatMessage && msg.getSender().equals("null"))
 					checkGroupMsgText((ChatMessage) msg);
 			}
-				
+			
+			//Significa che ho ricevuto un messaggio di eliminazione gruppo riferito a un gruppo che da me nemmeno esiste, quindi lo skippo
+			if(msg.isAGroupMessage() && msg.getGroupId() == -2)
+				continue;
+			
 			chat = searchChat(msgContact);
 			if(chat == null) 
 				chat = createChat(msgContact);
@@ -525,6 +582,7 @@ public class ChatLogic {
 
 	//Questo metodo aggiorna le informazioni su un gruppo e viene chiamato quando un utente riceve per la prima volta un messaggio
 	//da un certo gruppo e quindi ha bisogno delle sue informazioni
+	//Oppure viene chiamato quando devo aggiornare l'immagine di profilo di un gruppo
 	public void updateGroupInfo(int groupId, String username, String gpOwner, byte[] proPic, String creationDate) {
 		GroupContact gpContact = searchContact(groupId);
 		if(gpContact == null)
@@ -537,7 +595,10 @@ public class ChatLogic {
 		displayAllChat();
 		
 		try {
-			LocalDatabaseHandler.getInstance().createGroup(gpContact);
+			if(LocalDatabaseHandler.getInstance().groupExists(groupId))
+				LocalDatabaseHandler.getInstance().updateGroup(groupId, proPic);
+			else
+				LocalDatabaseHandler.getInstance().createGroup(gpContact);
 		} catch (SQLException e) {
 			//TODO show error
 			e.printStackTrace();
@@ -546,7 +607,7 @@ public class ChatLogic {
 
 	//Questo metodo aggiorna l'utente e viene chiamato quando riceviamo un messaggio da lui per la prima volta
 	//Viene inoltre aggiunto ai nostri contatti
-	public void updateUser(String username, String status, byte[] proPic) {
+	public void firstRegisterUser(String username, String status, byte[] proPic) {
 		SingleContact user = searchContact(username);
 		if(user == null) 
 			user = createContact(username);
@@ -555,7 +616,19 @@ public class ChatLogic {
 		user.setProfilePic(proPic);
 		user.setVisible(false);
 		registerUser(user, false);
-		System.out.println("Sto registrando " + username + " nel db locale");
+		displayAllChat();
+	}
+	
+	public void updateUser(String username, String status, byte[] proPic) {
+		SingleContact user = searchContact(username);
+		if(user == null) 
+			return;
+		
+		user.setStatus(status);
+		user.setProfilePic(proPic);
+		LocalDatabaseHandler.getInstance().modifyUser(user);
+		if(user.equals(activeContact))
+			ChatView.getInstance().showContactInformation(user, -1);
 		displayAllChat();
 	}
 
@@ -625,12 +698,17 @@ public class ChatLogic {
 		}		
 	}
 
-	public void showUserInfo(String username, String name, String lastName, String status, byte[] proPic) {
+	public void showUserInfo(String username, String name, String lastName) {
 		boolean isSavedContact = true;
-		if(!searchContact(username).isVisible())
+		SingleContact contact = searchContact(username);
+		
+		if(contact == null)
+			return;
+		
+		if(!contact.isVisible())
 			isSavedContact = false;
 			
-		ContactInfoView.getInstance().showInfo(username, name, lastName, status, proPic, isSavedContact);
+		ContactInfoView.getInstance().showInfo(username, name, lastName, contact.getStatus(), contact.getProfilePic(), isSavedContact);
 	}
 
 	public void setContactVisibility(String substring, boolean isVisible) {
@@ -642,9 +720,17 @@ public class ChatLogic {
 			LocalDatabaseHandler.getInstance().setInvisible(substring);
 	}
 	
+	public void deleteGroup(int groupId) {
+		Client.getInstance().requestGroupDeletion(groupId, myInformation.getUsername());
+	}
+	
 	public void requestRimotion(GroupChat chat, SingleContact contact) {
-		if(chat.getListUtenti().indexOf(contact) != -1)
-			Client.getInstance().removeFromGroup(chat.getGroupInfo().getGroupId(), myInformation.getUsername(), contact.getUsername());
+		if(chat.getListUtenti().indexOf(contact) != -1) {
+			if(chat.getGroupInfo().getOwner().equals(contact.getUsername()))
+				deleteGroup(chat.getGroupInfo().getGroupId());
+			else
+				Client.getInstance().removeFromGroup(chat.getGroupInfo().getGroupId(), myInformation.getUsername(), contact.getUsername());
+		}
 	}
 
 	public boolean removeFromGroup(GroupChat chat, String username, ChatMessage msg) {
@@ -669,29 +755,41 @@ public class ChatLogic {
 		return true;
 	}
 
-	public void handleGroupRimotion(String userRemoved, Integer groupId) {
+	//Questo metodo gestisce il messaggio di rimozione da parte del server
+	public void handleGroupRimotion(String userRemoved, Integer groupId, boolean autoRimotion) {
 		GroupContact contact = searchContact(groupId);
 		GroupChat chat = (GroupChat) searchChat(contact);
 		
 		//In base a chi è stato rimosso, preparo il messaggio da mostrare
 		ChatMessage msg;
-		if(userRemoved.equals(myInformation.getUsername()))
-			msg = createInformationMessage("Sei stato rimosso");
-		else
-			msg = createInformationMessage(userRemoved + " è stato rimosso");
+		if(userRemoved.equals(myInformation.getUsername())) {
+			if(autoRimotion)
+				msg = createInformationMessage("Hai abbandonato");
+			else
+				msg = createInformationMessage("Sei stato rimosso");
+		}
+		else {
+			if(autoRimotion)
+				msg = createInformationMessage(userRemoved + " ha abbandonato");
+			else
+				msg = createInformationMessage(userRemoved + " è stato rimosso");
+		}
 		
 		msg.setGroupId(groupId);
 		msg.setGroupMessage(true);
 		
 		//Se la rimozione è avvenuta correttamente, mostro il messaggio 
 		if(removeFromGroup(chat, userRemoved, msg)) {
-			chat.addNewMessage(msg);
-			displayAllChat();
-			
 			if(activeChat.equals(chat)) {
+				if(msg.getMessageDateStamp() > activeChat.getLastMessageDateStamp()) 
+					ChatView.getInstance().appendMessageInChat(createInformationMessage(msg.getSentDate()), false, "");
+				
 				ChatView.getInstance().appendMessageInChat(msg, false, "null");
 				ChatView.getInstance().showContactInformation(contact, chat.getListUtenti().size());
 			}
+			
+			chat.addNewMessage(msg);
+			displayAllChat();
 		}
 	}
 
@@ -755,14 +853,109 @@ public class ChatLogic {
 		msg.setGroupMessage(true);
 		
 		if(addedToGroup(userAdded, chat, msg)) {
-			chat.addNewMessage(msg);
-			displayAllChat();
-			
 			if(activeChat.equals(chat)) {
+				if(msg.getMessageDateStamp() > chat.getLastMessageDateStamp()) 
+					ChatView.getInstance().appendMessageInChat(createInformationMessage(msg.getSentDate()), false, "");
+				
 				ChatView.getInstance().appendMessageInChat(msg, false, "null");
 				ChatView.getInstance().showContactInformation(contact, chat.getListUtenti().size());
 			}
+			
+			chat.addNewMessage(msg);
+			displayAllChat();
+		}
+	}
+	
+	public Vector <GroupChat> getCommonGroups(String username) {
+		Vector <GroupChat> commonChats = new Vector <GroupChat>();
+		SingleContact contact = searchContact(username);
+		if(contact == null)
+			return commonChats;
+		
+		for(Chat chat : chatList) {
+			if(chat instanceof GroupChat && ((GroupChat) chat).getListUtenti().contains(myInformation)) {
+				if(((GroupChat) chat).getListUtenti().contains(contact))
+					commonChats.add((GroupChat) chat);
+			}
 		}
 		
+		return commonChats;
+	}
+
+	//Questo metodo serve ad abbandonare un gruppo
+	public void leftGroup(GroupChat chat) {
+		if(chat.getListUtenti().contains(myInformation))
+			Client.getInstance().requestGroupQuit(myInformation.getUsername(), chat.getGroupInfo().getGroupId());
+	}
+
+	public boolean handleGroupDeletion(int groupId) {
+		GroupContact contact = searchContact(groupId);
+		if(contact == null)
+			return false;
+		
+		GroupChat chat = (GroupChat) searchChat(contact);
+		if(chat == null)
+			return false;
+		
+		contact.setUsername("Gruppo eliminato");
+		contact.setProfilePic(null);
+		ChatMessage msg = createInformationMessage("Il gruppo è stato eliminato");
+		msg.setGroupId(groupId);
+		msg.setGroupMessage(true);
+		chat.addNewMessage(msg);
+		
+		displayAllChat();
+		
+		if(chat.equals(activeChat)) {
+			if(msg.getMessageDateStamp() > chat.getLastMessageDateStamp()) 
+				ChatView.getInstance().appendMessageInChat(createInformationMessage(msg.getSentDate()), false, "");
+			
+			ChatView.getInstance().appendMessageInChat(msg, false, "null");
+			ChatView.getInstance().showContactInformation(contact, chat.getListUtenti().size());
+		}
+		
+		LocalDatabaseHandler.getInstance().setGroupDeleted(groupId);
+		LocalDatabaseHandler.getInstance().addMessage(msg);
+		
+		return true;
+	}
+
+	//Questo metodo richiede di cambiare immagine di profilo del gruppo
+	public void groupPictureChanged(File selectedPhoto) {
+		if(activeChat instanceof GroupChat) {
+			if(((GroupChat) activeChat).getGroupInfo().getProfilePic() == null && selectedPhoto == null)
+				return;
+			
+			Client.getInstance().updateGroupPicture(selectedPhoto, ((GroupChat) activeChat).getGroupInfo().getGroupId(), myInformation.getUsername());
+		}
+	}
+
+	public void updateGroupImage(Integer groupId, File pic) {
+		GroupContact contact = searchContact(groupId);
+		if(contact == null)
+			return;
+		
+		GroupChat chat = (GroupChat) searchChat(contact);
+		if(chat == null)
+			return;
+		
+		ChatMessage chatMsg = createInformationMessage("L'immagine di profilo è stata cambiata");
+		chatMsg.setGroupId(groupId);
+		chatMsg.setGroupMessage(true);
+		contact.setProfilePic(Utilities.getByteArrFromFile(pic));
+		
+		chat.addNewMessage(chatMsg);
+		displayAllChat();
+		
+		if(chat.equals(activeChat)) {
+			if(chatMsg.getMessageDateStamp() > chat.getLastMessageDateStamp()) 
+				ChatView.getInstance().appendMessageInChat(createInformationMessage(chatMsg.getSentDate()), false, "");
+			
+			ChatView.getInstance().appendMessageInChat(chatMsg, false, "null");
+			ChatView.getInstance().showContactInformation(contact, chat.getListUtenti().size());
+		}
+		
+		LocalDatabaseHandler.getInstance().updateGroup(groupId, Utilities.getByteArrFromFile(pic));
+		LocalDatabaseHandler.getInstance().addMessage(chatMsg);
 	}
 }

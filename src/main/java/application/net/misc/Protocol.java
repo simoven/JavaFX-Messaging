@@ -36,4 +36,7 @@ public class Protocol {
 	public static final String CONTACT_FULL_INFORMATION_REQUEST = "Request full contact info";
 	public static final String GROUP_MEMBER_RIMOTION = "Remove user from group";
 	public static final String GROUP_MEMBER_ADD = "Adding new member";
+	public static final String GROUP_MEMBER_LEFT = "Left the group";
+	public static final String GROUP_DELETION = "Delete the group";
+	public static final String GROUP_PICTURE_CHANGED = "Picture changed";
 }

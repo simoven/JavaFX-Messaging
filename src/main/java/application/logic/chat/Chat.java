@@ -30,6 +30,11 @@ public class Chat implements Comparable <Chat>{
 		return unreadedMessage;
 	}
 	
+	public void clearChat() {
+		listMessaggi.clear();
+		unreadedMessage = true;
+	}
+	
 	public void setUnreadedMessage(boolean unreadMessage) {
 		this.unreadedMessage = unreadMessage;
 	}

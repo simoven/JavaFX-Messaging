@@ -1,5 +1,6 @@
 package application.net.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -109,11 +110,23 @@ public class ServerListener implements Runnable {
 						break;
 						
 					case Protocol.GROUP_MEMBER_RIMOTION:
-						handleGroupRimotion();
+						handleGroupRimotion(false);
 						break;
 						
 					case Protocol.GROUP_MEMBER_ADD:
 						handleGroupAdd();
+						break;
+						
+					case Protocol.GROUP_MEMBER_LEFT:
+						handleGroupRimotion(true);
+						break;
+						
+					case Protocol.GROUP_DELETION:
+						handleGroupDeletion();
+						break;
+						
+					case Protocol.GROUP_PICTURE_CHANGED:
+						handleGroupPictureChanged();
 						break;
 						
 					default:
@@ -139,7 +152,7 @@ public class ServerListener implements Runnable {
 			return;
 		}
 	}
-
+	
 	private void disconnect() {
 		try {
 			if(server.disconnectUser(serverUsername))
@@ -148,13 +161,58 @@ public class ServerListener implements Runnable {
 		closeStreams();
 	}
 	
+	private boolean checkGroupAndRequester(int groupId, String requester) throws SQLException {
+		if(!DatabaseHandler.getInstance().checkGroupExists(groupId))
+			return false;
+		
+		if(!requester.equals(DatabaseHandler.getInstance().getGroupInfo(groupId).getGpOwner()))
+			return false;
+		
+		return true;
+	}
+	
+	private void handleGroupPictureChanged() throws ClassNotFoundException, IOException, SQLException{
+		String requester = (String) inputStream.readObject();
+		int groupId = Integer.parseInt((String) inputStream.readObject());
+		File pic = (File) inputStream.readObject();
+		
+		if(!checkGroupAndRequester(groupId, requester))
+			return;
+		
+		ArrayList <String> listPartecipanti = DatabaseHandler.getInstance().getGroupPartecipants(groupId);
+		if(listPartecipanti.indexOf(requester) == -1)
+			return;
+		
+		DatabaseHandler.getInstance().updateGroup(groupId, Utilities.getByteArrFromFile(pic));
+		InformationMessage msg = new InformationMessage();
+		msg.setInformation(Protocol.GROUP_PICTURE_CHANGED);
+		msg.setPacket(new Pair <Integer, File>(groupId, pic));
+		for(String receiver : listPartecipanti) {	
+			ObjectOutputStream destOutput = server.getStream(receiver);
+			if(destOutput == null) {
+				ChatMessage infMsg = new ChatMessage("null", receiver);
+				infMsg.setText("PIC_CHANGED:" + groupId);
+				infMsg.setGroupMessage(true);
+				infMsg.setTimestamp(Utilities.getCurrentISODate());
+				infMsg.setGroupId(groupId);
+				DatabaseHandler.getInstance().addPendingMessage(infMsg, receiver);
+			}
+			else {
+				destOutput.writeObject(Protocol.GROUP_PICTURE_CHANGED);
+				destOutput.writeObject(msg);
+			}
+		}
+		
+	}
+
+	
 	@SuppressWarnings("unchecked")
 	private void handleGroupAdd() throws IOException, SQLException, ClassNotFoundException {
 		String requester = (String) inputStream.readObject();
 		int groupId = Integer.parseInt((String) inputStream.readObject());
 		Vector <String> users = (Vector <String>) inputStream.readObject();
 		
-		if(!requester.equals(DatabaseHandler.getInstance().getGroupInfo(groupId).getGpOwner()))
+		if(!checkGroupAndRequester(groupId, requester))
 			return;
 		
 		ArrayList <String> listPartecipanti = DatabaseHandler.getInstance().getGroupPartecipants(groupId);
@@ -206,46 +264,64 @@ public class ServerListener implements Runnable {
 		sendObject(msg);
 	}
 	
-	private void handleGroupRimotion() throws ClassNotFoundException, IOException, SQLException {
-		int groupId = Integer.parseInt((String) inputStream.readObject());
-		String members = (String) inputStream.readObject();
-		String [] split = members.split(":");
-		String requester = split [0];
-		String memberRemoved = split [1];
+	//Questo metodo gestisce la rimozione in un gruppo da parte dell'admin o l'abbandono spontaneo dell'utente
+	private void handleGroupRimotion(boolean autoRimotion) throws ClassNotFoundException, IOException, SQLException {
+		String requester = "";
+		if(!autoRimotion)
+			requester = (String) inputStream.readObject();
 		
-		if(!requester.equals(DatabaseHandler.getInstance().getGroupInfo(groupId).getGpOwner()))
+		int groupId = Integer.parseInt((String) inputStream.readObject());
+		String memberRemoved = (String) inputStream.readObject();
+		
+		if(!DatabaseHandler.getInstance().checkGroupExists(groupId))
+			return;
+		
+		if(!autoRimotion && !requester.equals(DatabaseHandler.getInstance().getGroupInfo(groupId).getGpOwner()))
 			return;
 		
 		ArrayList <String> listPartecipanti = DatabaseHandler.getInstance().getGroupPartecipants(groupId);
-		if(listPartecipanti.indexOf(requester) == -1) {
+		if(!autoRimotion && listPartecipanti.indexOf(requester) == -1) {
 			System.out.println("owner not in group");
 			return;
 		}
 		
+		String information;
+		if(!autoRimotion)
+			information = Protocol.GROUP_MEMBER_RIMOTION;
+		else
+			information = Protocol.GROUP_MEMBER_LEFT;
+		
 		DatabaseHandler.getInstance().removeUserFromGroup(groupId, memberRemoved);
 		InformationMessage msg = new InformationMessage();
-		msg.setInformation(Protocol.GROUP_MEMBER_RIMOTION);
+		msg.setInformation(information);
 		msg.setPacket(new Pair <String, Integer>(memberRemoved, groupId));
 		for(String receiver : listPartecipanti) {
 			ObjectOutputStream destOutput = server.getStream(receiver);
 			if(destOutput == null) {
 				ChatMessage infMsg = new ChatMessage("null", receiver);
+				if(!autoRimotion)
+					infMsg.setText("LEFT:" + memberRemoved);
+				else
+					infMsg.setText("REMOVED:" + memberRemoved);
+				
 				infMsg.setGroupMessage(true);
-				infMsg.setText("REMOVED:" + memberRemoved);
 				infMsg.setTimestamp(Utilities.getCurrentISODate());
 				infMsg.setGroupId(groupId);
 				DatabaseHandler.getInstance().addPendingMessage(infMsg, receiver);
 			}
 			else {
-				destOutput.writeObject(Protocol.GROUP_MEMBER_RIMOTION);
+				destOutput.writeObject(information);
 				destOutput.writeObject(msg);
 			}
 		}
 	}
 
-	
+	//Questo metodo restituisce i partecipanti di un gruppo
 	private void handleGroupPartecipants() throws SQLException, ClassNotFoundException, IOException {
 		int groupId = Integer.parseInt((String) inputStream.readObject());
+		if(!DatabaseHandler.getInstance().checkGroupExists(groupId))
+			return;
+		
 		ArrayList <String> utenti = DatabaseHandler.getInstance().getGroupPartecipants(groupId);
 		
 		if(utenti != null) {
@@ -258,8 +334,48 @@ public class ServerListener implements Runnable {
 		}	
 	}
 	
+	//questo metodo gestisce l'eliminazione di un gruppo
+	private void handleGroupDeletion() throws ClassNotFoundException, IOException, SQLException {
+		String requester = (String) inputStream.readObject();
+		int groupId = Integer.parseInt((String) inputStream.readObject());
+		
+		if(!checkGroupAndRequester(groupId, requester))
+			return;
+		
+		ArrayList <String> partecipants = DatabaseHandler.getInstance().getGroupPartecipants(groupId);
+		if(!partecipants.contains(requester))
+			return;
+		
+		DatabaseHandler.getInstance().deleteGroup(groupId);
+		
+		ChatMessage msg = new ChatMessage("null", "");
+		msg.setText("DELETED:" + groupId);
+		msg.setGroupId(groupId);
+		msg.setGroupMessage(true);
+		msg.setTimestamp(Utilities.getCurrentISODate());
+		
+		InformationMessage infMsg = new InformationMessage();
+		infMsg.setInformation(Protocol.GROUP_DELETION);
+		infMsg.setPacket(groupId);
+		
+		for(String receiver : partecipants) {
+			ObjectOutputStream destOutput = server.getStream(receiver);
+			if(destOutput == null) {
+				DatabaseHandler.getInstance().addPendingMessage(msg, receiver);
+			}
+			else {
+				destOutput.writeObject(Protocol.GROUP_DELETION);
+				destOutput.writeObject(infMsg);
+			}
+		}
+	}
+	
 	private void handleGroupInformation() throws ClassNotFoundException, IOException, SQLException {
 		int groupId = Integer.parseInt((String) inputStream.readObject());
+		
+		if(!DatabaseHandler.getInstance().checkGroupExists(groupId))
+			return;
+		
 		User group = DatabaseHandler.getInstance().getGroupInfo(groupId);
 		
 		if(group != null) {

@@ -1,10 +1,10 @@
 package application.net.client;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.sql.SQLException;
 import java.util.Vector;
 
 import application.logic.chat.GroupChat;
@@ -129,12 +129,7 @@ public class Client extends Service <Message> {
 		sendMessage(Protocol.MESSAGE_SEND_REQUEST);
 		
 		if(sendObject(msg)) {
-			try {
-				LocalDatabaseHandler.getInstance().addMessage((ChatMessage) msg);
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-			
+			LocalDatabaseHandler.getInstance().addMessage((ChatMessage) msg);
 			return true;
 		}
 		
@@ -195,10 +190,11 @@ public class Client extends Service <Message> {
 		sendMessage(Integer.toString(groupId));
 	}
 	
-	public void removeFromGroup(int groupId, String myUser, String username) {
+	public void removeFromGroup(int groupId, String requester, String username) {
 		sendMessage(Protocol.GROUP_MEMBER_RIMOTION);
+		sendMessage(requester);
 		sendMessage(Integer.toString(groupId));
-		sendMessage(myUser + ":" + username);
+		sendMessage(username);
 	}
 	
 	public void requestGroupAdd(String requester, Vector <String> users, int groupIdForAdd) {
@@ -206,6 +202,25 @@ public class Client extends Service <Message> {
 		sendMessage(requester);
 		sendMessage(Integer.toString(groupIdForAdd));
 		sendObject(users);
+	}
+	
+	public void requestGroupQuit(String username, int groupID) {
+		sendMessage(Protocol.GROUP_MEMBER_LEFT);
+		sendMessage(Integer.toString(groupID));
+		sendMessage(username);
+	}
+	
+	public void requestGroupDeletion(int groupId, String requester) {
+		sendMessage(Protocol.GROUP_DELETION);
+		sendMessage(requester);
+		sendMessage(Integer.toString(groupId));
+	}
+	
+	public void updateGroupPicture(File selectedPhoto, int groupId, String requester) {
+		sendMessage(Protocol.GROUP_PICTURE_CHANGED);
+		sendMessage(requester);
+		sendMessage(Integer.toString(groupId));
+		sendObject(selectedPhoto);
 	}
 
 	@Override
@@ -231,7 +246,10 @@ public class Client extends Service <Message> {
 							requestIncoming.equals(Protocol.GROUP_PARTECIPANT_REQUEST) ||
 							requestIncoming.equals(Protocol.CONTACT_FULL_INFORMATION_REQUEST) || 
 							requestIncoming.equals(Protocol.GROUP_MEMBER_RIMOTION) ||
-							requestIncoming.equals(Protocol.GROUP_MEMBER_ADD))
+							requestIncoming.equals(Protocol.GROUP_MEMBER_ADD) ||
+							requestIncoming.equals(Protocol.GROUP_MEMBER_LEFT) ||
+							requestIncoming.equals(Protocol.GROUP_DELETION) ||
+							requestIncoming.equals(Protocol.GROUP_PICTURE_CHANGED))
 						msg = (InformationMessage) inputStream.readObject();
 					
 				} catch(ClassNotFoundException e) {

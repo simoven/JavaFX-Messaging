@@ -1,0 +1,23 @@
+.redButton {
+	-fx-background-color: #F51E1E;
+	-fx-text-fill: white;
+	-fx-font-size: 1.1em;
+	-fx-background-radius: 0;
+}
+
+.redButton: hover {
+	-fx-background-color: #D21717;
+	-fx-text-fill: white;
+}
+
+.blueButton {
+	-fx-background-color: #7289da;
+	-fx-text-fill: white;
+	-fx-font-size: 1.1em;
+	-fx-background-radius: 0;
+}
+
+.blueButton: hover {
+	-fx-background-color: #6477C1;
+	-fx-text-fill: white;
+}

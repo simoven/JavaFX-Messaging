@@ -13,7 +13,7 @@
             <Pane prefWidth="2.0" style="-fx-background-color: #46474A;" />
             <Circle fx:id="backButton" fill="DODGERBLUE" onMouseClicked="#backButtonPressed" radius="20.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
                <HBox.margin>
-                  <Insets bottom="10.0" left="10.0" top="10.0" />
+                  <Insets bottom="12.0" left="10.0" top="10.0" />
                </HBox.margin>
             </Circle>
             <Label fx:id="infoLabel" prefHeight="30.0" prefWidth="232.0" style="-fx-text-fill: white;" text="Info sul contatto">
@@ -42,14 +42,23 @@
                   <Pane prefHeight="2.0" style="-fx-background-color: #46474A;" />
                   <HBox VBox.vgrow="NEVER">
                      <children>
-                        <Circle fx:id="propicCircle" fill="DODGERBLUE" radius="40.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                        <VBox>
+                           <children>
+                              <Circle fx:id="propicCircle" fill="DODGERBLUE" radius="45.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                                 <VBox.margin>
+                                    <Insets left="10.0" right="10.0" />
+                                 </VBox.margin>
+                              </Circle>
+                              <Label fx:id="changeImageLabel" onMouseClicked="#changeGroupImage" prefHeight="30.0" prefWidth="71.0" style="-fx-font-size: 0.9em;" text="  Cambia immagine" wrapText="true">
+                                 <VBox.margin>
+                                    <Insets left="25.0" top="5.0" />
+                                 </VBox.margin>
+                              </Label>
+                           </children>
+                        </VBox>
+                        <VBox style="-fx-background-color: #636566; -fx-background-radius: 15;" HBox.hgrow="ALWAYS">
                            <HBox.margin>
-                              <Insets left="20.0" />
-                           </HBox.margin>
-                        </Circle>
-                        <VBox style="-fx-background-color: #7289da; -fx-background-radius: 15;" HBox.hgrow="ALWAYS">
-                           <HBox.margin>
-                              <Insets left="20.0" right="10.0" />
+                              <Insets left="20.0" right="15.0" />
                            </HBox.margin>
                            <children>
                               <TextField fx:id="textField1" style="-fx-background-color: transparent; -fx-text-fill: white; -fx-font-size: 1.6em;">
@@ -57,19 +66,19 @@
                                     <Insets left="10.0" right="20.0" top="10.0" />
                                  </VBox.margin>
                               </TextField>
-                              <TextField fx:id="textField2" style="-fx-background-color: transparent; -fx-font-size: 1.2em;">
+                              <TextField fx:id="textField2" style="-fx-background-color: transparent; -fx-font-size: 1.2em; -fx-text-fill: #9DA7A7;">
                                  <VBox.margin>
                                     <Insets bottom="10.0" left="10.0" right="20.0" top="-5.0" />
                                  </VBox.margin>
                               </TextField>
-                              <Label fx:id="myStatusLabel" prefHeight="15.0" prefWidth="90.0" text="Il mio stato">
+                              <Label fx:id="myStatusLabel" prefHeight="15.0" prefWidth="90.0" style="-fx-text-fill: #7289da; -fx-font-size: 1.1em;" text="Il mio stato">
                                  <VBox.margin>
-                                    <Insets bottom="5.0" left="10.0" top="2.0" />
+                                    <Insets bottom="4.0" left="20.0" top="2.0" />
                                  </VBox.margin>
                               </Label>
-                              <Label fx:id="statusLabel" text="Prova prova prova" wrapText="true">
+                              <Label fx:id="statusLabel" style="-fx-text-fill: #9DA7A7;" text="Prova prova prova" wrapText="true">
                                  <VBox.margin>
-                                    <Insets bottom="10.0" left="10.0" />
+                                    <Insets bottom="10.0" left="20.0" right="20.0" />
                                  </VBox.margin>
                               </Label>
                            </children>

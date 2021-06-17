@@ -61,6 +61,7 @@
 	-fx-background-color: transparent;
 }
 
+/* è il messaggio tipo "tizio si è unito" */
 .genericChatInformation {
 	-fx-background-color: #9DA7A7;
     -fx-background-radius: 15;
@@ -92,6 +93,7 @@
 	-fx-text-fill:  #9DA7A7;
 }
 
+/* è la vbox che contiene i miei messaggi*/
 .rightMessageVBox {
 	-fx-background-color: #128c7e;
    	-fx-background-radius: 10 10 10 0;
@@ -186,4 +188,10 @@
 
 .menu-button > .label {
     -fx-padding: 0;
+}
+
+.InfoVBox {
+	.label {
+		-fx-background-color:red;
+	}
 }

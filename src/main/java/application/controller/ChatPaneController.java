@@ -8,10 +8,10 @@ import application.graphics.ChatView;
 import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
 import application.misc.FXUtilities;
-import application.net.client.Client;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
@@ -32,7 +32,7 @@ public class ChatPaneController {
     private Circle propicCircle;
 
     @FXML
-    private ImageView settingsButton;
+    private MenuButton settingsButton;
 
     @FXML
     private HBox chatProfileHBox;
@@ -63,12 +63,17 @@ public class ChatPaneController {
     
     private File attachedImage = null;
     
+    private Image blackDot;
+    
     @FXML
     void initialize() {
-    	Image img = new Image(getClass().getResource("/application/images/3dot_2.png").toExternalForm(), 
-    			settingsButton.getFitWidth(), settingsButton.getFitHeight(), true, true);
+    	blackDot = new Image(getClass().getResource("/application/images/3dot_2.png").toExternalForm(), 30, 30, true, true);
+    	settingsButton.setGraphic(new ImageView(blackDot));
+    	settingsButton.getItems().get(0).setOnAction(ev -> {
+    		settingsButton.hide();
+    		ChatLogic.getInstance().clearCurrentChat();
+    	});
     	
-    	settingsButton.setImage(img);
     	chatVbox.setAlignment(Pos.CENTER);
     	chatVbox.heightProperty().addListener(observable -> chatScrollPane.setVvalue(1D));
     	chatProfileHBox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));

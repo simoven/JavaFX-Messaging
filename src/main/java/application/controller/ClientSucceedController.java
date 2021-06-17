@@ -1,6 +1,6 @@
 package application.controller;
 
-import java.sql.SQLException;
+import java.io.File;
 import java.util.ArrayList;
 
 import application.logic.ChatLogic;
@@ -22,63 +22,83 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 	@Override
 	public void handle(WorkerStateEvent event) {
 		Message packet = (Message) event.getSource().getValue();
-		try {
-			if(packet instanceof ChatMessage) {
-				ChatLogic.getInstance().addIncomingMessage((ChatMessage) packet);
-				if(!packet.getSender().equals("null"))
-					LocalDatabaseHandler.getInstance().addMessage((ChatMessage) packet);
+		if(packet instanceof ChatMessage) {
+			ChatLogic.getInstance().addIncomingMessage((ChatMessage) packet);
+			if(!packet.getSender().equals("null"))
+				LocalDatabaseHandler.getInstance().addMessage((ChatMessage) packet);
+		}
+		else if(packet instanceof InformationMessage) {
+			switch (((InformationMessage) packet).getInformation()) {
+				case Protocol.ONLINE_STATUS_REQUEST:
+					handleOnlineRequest((InformationMessage) packet);
+					break;
+
+				case Protocol.MESSAGES_LIST:
+					handleMessageRetrieved((InformationMessage) packet);
+					break;
+					
+				case Protocol.CONTACTS_SEARCH:
+					handleContactSearch((InformationMessage) packet);
+					break;
+					
+				case Protocol.GROUP_CREATION_DONE:
+					handleGroupCreation((InformationMessage) packet);
+					break;
+					
+				case Protocol.CONTACT_INFORMATION_REQUEST:
+					handleContactInformation((InformationMessage) packet, false);
+					break;
+					
+				case Protocol.CONTACT_FULL_INFORMATION_REQUEST:
+					handleContactInformation((InformationMessage) packet, true);
+					break;
+					
+				case Protocol.GROUP_INFORMATION_REQUEST:
+					handleGroupInfo((InformationMessage) packet);
+					break;
+					
+				case Protocol.GROUP_PARTECIPANT_REQUEST:
+					handleGroupPartecipants((InformationMessage) packet);
+					break;
+					
+				case Protocol.GROUP_MEMBER_RIMOTION:
+					handlegroupRimotion((InformationMessage) packet, false);
+					break;
+					
+				case Protocol.GROUP_MEMBER_ADD:
+					handleGroupMemberAdd((InformationMessage) packet);
+					break;
+					
+				case Protocol.GROUP_MEMBER_LEFT:
+					handlegroupRimotion((InformationMessage) packet, true);
+					break;
+					
+				case Protocol.GROUP_DELETION:
+					handleGroupDeletion((InformationMessage) packet);
+					break;
+					
+				case Protocol.GROUP_PICTURE_CHANGED:
+					handleGroupPictureChanged((InformationMessage) packet);
+					break;
+					
+				default:
+					break;
 			}
-			else if(packet instanceof InformationMessage) {
-				switch (((InformationMessage) packet).getInformation()) {
-					case Protocol.ONLINE_STATUS_REQUEST:
-						handleOnlineRequest((InformationMessage) packet);
-						break;
-	
-					case Protocol.MESSAGES_LIST:
-						handleMessageRetrieved((InformationMessage) packet);
-						break;
-						
-					case Protocol.CONTACTS_SEARCH:
-						handleContactSearch((InformationMessage) packet);
-						break;
-						
-					case Protocol.GROUP_CREATION_DONE:
-						handleGroupCreation((InformationMessage) packet);
-						break;
-						
-					case Protocol.CONTACT_INFORMATION_REQUEST:
-						handleContactInformation((InformationMessage) packet, false);
-						break;
-						
-					case Protocol.CONTACT_FULL_INFORMATION_REQUEST:
-						handleContactInformation((InformationMessage) packet, true);
-						break;
-						
-					case Protocol.GROUP_INFORMATION_REQUEST:
-						handleGroupInfo((InformationMessage) packet);
-						break;
-						
-					case Protocol.GROUP_PARTECIPANT_REQUEST:
-						handleGroupPartecipants((InformationMessage) packet);
-						break;
-						
-					case Protocol.GROUP_MEMBER_RIMOTION:
-						handlegroupRimotion((InformationMessage) packet);
-						break;
-						
-					case Protocol.GROUP_MEMBER_ADD:
-						handleGroupMemberAdd((InformationMessage) packet);
-						
-					default:
-						break;
-				}
-			}
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 		
 		Client.getInstance().restart();
+	}
+
+	@SuppressWarnings("unchecked")
+	private void handleGroupPictureChanged(InformationMessage packet) {
+		Pair <Integer, File> pair = (Pair<Integer, File>) packet.getPacket();
+		ChatLogic.getInstance().updateGroupImage(pair.getKey(), pair.getValue());
+		
+	}
+
+	private void handleGroupDeletion(InformationMessage packet) {
+		int groupId = (int) packet.getPacket();
+		ChatLogic.getInstance().handleGroupDeletion(groupId);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -88,9 +108,9 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void handlegroupRimotion(InformationMessage packet) {
+	private void handlegroupRimotion(InformationMessage packet, boolean autoRimotion) {
 		Pair <String, Integer> pair = (Pair<String, Integer>) packet.getPacket();
-		ChatLogic.getInstance().handleGroupRimotion(pair.getKey(), pair.getValue());
+		ChatLogic.getInstance().handleGroupRimotion(pair.getKey(), pair.getValue(), autoRimotion);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -111,11 +131,12 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 
 	private void handleContactInformation(InformationMessage packet, boolean fullInfo) {
 		User utente = (User) packet.getPacket();
-		if(!fullInfo)
-			ChatLogic.getInstance().updateUser(utente.getUsername(), utente.getStatus(), utente.getProPic());
+		if(!fullInfo) 
+			ChatLogic.getInstance().firstRegisterUser(utente.getUsername(), utente.getStatus(), utente.getProPic());
 		else {
+			ChatLogic.getInstance().updateUser(utente.getUsername(), utente.getStatus(), utente.getProPic());
 			LongUser user = (LongUser) utente;
-			ChatLogic.getInstance().showUserInfo(user.getUsername(), user.getName(), user.getLastName(), user.getStatus(), user.getProPic());
+			ChatLogic.getInstance().showUserInfo(user.getUsername(), user.getName(), user.getLastName());
 		}
 	}
 
@@ -146,13 +167,8 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 		ArrayList <Message> listMessaggi = (ArrayList<Message>) message.getPacket();
 		ChatLogic.getInstance().retrievePendingMessage(listMessaggi);
 		
-		try {
-			for(Message msg : listMessaggi) {
-				LocalDatabaseHandler.getInstance().addMessage((ChatMessage) msg);
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+		for(Message msg : listMessaggi) 
+			LocalDatabaseHandler.getInstance().addMessage((ChatMessage) msg);
 	}
 
 	private void handleOnlineRequest(InformationMessage message) {

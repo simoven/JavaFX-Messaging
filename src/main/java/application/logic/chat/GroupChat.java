@@ -6,7 +6,6 @@ import java.util.Vector;
 import application.logic.contacts.GroupContact;
 import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
-import application.logic.messages.Message;
 
 public class GroupChat extends Chat {
 
@@ -24,12 +23,21 @@ public class GroupChat extends Chat {
 		return groupInfo;
 	}
 	
-	public void setRandomColors() {
+	private void setRandomColors() {
 		for(int i = 0; i < listUtenti.size(); ++i) 
 			colorList.add(generateRandomColor());
 	}
 	
+	@Override
+	public void clearChat() {
+		super.clearChat();
+		userOfLastMessage = "";
+	}
+	
 	public String getColorOf(String username) {
+		if(colorList.size() != listUtenti.size())
+			setRandomColors();
+		
 		for(int i = 0; i < listUtenti.size(); ++i)
 			if(listUtenti.get(i).getUsername().equals(username))
 				return colorList.get(i);

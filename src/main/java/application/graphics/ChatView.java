@@ -244,7 +244,7 @@ public class ChatView {
 		VBox.setMargin(textContainer.getChildren().get(1), new Insets(0, 10, 5, 0));
 		
 		shape.setFill(new ImagePattern(img));
-		String data = "null";
+		String data = "Mai";
 		if(!chat.getListMessaggi().isEmpty()) {
 			if(chat.getListMessaggi().lastElement().getSentDate().equals(Utilities.getTodayDate()))
 				data = Utilities.getHourFromStringTrimmed(chat.getListMessaggi().lastElement().getTimestamp());

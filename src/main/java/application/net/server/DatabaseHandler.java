@@ -233,7 +233,7 @@ public class DatabaseHandler {
 		return lista;
 	}
 
-	public int createGroup(String groupName, String owner, byte[] imgProfilo) throws SQLException {
+	public  synchronized int createGroup(String groupName, String owner, byte[] imgProfilo) throws SQLException {
 		String query = "INSERT INTO Gruppo VALUES (null, ?, ?, ?, ?);";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setString(1, groupName);
@@ -260,7 +260,7 @@ public class DatabaseHandler {
 		return group_id;
 	}
 
-	public void addPartecipantsToGroup(int groupID, Vector<String> partecipants) throws SQLException {
+	public synchronized void addPartecipantsToGroup(int groupID, Vector<String> partecipants) throws SQLException {
 		String query = "INSERT INTO UtenteInGruppo VALUES (?,?, null);";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		
@@ -271,7 +271,7 @@ public class DatabaseHandler {
 		}
 	}
 
-	public User getUserInfo(String userToCheck) throws SQLException {
+	public synchronized User getUserInfo(String userToCheck) throws SQLException {
 		User user = null;
 		String query = "SELECT * FROM Utente WHERE Username=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
@@ -288,7 +288,7 @@ public class DatabaseHandler {
 		return user;
 	}
 
-	public User getGroupInfo(int groupId) throws SQLException {
+	public synchronized User getGroupInfo(int groupId) throws SQLException {
 		User user = null;
 		String query = "SELECT * FROM Gruppo WHERE Id_gruppo=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
@@ -307,10 +307,46 @@ public class DatabaseHandler {
 		return user;
 	}
 
-	public void removeUserFromGroup(int groupId, String member) throws SQLException {
+	public synchronized void removeUserFromGroup(int groupId, String member) throws SQLException {
 		String query = "DELETE FROM UtenteInGruppo WHERE User_utente=? AND Id_gruppo=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setString(1, member);
+		stm.setInt(2, groupId);
+		stm.executeUpdate();
+		stm.close();
+	}
+
+	public synchronized boolean checkGroupExists(int groupId) throws SQLException {
+		String query = "SELECT * FROM Gruppo WHERE Id_gruppo=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setInt(1, groupId);
+		ResultSet rs = stm.executeQuery();
+		boolean exist = rs.next();
+		
+		stm.close();
+		rs.close();
+		
+		return exist;
+	}
+
+	public synchronized void deleteGroup(int groupId) throws SQLException {
+		String [] queries = new String [3];
+		queries [0] = "DELETE FROM MessaggioDiGruppo WHERE Group_id=?;";
+		queries [1] = "DELETE FROM UtenteinGruppo WHERE Id_gruppo=?;";
+		queries [2] = "DELETE FROM Gruppo WHERE Id_gruppo=?";
+		
+		for(int i = 0; i < 3; ++i) {
+			PreparedStatement stm = dbConnection.prepareStatement(queries [i]);
+			stm.setInt(1, groupId);
+			stm.executeUpdate();
+			stm.close();
+		}
+	}
+
+	public synchronized void updateGroup(int groupId, byte[] image) throws SQLException {
+		String query = "UPDATE Gruppo SET ProPic=? WHERE Id_gruppo=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setBytes(1, image);
 		stm.setInt(2, groupId);
 		stm.executeUpdate();
 		stm.close();
