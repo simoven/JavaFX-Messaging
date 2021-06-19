@@ -57,10 +57,7 @@ public class ContactInfoView {
 		else
 			controller.getStatusLabel().setText("");
 		
-		if(proPic != null)
-			controller.getPropicCircle().setFill(new ImagePattern(new Image(new ByteArrayInputStream(proPic), 200, 200, true, true)));
-		else
-			controller.getPropicCircle().setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/defaultSinglePic.png"), 200, 200, true, true)));
+		controller.displayImage(proPic, false);
 	
 		MenuItem item = new MenuItem();
 		item.setOnAction(controller);
@@ -102,17 +99,16 @@ public class ContactInfoView {
 		
 		byte [] proPic = activeChat.getGroupInfo().getProfilePic();
 		
-		if(proPic != null)
-			controller.getPropicCircle().setFill(new ImagePattern(new Image(new ByteArrayInputStream(proPic), 200, 200, true, true)));
-		else
-			controller.getPropicCircle().setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/defaultGroup.png"), 200, 200, true, true)));
+		controller.displayImage(proPic, true);
 		
 		MenuItem item = new MenuItem();
 		if(iAmOwner) {
 			controller.enableChangeImageLabel();
 			item.setText("Elimina gruppo");
 			item.setOnAction(ev -> {
-				ChatLogic.getInstance().deleteGroup(activeChat.getGroupInfo().getGroupId());
+				String title = "Sei sicuro di voler eliminare il gruppo ?\nL'operazione non è reversibile";
+				if(ChatDialog.getInstance().showConfirmDialog(title) == ChatDialog.APPROVE_OPTION)
+					ChatLogic.getInstance().deleteGroup(activeChat.getGroupInfo().getGroupId());
 			});
 			
 			MenuItem item2 = new MenuItem();
@@ -126,9 +122,11 @@ public class ContactInfoView {
 		else {
 			item.setText("Abbandona gruppo");
 			item.setOnAction(ev -> {
-				ChatLogic.getInstance().leftGroup(activeChat);
-				controller.getPopupMenuButton().hide();
-				SceneHandler.getInstance().setChatPane();
+				if(ChatDialog.getInstance().showConfirmDialog("Stai per abbandonare. Sei sicuro ?") == ChatDialog.APPROVE_OPTION) {
+					ChatLogic.getInstance().leftGroup(activeChat);
+					controller.getPopupMenuButton().hide();
+					SceneHandler.getInstance().setChatPane();
+				}
 			});
 		}
 		
@@ -195,6 +193,7 @@ public class ContactInfoView {
 		Pane horizontaLine = new Pane();
 		horizontaLine.getStyleClass().add("horizontaLine");
 		horizontaLine.setPrefHeight(1);
+		horizontaLine.setMinHeight(1);
 		horizontaLine.prefWidthProperty().bind(controller.getScrollPaneVBox().prefWidthProperty());
 		controller.getScrollPaneVBox().getChildren().add(horizontaLine);
 		VBox.setMargin(horizontaLine, new Insets(0, 10, 0, 10));

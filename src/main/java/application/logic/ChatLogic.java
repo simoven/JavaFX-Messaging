@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Vector;
 
+import application.graphics.ChatDialog;
 import application.graphics.ChatView;
 import application.graphics.ContactInfoView;
 import application.graphics.CreateChatView;
+import application.graphics.MyProfileView;
 import application.graphics.SceneHandler;
 import application.logic.chat.Chat;
 import application.logic.chat.GroupChat;
@@ -17,9 +19,11 @@ import application.logic.contacts.Contact;
 import application.logic.contacts.GroupContact;
 import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
+import application.logic.messages.InformationMessage;
 import application.logic.messages.Message;
 import application.net.client.Client;
 import application.net.client.LocalDatabaseHandler;
+import application.net.misc.Protocol;
 import application.net.misc.Utilities;
 
 //Questa classe gestisce la parte logica della chat
@@ -27,8 +31,11 @@ public class ChatLogic {
 
 	private static ChatLogic instance = null;
 	private SingleContact myInformation;
+	private String fullName;
 	private Chat activeChat;
 	private Contact activeContact;
+	//è l'ultima immagine che ho selezionato per inviare
+	private File attachedImage;
 	private Vector <Contact> contactList;
 	private Vector <Chat> chatList;
 	private ArrayList <SingleContact> lastSearchContacts;
@@ -42,6 +49,49 @@ public class ChatLogic {
 			instance = new ChatLogic();
 		
 		return instance;
+	}
+	
+	public void resetLogic() {
+		myInformation = null;
+		fullName = null;
+		contactList.clear();
+		chatList.clear();
+		lastSearchContacts = null;
+		activeChat = null;
+		activeContact = null;
+		Client.getInstance().resetClient();
+		SceneHandler.getInstance().setLoginScene();
+	}
+	
+	public File getAttachedImage() {
+		return attachedImage;
+	}
+	
+	public void setAttachedImage(File attachedImage) {
+		this.attachedImage = attachedImage;
+	}
+	
+	public void setFullName(String fullName) {
+		this.fullName = fullName; }
+	
+	public Contact getMyInformation() {
+		return myInformation;
+	}
+	
+	public Chat getActiveChat() {
+		return activeChat;
+	}
+	
+	public String getMyUsername() {
+		return myInformation.getUsername();
+	}
+	
+	public Contact getActiveContact() {
+		return activeContact;
+	}
+	
+	public Vector<Contact> getContactList() {
+		return contactList;
 	}
 	
 	public void setMyInformation(SingleContact myUser) {
@@ -62,24 +112,9 @@ public class ChatLogic {
 		}
 	}
 	
-	public Contact getMyInformation() {
-		return myInformation;
-	}
-	
-	public Chat getActiveChat() {
-		return activeChat;
-	}
-	
-	public String getMyUsername() {
-		return myInformation.getUsername();
-	}
-	
-	public Contact getActiveContact() {
-		return activeContact;
-	}
-	
-	public Vector<Contact> getContactList() {
-		return contactList;
+	public void displayMyInformation() {
+		SceneHandler.getInstance().setMyProfilePane();
+		MyProfileView.getInstance().displayMyInformation(myInformation, fullName);
 	}
 	
 	//Mostro tutte le chat a sinistra
@@ -125,6 +160,7 @@ public class ChatLogic {
 		boolean isGroupChat = false;
 		SceneHandler.getInstance().setChatPane();
 		ChatView.getInstance().getChatPaneController().getChatVbox().getChildren().clear();
+		ChatView.getInstance().getChatPaneController().removeImage();
 		if(activeChat instanceof SingleChat)
 			ChatView.getInstance().showContactInformation(activeContact, -1);
 		else {
@@ -163,6 +199,9 @@ public class ChatLogic {
 		SingleContact contatto = searchContact(username);
 		SingleChat chat;
 		if(contatto != null) {
+			if(activeContact == contatto)
+				return;
+			
 			chat = (SingleChat) searchChat(contatto);
 			if(chat == null) 
 				chat = (SingleChat) createChat(contatto);
@@ -199,7 +238,7 @@ public class ChatLogic {
 		displayCurrentChat();
 	}
 	
-	public void sendMessage(String text, File attachedImage) {
+	public void sendMessage(String text) {
 		if(activeChat == null)
 			return;
 		
@@ -256,6 +295,8 @@ public class ChatLogic {
 	
 	//Mostro tutti i miei contatti 
 	public void showContactsChoice() {
+		Collections.sort(contactList);
+		SceneHandler.getInstance().setAllContactsPane();
 		CreateChatView.getInstance().getChatChooserController().getAllUsersVbox().getChildren().clear();
 		for(Contact contact : ChatLogic.getInstance().getContactList()) {
 			if(!contact.isVisible())
@@ -419,6 +460,7 @@ public class ChatLogic {
 
 	//Controllo se nei messaggi che mi sono arrivati ci sono messaggi dal server, tipo "utente x è stato rimosso dal gruppo"
 	//La struttura del messaggio è OPERAZIONE:username
+	//Cambio il testo del messaggio che, in seguito, verrà salvato nel db locale dopo aver finito
 	private void checkGroupMsgText(ChatMessage msg) {
 		GroupContact contact = searchContact(msg.getGroupId());
 		if(contact == null)
@@ -429,6 +471,7 @@ public class ChatLogic {
 		if(msg.getText().contains(":")) {
 			String [] split = msg.getText().split(":");
 			if(split [0].equals("REMOVED") && chat != null) {
+				//Qualcuno è stato rimosso da un gruppo
 				if(split [1].equals(ChatLogic.getInstance().getMyInformation().getUsername())) {
 					msg.setText("Sei stato rimosso");
 					removeFromGroup(chat, myInformation.getUsername(), msg);
@@ -439,6 +482,7 @@ public class ChatLogic {
 				}
 			}
 			else if(split [0].equals("ADDED") && chat != null) {
+				//Qualcuno è stato aggiunto ad un gruppo
 				if(split [1].equals(ChatLogic.getInstance().getMyInformation().getUsername())) {
 					msg.setText("Sei stato aggiunto");
 					addedToGroup(myInformation.getUsername(), chat, msg);
@@ -449,6 +493,7 @@ public class ChatLogic {
 				}
 			}
 			else if(split [0].equals("LEFT") && chat != null) {
+				//qualcuno ha abbandonato un gruppo
 				if(split [1].equals(ChatLogic.getInstance().getMyInformation().getUsername())) {
 					msg.setText("Hai abbandonato");
 					removeFromGroup(chat, myInformation.getUsername(), msg);
@@ -459,17 +504,28 @@ public class ChatLogic {
 				}
 			}
 			else if(split [0].equals("DELETED")) {
+				//qualche gruppo è stato eliminato
 				int groupId = Integer.parseInt(split [1]);
 				msg.setText("Il gruppo è stato eliminato");
 				//Significa che il gruppo nemmeno esisteva nelle mie chat (Ero offline tra la creazione e l'eliminazione)
+				//E quindi scarto questo messaggio, altrimenti chatlogic avrebbe richiesto al server info sul gruppo (che non esiste piu)
 				if(!handleGroupDeletion(groupId))
 					msg.setGroupId(-2);
 			}
 			else if(split [0].equals("PIC_CHANGED")) {
+				//La foto profilo di qualche gruppo è stata cambiata
 				int groupId = Integer.parseInt(split [1]);
 				msg.setText("L' immagine di profilo è stata cambiata");
+				//Richiedo info al server su questo gruppo e quindi riceverò l'immagine aggiornata
 				Client.getInstance().requestGroupInformation(groupId);
 				LocalDatabaseHandler.getInstance().addMessage(msg);
+			}
+			else if(split [0].equals("NAME_CHANGED")) {
+				int groupId = msg.getGroupId();
+				GroupContact gpContact = searchContact(groupId);
+				msg.setText("Il nome del gruppo è stato cambiato");
+				gpContact.setUsername(split [1]);
+				LocalDatabaseHandler.getInstance().updateGroup(groupId, split [1]);
 			}
 		}
 	}
@@ -565,15 +621,21 @@ public class ChatLogic {
 				//TODO show error
 			}
 			
+			activeChat = (GroupChat) searchChat(gpContact);
+			SceneHandler.getInstance().setChatPane();
 			sendInformationMessage(groupID, "Il gruppo è stato creato");
 		}
 		
 		displayAllChat();
+		displayCurrentChat();
 	}
 
 	//Questo metodo imposta la chat di gruppo come chat attiva
 	public void setGroupChatActive(int groupId) {
 		GroupContact gpContact = searchContact(groupId);
+		if(gpContact == activeContact)
+			return;
+		
 		GroupChat gpChat = (GroupChat) searchChat(gpContact);
 		activeContact = gpContact;
 		activeChat = gpChat;
@@ -733,6 +795,7 @@ public class ChatLogic {
 		}
 	}
 
+	//Questo metodo gestisce la rimozione dal gruppo vera e propria
 	public boolean removeFromGroup(GroupChat chat, String username, ChatMessage msg) {
 		SingleContact contact = searchContact(username);
 		if(contact == null)
@@ -754,7 +817,18 @@ public class ChatLogic {
 		
 		return true;
 	}
-
+	
+	//Questo metodo controlla se il gruppo è attualmente il contatto attivo e appende il messaggio informativo nella chat
+	private void appendLastinfoMessageInChat(GroupChat chat, ChatMessage chatMsg) {
+		if(chat.equals(activeChat)) {
+			if(chatMsg.getMessageDateStamp() > chat.getLastMessageDateStamp()) 
+				ChatView.getInstance().appendMessageInChat(createInformationMessage(chatMsg.getSentDate()), false, "");
+			
+			ChatView.getInstance().appendMessageInChat(chatMsg, false, "null");
+			ChatView.getInstance().showContactInformation(activeContact, chat.getListUtenti().size());
+		}
+	}
+	
 	//Questo metodo gestisce il messaggio di rimozione da parte del server
 	public void handleGroupRimotion(String userRemoved, Integer groupId, boolean autoRimotion) {
 		GroupContact contact = searchContact(groupId);
@@ -780,13 +854,7 @@ public class ChatLogic {
 		
 		//Se la rimozione è avvenuta correttamente, mostro il messaggio 
 		if(removeFromGroup(chat, userRemoved, msg)) {
-			if(activeChat.equals(chat)) {
-				if(msg.getMessageDateStamp() > activeChat.getLastMessageDateStamp()) 
-					ChatView.getInstance().appendMessageInChat(createInformationMessage(msg.getSentDate()), false, "");
-				
-				ChatView.getInstance().appendMessageInChat(msg, false, "null");
-				ChatView.getInstance().showContactInformation(contact, chat.getListUtenti().size());
-			}
+			appendLastinfoMessageInChat(chat, msg);
 			
 			chat.addNewMessage(msg);
 			displayAllChat();
@@ -812,6 +880,7 @@ public class ChatLogic {
 		Client.getInstance().requestGroupAdd(myInformation.getUsername(), selectedContacts, groupIdForAdd);
 	}
 	
+	//Questo metodo gestisce l'aggiunta vera e propria nella chat
 	private boolean addedToGroup(String user, GroupChat chat, ChatMessage msg) {
 		SingleContact contactToAdd = searchContact(user);
 		if(contactToAdd == null) {
@@ -838,6 +907,8 @@ public class ChatLogic {
 		return true;
 	}
 
+	//Questo metodo gestisce l'aggiunta di un membro in un gruppo, che sia io o un'altra persona
+	//Crea il messaggio informativo e lo appende nella chat
 	public void handleGroupAdd(String userAdded, Integer groupId) {
 		CreateChatView.getInstance().changeButtonUse(false);
 		GroupContact contact = searchContact(groupId);
@@ -853,19 +924,14 @@ public class ChatLogic {
 		msg.setGroupMessage(true);
 		
 		if(addedToGroup(userAdded, chat, msg)) {
-			if(activeChat.equals(chat)) {
-				if(msg.getMessageDateStamp() > chat.getLastMessageDateStamp()) 
-					ChatView.getInstance().appendMessageInChat(createInformationMessage(msg.getSentDate()), false, "");
-				
-				ChatView.getInstance().appendMessageInChat(msg, false, "null");
-				ChatView.getInstance().showContactInformation(contact, chat.getListUtenti().size());
-			}
+			appendLastinfoMessageInChat(chat, msg);
 			
 			chat.addNewMessage(msg);
 			displayAllChat();
 		}
 	}
 	
+	//Questo metodo trova i gruppi in comune tra me e un altro utente
 	public Vector <GroupChat> getCommonGroups(String username) {
 		Vector <GroupChat> commonChats = new Vector <GroupChat>();
 		SingleContact contact = searchContact(username);
@@ -888,6 +954,7 @@ public class ChatLogic {
 			Client.getInstance().requestGroupQuit(myInformation.getUsername(), chat.getGroupInfo().getGroupId());
 	}
 
+	//Questo metodo gestisce l'eliminazione di un gruppo
 	public boolean handleGroupDeletion(int groupId) {
 		GroupContact contact = searchContact(groupId);
 		if(contact == null)
@@ -903,16 +970,11 @@ public class ChatLogic {
 		msg.setGroupId(groupId);
 		msg.setGroupMessage(true);
 		chat.addNewMessage(msg);
+		contact.setDeleted(true);
 		
 		displayAllChat();
 		
-		if(chat.equals(activeChat)) {
-			if(msg.getMessageDateStamp() > chat.getLastMessageDateStamp()) 
-				ChatView.getInstance().appendMessageInChat(createInformationMessage(msg.getSentDate()), false, "");
-			
-			ChatView.getInstance().appendMessageInChat(msg, false, "null");
-			ChatView.getInstance().showContactInformation(contact, chat.getListUtenti().size());
-		}
+		appendLastinfoMessageInChat(chat, msg);
 		
 		LocalDatabaseHandler.getInstance().setGroupDeleted(groupId);
 		LocalDatabaseHandler.getInstance().addMessage(msg);
@@ -929,7 +991,8 @@ public class ChatLogic {
 			Client.getInstance().updateGroupPicture(selectedPhoto, ((GroupChat) activeChat).getGroupInfo().getGroupId(), myInformation.getUsername());
 		}
 	}
-
+	
+	//Questo metodo aggiorna l'immagine di profilo del gruppo dopo la risposta del server
 	public void updateGroupImage(Integer groupId, File pic) {
 		GroupContact contact = searchContact(groupId);
 		if(contact == null)
@@ -947,15 +1010,104 @@ public class ChatLogic {
 		chat.addNewMessage(chatMsg);
 		displayAllChat();
 		
-		if(chat.equals(activeChat)) {
-			if(chatMsg.getMessageDateStamp() > chat.getLastMessageDateStamp()) 
-				ChatView.getInstance().appendMessageInChat(createInformationMessage(chatMsg.getSentDate()), false, "");
-			
-			ChatView.getInstance().appendMessageInChat(chatMsg, false, "null");
-			ChatView.getInstance().showContactInformation(contact, chat.getListUtenti().size());
-		}
+		appendLastinfoMessageInChat(chat, chatMsg);
 		
 		LocalDatabaseHandler.getInstance().updateGroup(groupId, Utilities.getByteArrFromFile(pic));
 		LocalDatabaseHandler.getInstance().addMessage(chatMsg);
+	}
+
+	public void groupNameChanged(String name) {
+		if(activeChat instanceof GroupChat) {
+		if(((GroupChat) activeChat).getListUtenti().contains(myInformation))
+			Client.getInstance().updateGroupName(myInformation.getUsername(), name, ((GroupChat) activeChat).getGroupInfo().getGroupId());
+		}
+	}
+
+	public void updateGroupName(Integer groupId, String newName) {
+		GroupContact contact = searchContact(groupId);
+		if(contact == null)
+			return;
+		
+		GroupChat chat = (GroupChat) searchChat(contact);
+		if(chat == null)
+			return;
+		
+		ChatMessage chatMsg = createInformationMessage("Il nome del gruppo è stato cambiato");
+		chatMsg.setGroupId(groupId);
+		chatMsg.setGroupMessage(true);
+		contact.setUsername(newName);
+		
+		chat.addNewMessage(chatMsg);
+		displayAllChat();
+		
+		appendLastinfoMessageInChat(chat, chatMsg);
+		
+		LocalDatabaseHandler.getInstance().updateGroup(groupId, newName);
+		LocalDatabaseHandler.getInstance().addMessage(chatMsg);
+		
+	}
+
+	public void changePassword(String oldPassword, String newPassword) {
+		Client.getInstance().requestPasswordChange(myInformation.getUsername(), oldPassword, newPassword);
+	}
+
+	public void handlePasswordChange(InformationMessage msg) {
+		String response = (String) msg.getPacket();
+		if(!response.equals(Protocol.REQUEST_SUCCESSFUL)) {
+			String error = checkPasswordErrorText(response);
+			int res = ChatDialog.getInstance().showErrorDialog(error);
+			if(res == ChatDialog.RETRY_OPTION)
+				displayMyInformation();
+		}
+		else
+			ChatDialog.getInstance().showResponseDialog("La password è stata cambiata con successo");
+		
+	}
+
+	public String checkPasswordErrorText(String response) {
+		switch(response) {
+		    case Utilities.PASSWORD_TOO_SHORT:
+		    	return "La nuova password deve essere lunga almeno 8 caratteri";
+		    	
+		    case Utilities.PASSWORD_TOO_LONG:
+		    	return "La nuova password deve essere lunga al massimo 20 caratteri";
+		    	
+		    case Utilities.PASSWORD_NOT_VALID:
+		    	return "I caratteri della nuova password non sono validi";
+		    
+		    case Protocol.INVALID_CREDENTIAL:
+		    	return "La vecchia password non è corretta";
+		    	
+		    case Protocol.SERVER_ERROR:
+		    	return "C'è stato un errore nel server";
+		}
+		
+		return "Impossibile cambiare la password";
+	}
+
+	public void updateMyPhoto(File photo) {
+		Client.getInstance().updateProPic(myInformation.getUsername(), photo);
+	}
+
+	public void updateMyStatus(String text) {
+		Client.getInstance().updateStatus(myInformation.getUsername(), text);
+	}
+
+	public void handleMyPhotoUpdate(File packet) {
+		byte [] img = Utilities.getByteArrFromFile(packet);
+		myInformation.setProfilePic(img);
+		if(LocalDatabaseHandler.getInstance().modifyUser(myInformation)) {
+			MyProfileView.getInstance().displayMyInformation(myInformation, fullName);
+			ChatDialog.getInstance().showResponseDialog("Foto aggiornata con successo");
+			ChatView.getInstance().updateInformation();
+		}
+	}
+
+	public void handleMyStatusChanged(String status) {
+		myInformation.setStatus(status);
+		if(LocalDatabaseHandler.getInstance().modifyUser(myInformation)) {
+			MyProfileView.getInstance().displayMyInformation(myInformation, status);
+			ChatDialog.getInstance().showResponseDialog("Stato aggiornato con successo");
+		}
 	}
 }

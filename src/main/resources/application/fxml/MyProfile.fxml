@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.shape.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="root" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.controller.MyProfileController">
+   <center>
+      <StackPane fx:id="myStackPane" BorderPane.alignment="CENTER">
+         <children>
+            <VBox fx:id="fieldVBox" alignment="TOP_CENTER">
+               <children>
+                  <Pane minHeight="2.0" prefHeight="2.0" style="-fx-background-color: #46474A;" />
+                  <HBox prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <Pane maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                        <VBox alignment="TOP_CENTER" style="-fx-background-color: #636566; -fx-background-radius: 20;" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Circle fx:id="propicCircle" fill="DODGERBLUE" onMousePressed="#displayMyPic" radius="50.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" />
+                                 </VBox.margin>
+                              </Circle>
+                              <Label fx:id="changePicLabel" onMousePressed="#changeProfilePic" style="-fx-text-fill: white;" text="Cambia">
+                                 <VBox.margin>
+                                    <Insets bottom="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <Label fx:id="nameLabel" prefHeight="15.0" style="-fx-text-fill: white; -fx-font-size: 1.4em;" text="Simone Ventrici" wrapText="true" />
+                              <Label fx:id="usernameLabel" style="-fx-text-fill: #9DA7A7; -fx-font-size: 1em;" text="\@simoven" />
+                           </children>
+                           <padding>
+                              <Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
+                           </padding>
+                        </VBox>
+                        <Pane maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="15.0" top="15.0" />
+                     </VBox.margin>
+                  </HBox>
+                  <Pane minHeight="1.0" prefHeight="1.0" style="-fx-background-color: #46474A;">
+                     <VBox.margin>
+                        <Insets bottom="20.0" left="10.0" right="10.0" />
+                     </VBox.margin>
+                  </Pane>
+                  <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                     <content>
+                        <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                           <children>
+                              <HBox fx:id="statusHBox">
+                                 <children>
+                                    <Pane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                                    <VBox style="-fx-background-color: #636566; -fx-background-radius: 20;" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-text-fill: #A1B4FF;" text="Il mio stato">
+                                             <VBox.margin>
+                                                <Insets bottom="5.0" left="22.0" top="8.0" />
+                                             </VBox.margin>
+                                          </Label>
+                                          <TextField fx:id="statusTextField" onKeyPressed="#onStatusFieldKeyPressed">
+                                             <VBox.margin>
+                                                <Insets bottom="5.0" left="18.0" right="18.0" />
+                                             </VBox.margin>
+                                          </TextField>
+                                          <HBox>
+                                             <children>
+                                                <Label fx:id="rowCountLabel" style="-fx-text-fill: #9DA7A7;" text="0/90">
+                                                   <HBox.margin>
+                                                      <Insets left="22.0" />
+                                                   </HBox.margin>
+                                                </Label>
+                                                <Pane prefHeight="2.0" HBox.hgrow="ALWAYS" />
+                                                <Button fx:id="editStatusButton" mnemonicParsing="false" onMousePressed="#changeStatus" prefHeight="25.0" text="Modifica" HBox.hgrow="ALWAYS">
+                                                   <HBox.margin>
+                                                      <Insets right="15.0" top="5.0" />
+                                                   </HBox.margin>
+                                                </Button>
+                                             </children>
+                                             <VBox.margin>
+                                                <Insets bottom="10.0" />
+                                             </VBox.margin>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                    <Pane maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets bottom="40.0" />
+                                 </VBox.margin>
+                              </HBox>
+                              <HBox fx:id="passwordHBox" prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <Pane HBox.hgrow="ALWAYS" />
+                                    <VBox style="-fx-background-color: #636566; -fx-background-radius: 20;" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <Label style="-fx-text-fill: #A1B4FF;" text="Cambia password">
+                                             <VBox.margin>
+                                                <Insets bottom="10.0" left="22.0" top="8.0" />
+                                             </VBox.margin>
+                                          </Label>
+                                          <PasswordField fx:id="oldPasswordField" promptText="Vecchia Password">
+                                             <VBox.margin>
+                                                <Insets bottom="20.0" left="18.0" right="18.0" />
+                                             </VBox.margin>
+                                          </PasswordField>
+                                          <PasswordField fx:id="newPasswordField" promptText="Nuova Password">
+                                             <VBox.margin>
+                                                <Insets bottom="10.0" left="18.0" right="18.0" />
+                                             </VBox.margin>
+                                          </PasswordField>
+                                          <PasswordField fx:id="confirmPasswordField" promptText="Conferma Password">
+                                             <VBox.margin>
+                                                <Insets bottom="10.0" left="18.0" right="18.0" />
+                                             </VBox.margin>
+                                          </PasswordField>
+                                          <Label fx:id="passwordInfoLabel" style="-fx-text-fill: white;" text="Password non valida">
+                                             <VBox.margin>
+                                                <Insets left="22.0" right="10.0" />
+                                             </VBox.margin>
+                                          </Label>
+                                          <HBox prefHeight="100.0" prefWidth="200.0">
+                                             <children>
+                                                <Pane HBox.hgrow="ALWAYS" />
+                                                <Button fx:id="changePasswordButton" mnemonicParsing="false" onMousePressed="#changePassword" text="Cambia">
+                                                   <HBox.margin>
+                                                      <Insets bottom="10.0" right="15.0" />
+                                                   </HBox.margin>
+                                                </Button>
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                       <HBox.margin>
+                                          <Insets />
+                                       </HBox.margin>
+                                    </VBox>
+                                    <Pane HBox.hgrow="ALWAYS" />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets bottom="15.0" />
+                                 </VBox.margin>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+   </center>
+   <top>
+      <HBox fx:id="topHbox" prefHeight="51.0" BorderPane.alignment="CENTER">
+         <children>
+            <Pane prefWidth="2.0" style="-fx-background-color: #46474A;" />
+            <Circle fx:id="backButton" fill="DODGERBLUE" onMouseClicked="#backButtonPressed" radius="20.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+               <HBox.margin>
+                  <Insets bottom="12.0" left="10.0" top="10.0" />
+               </HBox.margin>
+            </Circle>
+            <Label fx:id="infoLabel" prefHeight="30.0" prefWidth="232.0" style="-fx-text-fill: white;" text="Il mio profilo">
+               <HBox.margin>
+                  <Insets left="10.0" top="15.0" />
+               </HBox.margin>
+            </Label>
+            <Pane HBox.hgrow="ALWAYS" />
+            <MenuButton fx:id="popupMenuButton" mnemonicParsing="false" style="-fx-background-color: transparent;">
+               <items>
+                  <MenuItem mnemonicParsing="false" onAction="#showChangePassword" text="Cambia Password" />
+                  <MenuItem mnemonicParsing="false" onAction="#logOut" text="Esci" />
+               </items>
+               <HBox.margin>
+                  <Insets right="15.0" top="15.0" />
+               </HBox.margin>
+            </MenuButton>
+         </children>
+      </HBox>
+   </top>
+</BorderPane>

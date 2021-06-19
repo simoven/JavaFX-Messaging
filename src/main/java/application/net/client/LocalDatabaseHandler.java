@@ -377,6 +377,19 @@ public class LocalDatabaseHandler {
 		}
 	}
 	
+	public void updateGroup(Integer groupId, String newName) {
+		try {
+			String query = "UPDATE Gruppo SET Nome=? WHERE Id_gruppo=?;";
+			PreparedStatement stm = dbConnection.prepareStatement(query);
+			stm.setString(1, newName);
+			stm.setInt(2, groupId);
+			stm.executeUpdate();
+			stm.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	//questo metodo elimina tutti i dati del gruppo
 	public void deleteGroup(int groupId) {
 		try {
@@ -396,7 +409,7 @@ public class LocalDatabaseHandler {
 		}
 	}
 	
-	public void modifyUser(SingleContact user) {
+	public boolean modifyUser(SingleContact user) {
 		try {
 			String query = "UPDATE Utente SET Img_profilo=?, Status=? WHERE username=?;";
 			PreparedStatement stm = dbConnection.prepareStatement(query);
@@ -407,7 +420,10 @@ public class LocalDatabaseHandler {
 			stm.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
 		} 
+		
+		return true;
 	}
 	
 	public void setInvisible(String user) {

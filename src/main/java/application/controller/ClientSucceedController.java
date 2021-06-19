@@ -78,7 +78,23 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 					break;
 					
 				case Protocol.GROUP_PICTURE_CHANGED:
-					handleGroupPictureChanged((InformationMessage) packet);
+					handleGroupInfoChanged((InformationMessage) packet, true);
+					break;
+					
+				case Protocol.GROUP_NAME_CHANGED:
+					handleGroupInfoChanged((InformationMessage) packet, false);
+					break;
+					
+				case Protocol.PASSWORD_CHANGE:
+					ChatLogic.getInstance().handlePasswordChange(((InformationMessage) packet));
+					break;
+					
+				case Protocol.PHOTO_CHANGE:
+					handleMyInfoChanged((InformationMessage) packet, true);
+					break;
+					
+				case Protocol.STATUS_CHANGE:
+					handleMyInfoChanged((InformationMessage) packet, false);
 					break;
 					
 				default:
@@ -88,12 +104,36 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 		
 		Client.getInstance().restart();
 	}
+	
+	private void handleMyInfoChanged(InformationMessage packet, boolean isProPic) {
+		if(isProPic) {
+			if(packet.getPacket() instanceof String && packet.getPacket().equals("null")) {
+				//TODO errore
+			}
+			else if(packet.getPacket() instanceof File) 
+				ChatLogic.getInstance().handleMyPhotoUpdate((File) packet.getPacket());
+		}
+		else {
+			if(packet.getPacket() == null) {
+				//TODO errore
+			}
+			else {
+				System.out.println(packet.getPacket());
+				ChatLogic.getInstance().handleMyStatusChanged((String) packet.getPacket());
+			}
+		}	
+	}
 
 	@SuppressWarnings("unchecked")
-	private void handleGroupPictureChanged(InformationMessage packet) {
-		Pair <Integer, File> pair = (Pair<Integer, File>) packet.getPacket();
-		ChatLogic.getInstance().updateGroupImage(pair.getKey(), pair.getValue());
-		
+	private void handleGroupInfoChanged(InformationMessage packet, boolean isProPic) {
+		if(isProPic) {
+			Pair <Integer, File> pair = (Pair<Integer, File>) packet.getPacket();
+			ChatLogic.getInstance().updateGroupImage(pair.getKey(), pair.getValue());
+		}
+		else {
+			Pair <Integer, String> pair = (Pair<Integer, String>) packet.getPacket();
+			ChatLogic.getInstance().updateGroupName(pair.getKey(), pair.getValue());
+		}
 	}
 
 	private void handleGroupDeletion(InformationMessage packet) {

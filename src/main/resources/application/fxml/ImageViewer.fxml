@@ -6,7 +6,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-<StackPane prefHeight="150.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.controller.ImageViewController">
+<StackPane fx:id="thisRoot" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.controller.ImageViewController">
    <children>
       <VBox fx:id="paneVBox">
          <children>
@@ -24,6 +24,16 @@
                   <Insets />
                </VBox.margin>
             </ImageView>
+            <HBox>
+               <children>
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <Button fx:id="selectButton" mnemonicParsing="false" onMousePressed="#confirmThisImage" prefHeight="30.0" text="Seleziona">
+                     <HBox.margin>
+                        <Insets bottom="10.0" right="10.0" top="10.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+            </HBox>
          </children>
       </VBox>
    </children>

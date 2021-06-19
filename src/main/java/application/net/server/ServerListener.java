@@ -126,7 +126,23 @@ public class ServerListener implements Runnable {
 						break;
 						
 					case Protocol.GROUP_PICTURE_CHANGED:
-						handleGroupPictureChanged();
+						handleGroupInfoChanged(true);
+						break;
+						
+					case Protocol.GROUP_NAME_CHANGED:
+						handleGroupInfoChanged(false);
+						break;
+						
+					case Protocol.PASSWORD_CHANGE:
+						handlePasswordChange();
+						break;
+						
+					case Protocol.PHOTO_CHANGE:
+						handleMyInfoChanged(true);
+						break;
+						
+					case Protocol.STATUS_CHANGE:
+						handleMyInfoChanged(false);
 						break;
 						
 					default:
@@ -148,11 +164,10 @@ public class ServerListener implements Runnable {
 			sendMessage(Protocol.BAD_REQUEST);
 			f.printStackTrace();
 			disconnect();
-			f.printStackTrace();
 			return;
 		}
 	}
-	
+
 	private void disconnect() {
 		try {
 			if(server.disconnectUser(serverUsername))
@@ -161,6 +176,36 @@ public class ServerListener implements Runnable {
 		closeStreams();
 	}
 	
+	//Se non è la foto, è lo stato
+	private void handleMyInfoChanged(boolean isProfilePic) throws IOException, ClassNotFoundException, SQLException {
+		String requester = (String) inputStream.readObject();
+		String status;
+		File proPic;
+		
+		InformationMessage msg = new InformationMessage();
+		if(isProfilePic) {
+			proPic = (File) inputStream.readObject();
+			msg.setInformation(Protocol.PHOTO_CHANGE);
+			msg.setPacket(proPic);
+			if(!DatabaseHandler.getInstance().updateProPic(requester, proPic))
+				msg.setPacket("null");
+			
+			sendMessage(Protocol.PHOTO_CHANGE);
+		}
+		else {
+			status = (String) inputStream.readObject();
+			msg.setInformation(Protocol.STATUS_CHANGE);
+			msg.setPacket(status);
+			if(!DatabaseHandler.getInstance().updateStatus(requester, status))
+				msg.setPacket(null);
+				
+			sendMessage(Protocol.STATUS_CHANGE);
+		}
+		
+		sendObject(msg);
+	}
+	
+	//Questo metodo controlla che il gruppo e che la persona che richiede l'operazione sia il propritario del gruppo
 	private boolean checkGroupAndRequester(int groupId, String requester) throws SQLException {
 		if(!DatabaseHandler.getInstance().checkGroupExists(groupId))
 			return false;
@@ -171,10 +216,46 @@ public class ServerListener implements Runnable {
 		return true;
 	}
 	
-	private void handleGroupPictureChanged() throws ClassNotFoundException, IOException, SQLException{
+	//Leggo sempre l'username anche se è già salvato nel server per una doppia sicurezza
+	private void handlePasswordChange() throws IOException, SQLException, ClassNotFoundException {
+		String username = (String) inputStream.readObject();
+		String oldPassword = (String) inputStream.readObject();
+		String newPassword = (String) inputStream.readObject();
+		
+		InformationMessage msg = new InformationMessage();
+		msg.setInformation(Protocol.PASSWORD_CHANGE);
+		
+		User check = DatabaseHandler.getInstance().checkUserLogin(username, oldPassword);
+		if(check == null) 
+			msg.setPacket(Protocol.INVALID_CREDENTIAL);
+		
+		else {
+			String result = Utilities.checkIfPasswordValid(newPassword);
+			if(!result.equals(Utilities.PASSWORD_VALID)) 
+				msg.setPacket(result);
+			
+			else {
+				if(DatabaseHandler.getInstance().updatePassword(username, newPassword))
+					msg.setPacket(Protocol.REQUEST_SUCCESSFUL);
+				else
+					msg.setPacket(Protocol.SERVER_ERROR);
+			}
+		}
+		
+		sendMessage(Protocol.PASSWORD_CHANGE);
+		sendObject(msg);
+	}
+	
+	//Se non è l'immagine di profilo allora è il nome
+	private void handleGroupInfoChanged(boolean isProfilePic) throws ClassNotFoundException, IOException, SQLException{
 		String requester = (String) inputStream.readObject();
 		int groupId = Integer.parseInt((String) inputStream.readObject());
-		File pic = (File) inputStream.readObject();
+		String newName = "";
+		File pic = null;
+		if(isProfilePic)
+			pic = (File) inputStream.readObject();
+		else
+			newName = (String) inputStream.readObject();
 		
 		if(!checkGroupAndRequester(groupId, requester))
 			return;
@@ -183,28 +264,38 @@ public class ServerListener implements Runnable {
 		if(listPartecipanti.indexOf(requester) == -1)
 			return;
 		
-		DatabaseHandler.getInstance().updateGroup(groupId, Utilities.getByteArrFromFile(pic));
 		InformationMessage msg = new InformationMessage();
-		msg.setInformation(Protocol.GROUP_PICTURE_CHANGED);
-		msg.setPacket(new Pair <Integer, File>(groupId, pic));
+		if(isProfilePic) {
+			DatabaseHandler.getInstance().updateGroup(groupId, Utilities.getByteArrFromFile(pic));
+			msg.setInformation(Protocol.GROUP_PICTURE_CHANGED);
+			msg.setPacket(new Pair <Integer, File>(groupId, pic));
+		}
+		else {
+			DatabaseHandler.getInstance().updateGroup(groupId, newName);
+			msg.setInformation(Protocol.GROUP_NAME_CHANGED);
+			msg.setPacket(new Pair <Integer, String>(groupId, newName));
+		}
+		
 		for(String receiver : listPartecipanti) {	
 			ObjectOutputStream destOutput = server.getStream(receiver);
 			if(destOutput == null) {
 				ChatMessage infMsg = new ChatMessage("null", receiver);
-				infMsg.setText("PIC_CHANGED:" + groupId);
+				if(isProfilePic)
+					infMsg.setText("PIC_CHANGED:" + groupId);
+				else
+					infMsg.setText("NAME_CHANGED:" + newName);
 				infMsg.setGroupMessage(true);
 				infMsg.setTimestamp(Utilities.getCurrentISODate());
 				infMsg.setGroupId(groupId);
 				DatabaseHandler.getInstance().addPendingMessage(infMsg, receiver);
 			}
 			else {
-				destOutput.writeObject(Protocol.GROUP_PICTURE_CHANGED);
+				destOutput.writeObject(msg.getInformation());
 				destOutput.writeObject(msg);
 			}
 		}
 		
 	}
-
 	
 	@SuppressWarnings("unchecked")
 	private void handleGroupAdd() throws IOException, SQLException, ClassNotFoundException {
@@ -299,7 +390,7 @@ public class ServerListener implements Runnable {
 			ObjectOutputStream destOutput = server.getStream(receiver);
 			if(destOutput == null) {
 				ChatMessage infMsg = new ChatMessage("null", receiver);
-				if(!autoRimotion)
+				if(autoRimotion)
 					infMsg.setText("LEFT:" + memberRemoved);
 				else
 					infMsg.setText("REMOVED:" + memberRemoved);

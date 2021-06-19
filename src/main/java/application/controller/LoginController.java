@@ -76,6 +76,7 @@ public class LoginController {
     	myContact.setProfilePic(user.getProPic());
     	myContact.setStatus(user.getStatus());
     	ChatLogic.getInstance().setMyInformation(myContact);
+    	ChatLogic.getInstance().setFullName(user.getName() + " " + user.getLastName());
     	
     	Client.getInstance().setOnFailed(new ClientFailedController());
     	Client.getInstance().setOnSucceeded(new ClientSucceedController());

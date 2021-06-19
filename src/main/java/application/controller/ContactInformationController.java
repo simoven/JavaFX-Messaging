@@ -6,10 +6,10 @@ import java.io.FileInputStream;
 
 import application.graphics.ChatDialog;
 import application.graphics.ContactInfoView;
+import application.graphics.ImageViewer;
 import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
 import application.misc.FXUtilities;
-import application.net.client.Client;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -23,6 +23,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -55,6 +56,15 @@ public class ContactInformationController implements EventHandler <ActionEvent> 
 
     @FXML
     private Circle backButton;
+    
+    @FXML
+    private Circle approveButton;
+
+    @FXML
+    private Circle cancelButton;
+    
+    @FXML
+    private Circle changeNameButton;
 
     @FXML
     private VBox scrollPaneVBox;
@@ -68,12 +78,19 @@ public class ContactInformationController implements EventHandler <ActionEvent> 
     @FXML
     private Label changeImageLabel;
     
+    @FXML
+    private StackPane myStackPane;
+    
     private Image dotWhiteImage;
     
     private Image defaultGroup;
     
     @FXML
     private BorderPane root;
+    
+    private String previousName = "";
+    
+    private byte [] currentImage = null;
     
     public Label getInfoLabel() {return infoLabel; }
     
@@ -93,12 +110,23 @@ public class ContactInformationController implements EventHandler <ActionEvent> 
     
     public Label getMyStatusLabel() { return myStatusLabel; }
     
+    private void setNameButtonsVisibility(boolean areVisible) {
+    	approveButton.setVisible(areVisible);
+		cancelButton.setVisible(areVisible);
+		approveButton.setDisable(!areVisible);
+		cancelButton.setDisable(!areVisible);
+    }
+    
     @FXML 
     void initialize() {
     	root.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
+    	topHbox.prefHeightProperty().bind(SceneHandler.getInstance().getChatPane().heightProperty().multiply(0.05));
     	dotWhiteImage = new Image(getClass().getResourceAsStream("/application/images/3dot_white.png"), 30, 30, true, true);
     	backButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/backArrow.png"), 100, 100, true, true)));
     	defaultGroup = new Image(getClass().getResourceAsStream("/application/images/defaultGroup.png"), 100, 100, true, true);
+    	changeNameButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/pencil.png"), 80, 80, true, true)));
+    	cancelButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/cancelIcon.png"), 100, 100, true, true)));
+    	approveButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/approveTicker.png"), 100, 100, true, true)));
     	popupMenuButton.setGraphic(new ImageView(dotWhiteImage));
     	disableChangeImageLabel();
     	ContactInfoView.getInstance().setController(this);
@@ -128,14 +156,20 @@ public class ContactInformationController implements EventHandler <ActionEvent> 
 	public void enableChangeImageLabel() {
 		changeImageLabel.setDisable(false);
 		changeImageLabel.setVisible(true);
+		changeNameButton.setDisable(false);
+		changeNameButton.setVisible(true);
 	}
 	
 	public void disableChangeImageLabel() {
 		changeImageLabel.setDisable(true);
 		changeImageLabel.setVisible(false);
+		changeNameButton.setDisable(true);
+		changeNameButton.setVisible(false);
+		setNameButtonsVisibility(false);
 	}
 	
-	 @FXML
+	@FXML
+	//Questo metodod viene chiamato cliccando su "Cambia immagine"
     void changeGroupImage(MouseEvent event) {
 		 int result = ChatDialog.getInstance().showPhotoOptionDialog();
 		 File selectedPhoto = null;
@@ -146,16 +180,63 @@ public class ContactInformationController implements EventHandler <ActionEvent> 
 		 else 
 			 return;
 		 
-		 if(selectedPhoto == null)
+		 if(selectedPhoto == null) {
 			 propicCircle.setFill(new ImagePattern(defaultGroup));
-		 else {
-			 try {
-				 propicCircle.setFill(new ImagePattern(new Image(new FileInputStream(selectedPhoto), 100, 100, true, true)));
-			 } catch (Exception e) {
-				 //TODO show error
-			 }
+			 ChatLogic.getInstance().groupPictureChanged(selectedPhoto);
 		 }
-		 
-		 ChatLogic.getInstance().groupPictureChanged(selectedPhoto);
+		 else 
+			 ImageViewer.getInstance().displayImageChooser(myStackPane, this, selectedPhoto);
+    }
+	
+	public void changeGroupPhoto(File image) {
+		try {
+			propicCircle.setFill(new ImagePattern(new Image(new FileInputStream(image), 200, 200, true, true)));
+			ChatLogic.getInstance().groupPictureChanged(image);
+		} catch (Exception e) {
+			//TODO show error
+		}
+	}
+	 
+	 @FXML
+    void cancelNameChange(MouseEvent event) {
+		 textField1.setText(previousName);
+		 textField1.setEditable(false);
+		 setNameButtonsVisibility(false);
+    }
+
+    @FXML
+    void confirmNameChange(MouseEvent event) {
+    	if(textField1.getText().isBlank())
+    		return;
+    	
+    	 textField1.setEditable(false);
+		 setNameButtonsVisibility(false);
+		 ChatLogic.getInstance().groupNameChanged(textField1.getText());
+    }
+    
+    @FXML
+    void prepareChangeName(MouseEvent event) {
+    	previousName = textField1.getText();
+    	textField1.setEditable(true);
+    	textField1.requestFocus();
+    	setNameButtonsVisibility(true);
+    }
+    
+    @FXML
+    void displayProfilePhoto(MouseEvent event) {
+    	if(currentImage != null)
+    		ImageViewer.getInstance().displayImageInPane(myStackPane, currentImage);
+    }
+    
+    public void displayImage(byte[] img, boolean isGroupImage) {
+    	currentImage = img;
+    	if(img != null)
+			propicCircle.setFill(new ImagePattern(new Image(new ByteArrayInputStream(img), 200, 200, true, true)));
+		else {
+			if(!isGroupImage)
+				propicCircle.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/defaultSinglePic.png"), 200, 200, true, true)));
+			else
+				propicCircle.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/defaultGroup.png"), 200, 200, true, true)));
+		}
     }
 }

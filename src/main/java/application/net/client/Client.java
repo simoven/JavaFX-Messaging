@@ -222,6 +222,32 @@ public class Client extends Service <Message> {
 		sendMessage(Integer.toString(groupId));
 		sendObject(selectedPhoto);
 	}
+	
+	public void updateGroupName(String requester, String gpName, int groupId) {
+		sendMessage(Protocol.GROUP_NAME_CHANGED);
+		sendMessage(requester);
+		sendMessage(Integer.toString(groupId));
+		sendMessage(gpName);
+	}
+	
+	public void requestPasswordChange(String username, String oldPassword, String newPassword) {
+		sendMessage(Protocol.PASSWORD_CHANGE);
+		sendMessage(username);
+		sendMessage(oldPassword);
+		sendMessage(newPassword);
+	}
+	
+	public void updateProPic(String username, File img) {
+		sendMessage(Protocol.PHOTO_CHANGE);
+		sendMessage(username);
+		sendObject(img);
+	}
+
+	public void updateStatus(String username, String status) {
+		sendMessage(Protocol.STATUS_CHANGE);
+		sendMessage(username);
+		sendMessage(status);
+	}
 
 	@Override
 	protected Task <Message> createTask() {
@@ -230,7 +256,7 @@ public class Client extends Service <Message> {
 			@Override
 			protected Message call() throws Exception {
 				String requestIncoming = (String) inputStream.readObject();
-				System.out.println(requestIncoming);
+				System.out.println("In arrivo : " + requestIncoming);
 				Message msg = null;
 				
 				try {
@@ -249,7 +275,11 @@ public class Client extends Service <Message> {
 							requestIncoming.equals(Protocol.GROUP_MEMBER_ADD) ||
 							requestIncoming.equals(Protocol.GROUP_MEMBER_LEFT) ||
 							requestIncoming.equals(Protocol.GROUP_DELETION) ||
-							requestIncoming.equals(Protocol.GROUP_PICTURE_CHANGED))
+							requestIncoming.equals(Protocol.GROUP_PICTURE_CHANGED) ||
+							requestIncoming.equals(Protocol.GROUP_NAME_CHANGED) ||
+							requestIncoming.equals(Protocol.PASSWORD_CHANGE) ||
+							requestIncoming.equals(Protocol.STATUS_CHANGE) ||
+							requestIncoming.equals(Protocol.PHOTO_CHANGE))
 						msg = (InformationMessage) inputStream.readObject();
 					
 				} catch(ClassNotFoundException e) {

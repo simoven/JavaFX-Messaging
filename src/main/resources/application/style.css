@@ -13,7 +13,7 @@
 
 .searchTextField {
 	-fx-background-color: #46474A;
-	-fx-background-radius: 100px;
+	-fx-background-radius: 20;
 	-fx-text-fill: white;
 }
 
@@ -22,8 +22,7 @@
 	-fx-background-color: #636566;
 }
 
-/* è il bottone chiudi per le immagini*/
-#closeButton {
+.imageViewerButton {
 	-fx-background-color: #46474A;
 	-fx-background-radius: 15;
 	-fx-text-fill: white;
@@ -87,6 +86,11 @@
 
 #messageTextArea .content{
     -fx-background-color: transparent;
+}
+
+#messageTextArea .scroll-bar:vertical {
+    -fx-pref-width: 1;
+    -fx-opacity: 0;
 }
 
 .lastMessageInChat {
@@ -159,6 +163,18 @@
 	-fx-background-color: #5A6BAF;
 }
 
+.redButton {
+	-fx-background-color: #F51E1E;
+	-fx-text-fill: white;
+	-fx-font-size: 1.1em;
+	-fx-background-radius: 15;
+}
+
+.redButton: hover {
+	-fx-background-color: #D21717;
+	-fx-text-fill: white;
+}
+
 .check-box .box {
 	-fx-background-color: white;
 	-fx-border-color: grey;
@@ -190,8 +206,22 @@
     -fx-padding: 0;
 }
 
-.InfoVBox {
-	.label {
-		-fx-background-color:red;
-	}
+.menu-item {
+    -fx-background-color: #636566; 
+}
+
+.menu-item .label {
+    -fx-text-fill: white;
+}
+
+.menu-item .label:disabled {
+    -fx-opacity: 1.0;
+}    
+
+.menu-item:focused, .menu-item:hovered {
+    -fx-background-color: #46474A; 
+}
+  
+.context-menu {
+    -fx-background-color: #636566; 
 }

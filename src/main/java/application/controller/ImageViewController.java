@@ -2,15 +2,13 @@ package application.controller;
 
 import java.io.ByteArrayInputStream;
 
-import application.graphics.ChatView;
-import application.graphics.SceneHandler;
+import application.graphics.ImageViewer;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -26,26 +24,52 @@ public class ImageViewController {
     private VBox paneVBox;
     
     @FXML
-    private StackPane root;
+    private StackPane thisRoot;
+    
+    @FXML
+    private Button selectButton;
+    
+    public StackPane getThisRoot() {
+		return thisRoot;
+	}
     
     @FXML
     void initialize() {
-    	ChatView.getInstance().setImageViewController(this);
-    	paneVBox.prefWidthProperty().bind(SceneHandler.getInstance().getChatPaneStackPane().widthProperty());
-    	paneVBox.prefHeightProperty().bind(SceneHandler.getInstance().getChatPaneStackPane().heightProperty());
+    	ImageViewer.getInstance().setController(this);
+    	closeButton.getStyleClass().add("imageViewerButton");
+    	selectButton.getStyleClass().add("imageViewerButton");
     	paneVBox.setAlignment(Pos.CENTER);
-    	imageView.fitWidthProperty().bind(paneVBox.prefWidthProperty().multiply(0.95));
-    	imageView.fitHeightProperty().bind(paneVBox.prefHeightProperty().multiply(0.9));
+    	imageView.fitWidthProperty().bind(thisRoot.prefWidthProperty().multiply(0.95));
+    	imageView.fitHeightProperty().bind(thisRoot.prefHeightProperty().multiply(0.8));
     	paneVBox.getParent().getStyleClass().add("halfTransparent");
     }
     
     @FXML
     void closePanel(MouseEvent event) {
-    	SceneHandler.getInstance().closeImageScene();
+    	StackPane parent = (StackPane) thisRoot.getParent();
+    	parent.getChildren().remove(thisRoot);
+    }
+    
+    //aggiorno i constraints per adattarmi al pannello dove devo essere aggiunto
+    public void updateConstraints(StackPane root) {
+    	paneVBox.prefWidthProperty().unbind();
+    	paneVBox.prefHeightProperty().unbind();
+    	thisRoot.prefWidthProperty().bind(root.widthProperty());
+    	thisRoot.prefHeightProperty().bind(root.heightProperty());
     }
 
-	public void handleClick(byte[] image) {
+	public void showImage(byte[] image) {
 		imageView.setImage(new Image(new ByteArrayInputStream(image), paneVBox.getPrefWidth() * 1.5, paneVBox.getPrefHeight() * 1.5, true, true));
-    	SceneHandler.getInstance().setImageScene(); 
 	}
+	
+	public void updateSelectButton(boolean isActive) {
+		selectButton.setVisible(isActive);
+		selectButton.setDisable(!isActive);
+	}
+	
+	@FXML
+    void confirmThisImage(MouseEvent event) {
+		ImageViewer.getInstance().confirmFoto();
+		closePanel(null);
+    }
 }

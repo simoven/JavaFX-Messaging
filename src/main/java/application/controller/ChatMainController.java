@@ -13,7 +13,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -86,9 +85,6 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     
     @FXML
     void newChat(MouseEvent event) {
-    	//Significa che il pannello è già attivo
-    	SceneHandler.getInstance().setAllContactsPane();
-    	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
     	ChatLogic.getInstance().showContactsChoice();
     }
     
@@ -123,5 +119,10 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     	
     	allChatVbox.getChildren().clear();
     	ChatLogic.getInstance().showChatFiltered(searchField.getText());
+    }
+    
+    @FXML
+    void displayMyInformation(MouseEvent event) {
+    	ChatLogic.getInstance().displayMyInformation();
     }
 }

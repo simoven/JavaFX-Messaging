@@ -12,7 +12,7 @@
    <bottom>
       <HBox fx:id="bottomHBox" BorderPane.alignment="CENTER">
          <children>
-            <TextArea fx:id="messageTextArea" minHeight="0.0" promptText="Scrivi un messaggio.." wrapText="true" HBox.hgrow="ALWAYS">
+            <TextArea fx:id="messageTextArea" minHeight="0.0" onKeyPressed="#onKeyPressed" promptText="Scrivi un messaggio.." wrapText="true" HBox.hgrow="ALWAYS">
                <HBox.margin>
                   <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
                </HBox.margin></TextArea>

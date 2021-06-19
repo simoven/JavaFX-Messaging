@@ -1,5 +1,6 @@
 package application.net.server;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -63,6 +64,7 @@ public class DatabaseHandler {
 				utente = new LongUser(username, rs.getString("Nome"), rs.getString("Cognome"));
 				utente.setPassword("");
 				utente.setPropicFile(rs.getBytes("Img_profilo"));
+				utente.setStatus(rs.getString("Status"));
 			}
 		}
 		
@@ -342,13 +344,52 @@ public class DatabaseHandler {
 			stm.close();
 		}
 	}
-
-	public synchronized void updateGroup(int groupId, byte[] image) throws SQLException {
+	
+	public synchronized void updateGroup(int groupId, byte[] proPic) throws SQLException {
 		String query = "UPDATE Gruppo SET ProPic=? WHERE Id_gruppo=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
-		stm.setBytes(1, image);
+		stm.setBytes(1, proPic);
 		stm.setInt(2, groupId);
 		stm.executeUpdate();
 		stm.close();
+	}
+	
+	public synchronized void updateGroup(int groupId, String newName) throws SQLException {
+		String query = "UPDATE Gruppo SET Nome=? WHERE Id_gruppo=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setString(1, newName);
+		stm.setInt(2, groupId);
+		stm.executeUpdate();
+		stm.close();
+	}
+
+	public boolean updatePassword(String username, String newPassword) throws SQLException {
+		String query = "Update Utente SET Password=? WHERE Username=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setString(1, BCrypt.hashpw(newPassword, BCrypt.gensalt(12)));
+		stm.setString(2, username);
+		boolean answer = stm.executeUpdate() != 0;
+		stm.close();
+		return answer;
+	}
+
+	public boolean updateProPic(String requester, File proPic) throws SQLException {
+		String query = "Update Utente SET Img_profilo=? WHERE Username=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setBytes(1, Utilities.getByteArrFromFile(proPic));
+		stm.setString(2, requester);
+		boolean answer = stm.executeUpdate() != 0;
+		stm.close();
+		return answer;
+	}
+
+	public boolean updateStatus(String requester, String status) throws SQLException {
+		String query = "Update Utente SET Status=? WHERE Username=?;";
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		stm.setString(1, status);
+		stm.setString(2, requester);
+		boolean answer = stm.executeUpdate() != 0;
+		stm.close();
+		return answer;
 	}
 }

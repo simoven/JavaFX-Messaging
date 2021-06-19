@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.util.ArrayList;
 
 import application.graphics.CreateChatView;
+import application.graphics.ImageViewer;
 import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
 import application.misc.FXUtilities;
@@ -18,6 +19,7 @@ import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -41,6 +43,9 @@ public class CreateGroupController {
 
     @FXML
     private Circle createGroupButton;
+    
+    @FXML
+    private StackPane myStackPane;
 
     @FXML
     private ScrollPane alluserScrollpane;
@@ -52,6 +57,8 @@ public class CreateGroupController {
     
     private Image buttonPressed;
     
+    private Image defaultGroupIcon;
+    
     private File selectedImage;
     
     public VBox getPartecipantsVBox() { return partecipantsVBox; }
@@ -60,6 +67,7 @@ public class CreateGroupController {
     void initialize() {
     	buttonDefault = new Image(getClass().getResourceAsStream("/application/images/approveTicker.png"), 100, 100, true, true);
     	buttonPressed = new Image(getClass().getResourceAsStream("/application/images/approveTickerPressed.png"), 100, 100, true, true);
+    	defaultGroupIcon = new Image(getClass().getResourceAsStream("/application/images/defaultGroup.png"), 100, 100, true, true);
     	createGroupButton.setFill(new ImagePattern(buttonDefault));
     	
     	root.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
@@ -74,21 +82,29 @@ public class CreateGroupController {
     
     @FXML
     void chooseImage(MouseEvent event) {
+    	if(selectedImage != null) {
+    		selectedImage = null;
+    		groupProfilePic.setFill(new ImagePattern(defaultGroupIcon));
+    	}
+    	
     	File file = FXUtilities.chooseImage();
     	
-    	if(file != null) {
-    		try {
-	    		Image img2 = new Image(new FileInputStream(file.getAbsolutePath()), 100, 100, true, true);
-				groupProfilePic.setFill(new ImagePattern(img2));
-				selectedImage = file;
-    		} catch (Exception e) {
-    			//TODO cannot load image
-    		}
-    	}
+    	if(file != null)
+    		ImageViewer.getInstance().displayImageChooser(myStackPane, this, file);
     	else {
     		file = null;
-    		groupProfilePic.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/defaultGroup.png"), 100, 100, true, true)));
+    		groupProfilePic.setFill(new ImagePattern(defaultGroupIcon));
     	}
+    }
+    
+    public void confirmImage(File img) {
+    	try {
+    		Image img2 = new Image(new FileInputStream(img), 100, 100, true, true);
+			groupProfilePic.setFill(new ImagePattern(img2));
+			selectedImage = img;
+		} catch (Exception e) {
+			//TODO cannot load image
+		}
     }
     
     @FXML

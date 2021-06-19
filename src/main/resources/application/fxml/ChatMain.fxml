@@ -20,7 +20,7 @@
                               <Insets bottom="12.0" left="20.0" right="10.0" top="20.0" />
                            </HBox.margin>
                         </TextField>
-                        <Circle fx:id="myPropicCircle" fill="DODGERBLUE" radius="20.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                        <Circle fx:id="myPropicCircle" fill="DODGERBLUE" onMousePressed="#displayMyInformation" radius="20.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
                            <HBox.margin>
                               <Insets bottom="12.0" left="10.0" right="10.0" top="10.0" />
                            </HBox.margin>

@@ -1,6 +1,6 @@
 package application.logic.contacts;
 
-public class Contact {
+public class Contact implements Comparable <Contact>{
 	
 	protected String username;
 	protected byte [] profilePic;
@@ -49,5 +49,10 @@ public class Contact {
 		Contact contact = (Contact) obj;
 		
 		return username.equals(contact.getUsername());
+	}
+	
+	@Override
+	public int compareTo(Contact o) {
+		return username.compareTo(o.getUsername());
 	}
 }

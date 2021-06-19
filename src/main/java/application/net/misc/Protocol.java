@@ -24,6 +24,7 @@ public class Protocol {
 	public static final String USER_ONLINE = "User is online";
 	public static final String IMAGE_NULL = "Image is null";
 	public static final String IMAGE_NOT_NULL = "Image is not null";
+	public static final String GENERIC_ERROR = "Error";
 	
 	public static final String ADDED_NEW_GROUP = "User added to a new Group";
 	public static final String MESSAGES_RETRIEVED = "Messages retrieved from server";
@@ -39,4 +40,8 @@ public class Protocol {
 	public static final String GROUP_MEMBER_LEFT = "Left the group";
 	public static final String GROUP_DELETION = "Delete the group";
 	public static final String GROUP_PICTURE_CHANGED = "Picture changed";
+	public static final String GROUP_NAME_CHANGED = "Name changed";
+	public static final String PASSWORD_CHANGE = "Change the password";
+	public static final String STATUS_CHANGE = "Change the status";
+	public static final String PHOTO_CHANGE = "Change the photo";
 }

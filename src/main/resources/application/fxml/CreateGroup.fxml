@@ -50,28 +50,32 @@
                   </Circle>
                </children>
             </HBox>
-            <Pane prefHeight="2.0" style="-fx-background-color: #46474A;">
+            <Pane minHeight="2.0" prefHeight="2.0" style="-fx-background-color: #46474A;">
                <VBox.margin>
                   <Insets />
                </VBox.margin>
             </Pane>
-            <HBox fx:id="labelHbox" prefHeight="20.0">
+            <StackPane fx:id="myStackPane" VBox.vgrow="ALWAYS">
                <children>
-                  <Label prefHeight="20.0" prefWidth="225.0" style="-fx-text-fill: white; -fx-font-size: 1em;" text="Aggiungi partecipanti :">
-                     <font>
-                        <Font size="16.0" />
-                     </font>
-                     <padding>
-                        <Insets bottom="5.0" left="10.0" top="5.0" />
-                     </padding>
-                  </Label>
+                  <HBox fx:id="labelHbox" prefHeight="20.0">
+                     <children>
+                        <Label prefHeight="20.0" prefWidth="225.0" style="-fx-text-fill: white; -fx-font-size: 1em;" text="Aggiungi partecipanti :">
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                           <padding>
+                              <Insets bottom="5.0" left="10.0" top="5.0" />
+                           </padding>
+                        </Label>
+                     </children>
+                  </HBox>
+                  <ScrollPane fx:id="alluserScrollpane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                     <content>
+                        <VBox fx:id="partecipantsVBox" />
+                     </content>
+                  </ScrollPane>
                </children>
-            </HBox>
-            <ScrollPane fx:id="alluserScrollpane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
-               <content>
-                  <VBox fx:id="partecipantsVBox" />
-               </content>
-            </ScrollPane>
+            </StackPane>
          </children>
       </VBox>
    </children>

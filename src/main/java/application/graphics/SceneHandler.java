@@ -26,6 +26,7 @@ public class SceneHandler {
 	private StackPane imageViewPane;
 	private AnchorPane createGroupPane;
 	private BorderPane contactInformationPane;
+	private BorderPane myProfilePane;
 	
 	private static SceneHandler instance = null;
 	
@@ -92,6 +93,8 @@ public class SceneHandler {
 		createGroupPane = (AnchorPane) loader.load();
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/ContactInformation.fxml"));
 		contactInformationPane = (BorderPane) loader.load();
+		loader = new FXMLLoader(getClass().getResource("/application/fxml/MyProfile.fxml"));
+		myProfilePane = (BorderPane) loader.load();
 		
 		scene = new Scene(loginPane, 800, 600);
 		windowFrame.setMinHeight(600);
@@ -104,7 +107,16 @@ public class SceneHandler {
 	}
 	
 	public void setLoginScene() {
+		windowFrame.hide();
 		scene.setRoot(loginPane);
+		windowFrame.setMinHeight(600);
+		windowFrame.setMinWidth(800);
+		windowFrame.setHeight(600);
+		windowFrame.setWidth(800);
+		windowFrame.setResizable(false);
+		scene.getStylesheets().clear();
+		scene.getStylesheets().add(getClass().getResource("/application/loginRegistrationStyle.css").toExternalForm());
+		windowFrame.show();
 	}
 	
 	public void setRegisterScene() {
@@ -113,10 +125,6 @@ public class SceneHandler {
 	
 	public void setImageScene() {
 		chatPaneStackPane.getChildren().add(imageViewPane);
-	}
-	
-	public void closeImageScene() {
-		chatPaneStackPane.getChildren().remove(chatPaneStackPane.getChildren().size() - 1);
 	}
 	
 	public void setContactInformationPane() {
@@ -138,14 +146,24 @@ public class SceneHandler {
     		return;
     	
     	layoutHBox.getChildren().remove(1);
-    	layoutHBox.getChildren().add(SceneHandler.getInstance().getContactsPane());
+    	layoutHBox.getChildren().add(contactsPane);
     	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
+	}
+	
+	public void setMyProfilePane() {
+		HBox layoutHBox = (HBox) mainChat.getChildren().get(0);
+		if(layoutHBox.getChildren().get(1).equals(myProfilePane))
+    		return;
+		
+		layoutHBox.getChildren().remove(1);
+    	layoutHBox.getChildren().add(myProfilePane);
+    	HBox.setHgrow(myProfilePane, Priority.ALWAYS);
 	}
 	
 	//Questo metodo controlla se il pannello per la visualizzazione dell'imagine è rimasto aperto e, in caso, lo chiude
 	public void checkImageSceneActive() {
-		if(chatPaneStackPane.getChildren().get(chatPaneStackPane.getChildren().size() - 1) instanceof AnchorPane)
-			closeImageScene();
+		if(chatPaneStackPane.getChildren().indexOf(imageViewPane) != -1)
+			chatPaneStackPane.getChildren().remove(imageViewPane);
 	}
 	
 	public void setChatScene() {
@@ -165,7 +183,7 @@ public class SceneHandler {
     		return;
     	
     	layoutHBox.getChildren().remove(1);
-    	layoutHBox.getChildren().add(SceneHandler.getInstance().getCreateGroupPane());
+    	layoutHBox.getChildren().add(createGroupPane);
     	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
 		
 	}

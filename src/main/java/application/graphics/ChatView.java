@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 
 import application.controller.ChatMainController;
 import application.controller.ChatPaneController;
-import application.controller.ImageViewController;
 import application.logic.ChatLogic;
 import application.logic.chat.Chat;
 import application.logic.chat.GroupChat;
@@ -38,7 +37,6 @@ public class ChatView {
 	private static ChatView instance = null;
 	private ChatPaneController chatPaneController = null;
 	private ChatMainController chatMainController = null;
-	private ImageViewController imageViewController = null;
 	
 	private ChatView() {}
 	
@@ -54,10 +52,6 @@ public class ChatView {
 	
 	public void setChatMainController(ChatMainController chatMainController) {
 		this.chatMainController = chatMainController; }
-	
-	public void setImageViewController(ImageViewController imageViewController) {
-		this.imageViewController = imageViewController;
-	}
 	
 	public ChatMainController getChatMainController() { return chatMainController; }
 	
@@ -134,7 +128,7 @@ public class ChatView {
     		ImageView img = new ImageView(new Image(new ByteArrayInputStream(chatMsg.getImage()), 250, 250, true, true));
     		img.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<Event>() {
     			public void handle(Event event) {
-    				imageViewController.handleClick(chatMsg.getImage()); };
+    				ImageViewer.getInstance().displayImageInPane(SceneHandler.getInstance().getChatPaneStackPane(), chatMsg.getImage()); };
 			});
     		box.getChildren().add(img);
     		VBox.setMargin(img, new Insets(10, 10, 0, 10));
@@ -276,6 +270,5 @@ public class ChatView {
 		else 
 			chatPaneController.getLastAccessLabel().setText("Ultimo accesso : " + status);
 		
-	}
-	
+	}	
 }
