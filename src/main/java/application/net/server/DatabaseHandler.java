@@ -105,19 +105,28 @@ public class DatabaseHandler {
 	public synchronized void addPendingMessage(ChatMessage msg, String receiver) throws SQLException {
 		String query;
 		if(msg.isAGroupMessage())
-			query = "INSERT INTO MessaggioDiGruppo Values(null, ?, ?, ?, ?, ?, ?);";
+			query = "INSERT INTO MessaggioDiGruppo Values(null, ?, ?, ?, ?, ?, ?, ?);";
 		else 
-			query = "INSERT INTO Messaggi Values(null, ?, ?, ?, ?, ?);";
+			query = "INSERT INTO Messaggi Values(null, ?, ?, ?, ?, ?, ?);";
 		PreparedStatement stmt = dbConnection.prepareStatement(query);
 		stmt.setString(1, msg.getSender());
 		stmt.setString(2, receiver);
 		stmt.setString(3, msg.getText());
 		stmt.setBytes(4, msg.getImage());
 		stmt.setString(5, msg.getTimestamp());
-		//Nel caso del messaggio di gruppo il receiver è un intero : l'id del gruppo
 		//uso la string receiver in modo da capire qual è l'username della persona che non ha ricevuto il messaggio
 		if(msg.isAGroupMessage())
 			stmt.setInt(6, msg.getGroupId());
+		
+		int deleted = 0;
+		if(msg.isDeleted())
+			deleted = 1;
+		
+		if(msg.isAGroupMessage())
+			stmt.setInt(7, deleted);
+		else
+			stmt.setInt(6, deleted);
+	
 		stmt.executeUpdate();
 		stmt.close();
 	}
@@ -173,6 +182,9 @@ public class DatabaseHandler {
 			msg.setImage(rs.getBytes("Image"));
 			msg.setGroupMessage(false);
 			msg.setTimestamp(rs.getString("Date"));
+			if(rs.getInt("Deleted") == 1)
+				msg.setDeleted(true);
+			
 			lista.add(msg);
 		}
 		
@@ -391,5 +403,56 @@ public class DatabaseHandler {
 		boolean answer = stm.executeUpdate() != 0;
 		stm.close();
 		return answer;
+	}
+	
+	//Questo metodo rimuove il messaggio nel db, ovvero se il receiver non ha ancora ricevuto il messaggio
+	public ArrayList <String> removeMessage(ChatMessage msg) throws SQLException {
+		String query;
+		ArrayList <String> receiverArr = new ArrayList <String>();
+		if(!msg.isAGroupMessage())
+			query = "SELECT * FROM Messaggi WHERE sender=? AND receiver=? AND Date=?;";
+		else
+			query = "SELECT * FROM MessaggioDiGruppo WHERE sender=? AND Date=? AND Group_id=?;";
+		
+		PreparedStatement stm = dbConnection.prepareStatement(query);
+		if(!msg.isAGroupMessage()) {
+			stm.setString(1, msg.getSender());
+			stm.setString(2, msg.getReceiver());
+			stm.setString(3, msg.getTimestamp());
+		}
+		else {
+			stm.setString(1, msg.getSender());
+			stm.setString(2, msg.getTimestamp());
+			stm.setInt(3, msg.getGroupId());
+		}
+		
+		ResultSet rs = stm.executeQuery();
+		while(rs.next())
+			receiverArr.add(rs.getString("receiver"));
+		
+		rs.close();
+		stm.close();
+		
+		if(!msg.isAGroupMessage())
+			query = "DELETE FROM Messaggi WHERE sender=? AND receiver=? AND Date=?;";
+		else
+			query = "DELETE FROM MessaggioDiGruppo WHERE sender=? AND Date=? AND Group_id=?;";
+		
+		stm = dbConnection.prepareStatement(query);
+		if(!msg.isAGroupMessage()) {
+			stm.setString(1, msg.getSender());
+			stm.setString(2, msg.getReceiver());
+			stm.setString(3, msg.getTimestamp());
+		}
+		else {
+			stm.setString(1, msg.getSender());
+			stm.setString(2, msg.getTimestamp());
+			stm.setInt(3, msg.getGroupId());
+		}
+		
+		stm.executeUpdate();
+		stm.close();
+		
+		return receiverArr;
 	}
 }

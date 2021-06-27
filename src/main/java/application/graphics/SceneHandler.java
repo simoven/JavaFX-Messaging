@@ -5,8 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -15,7 +14,7 @@ public class SceneHandler {
 	private Stage windowFrame;
 	private Scene scene;
 	
-	private AnchorPane mainChat;
+	private AnchorPane mainChatPane;
 	private BorderPane chatPane;
 	private StackPane chatPaneStackPane;
 	private ScrollPane chatPaneScrollPane;
@@ -28,6 +27,8 @@ public class SceneHandler {
 	private BorderPane contactInformationPane;
 	private BorderPane myProfilePane;
 	
+	//é lo stackPnae principale sulla destra, dove poi cambio chikdren in base al pannello che mi serve
+	private StackPane mainStackPane;
 	private static SceneHandler instance = null;
 	
 	private SceneHandler() {}
@@ -46,6 +47,9 @@ public class SceneHandler {
 	public StackPane getChatPaneStackPane() {
 		return chatPaneStackPane;
 	}
+	
+	public void setMainStackPane(StackPane mainStackPane) {
+		this.mainStackPane = mainStackPane; }
 	
 	public ScrollPane getChatPaneScrollPane() {
 		return chatPaneScrollPane;
@@ -80,7 +84,7 @@ public class SceneHandler {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("/application/fxml/ChatPane.fxml"));
 		chatPane = (BorderPane) loader.load();
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/ChatMain.fxml"));
-		mainChat = (AnchorPane) loader.load();
+		mainChatPane = (AnchorPane) loader.load();
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/ChatChooser.fxml"));
 		contactsPane = (BorderPane) loader.load();
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/Login.fxml"));
@@ -99,7 +103,7 @@ public class SceneHandler {
 		scene = new Scene(loginPane, 800, 600);
 		windowFrame.setMinHeight(600);
 		windowFrame.setMinWidth(800);
-		scene.getStylesheets().add(getClass().getResource("/application/loginRegistrationStyle.css").toExternalForm());
+		scene.getStylesheets().add(getClass().getResource("/application/styles/loginRegistrationStyle.css").toExternalForm());
 		windowFrame.setTitle("JavaFX Messaging");
 		windowFrame.setScene(scene);
 		windowFrame.setResizable(false);
@@ -107,6 +111,13 @@ public class SceneHandler {
 	}
 	
 	public void setLoginScene() {
+		scene.setRoot(loginPane);
+	}
+	
+	public void setOpenLoginScene() {
+		if(scene.getRoot().equals(loginPane) || scene.getRoot().equals(registerPane))
+			return;
+		
 		windowFrame.hide();
 		scene.setRoot(loginPane);
 		windowFrame.setMinHeight(600);
@@ -115,7 +126,7 @@ public class SceneHandler {
 		windowFrame.setWidth(800);
 		windowFrame.setResizable(false);
 		scene.getStylesheets().clear();
-		scene.getStylesheets().add(getClass().getResource("/application/loginRegistrationStyle.css").toExternalForm());
+		scene.getStylesheets().add(getClass().getResource("/application/styles/loginRegistrationStyle.css").toExternalForm());
 		windowFrame.show();
 	}
 	
@@ -128,36 +139,63 @@ public class SceneHandler {
 	}
 	
 	public void setContactInformationPane() {
-		HBox layoutHBox = (HBox) mainChat.getChildren().get(0);
-		layoutHBox.getChildren().remove(1);
-		layoutHBox.getChildren().add(contactInformationPane);
+		if(mainStackPane.getChildren().size() > 0) {
+			if(mainStackPane.getChildren().get(0).equals(contactInformationPane))
+				return;
+			else
+				ChatAnimation.doSlideInFromBottom((Pane) mainStackPane.getChildren().get(0), contactInformationPane, mainStackPane);
+		}
+		else
+			ChatAnimation.doSlideInFromBottom(null, contactInformationPane, mainStackPane);
 	}
 	
-	public void setChatPane() {	
-		HBox layoutHBox = (HBox) mainChat.getChildren().get(0);
-    	layoutHBox.getChildren().remove(1);
-    	layoutHBox.getChildren().add(chatPane);
-    	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
+	//se non deve scorrere da sinistra, allora deve arrivare da sopra
+	public void setChatPane(boolean fromLeft) {	
+		if(mainStackPane.getChildren().size() > 0) {
+			if(mainStackPane.getChildren().get(0).equals(chatPane))
+				return;
+			else {
+				if(fromLeft)
+					ChatAnimation.doSlideInFromLeft((Pane) mainStackPane.getChildren().get(0), chatPane, mainStackPane);
+				else 
+					ChatAnimation.doSlideInFromTop((Pane) mainStackPane.getChildren().get(0), chatPane, mainStackPane);
+			}
+		}
+		else
+			ChatAnimation.doSlideInFromTop(null, chatPane, mainStackPane);
     }
 	
 	public void setAllContactsPane() {
-		HBox layoutHBox = (HBox) mainChat.getChildren().get(0);
-		if(layoutHBox.getChildren().get(1).equals(contactsPane))
-    		return;
-    	
-    	layoutHBox.getChildren().remove(1);
-    	layoutHBox.getChildren().add(contactsPane);
-    	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
+		if(mainStackPane.getChildren().size() > 0) {
+			if(mainStackPane.getChildren().get(0).equals(contactsPane))
+				return;
+			else 
+				ChatAnimation.doSlideInFromBottom((Pane) mainStackPane.getChildren().get(0), contactsPane, mainStackPane);
+		}
+		else 
+			ChatAnimation.doSlideInFromBottom(null, contactsPane, mainStackPane);
+	}
+	
+	public void showGroupCreationPane() {
+		if(mainStackPane.getChildren().size() > 0) {
+			if(mainStackPane.getChildren().get(0).equals(createGroupPane))
+				return;
+			else 
+				ChatAnimation.doSlideInFromBottom((Pane) mainStackPane.getChildren().get(0), createGroupPane, mainStackPane);
+		}
+		else
+			ChatAnimation.doSlideInFromBottom(null, createGroupPane, mainStackPane);
 	}
 	
 	public void setMyProfilePane() {
-		HBox layoutHBox = (HBox) mainChat.getChildren().get(0);
-		if(layoutHBox.getChildren().get(1).equals(myProfilePane))
-    		return;
-		
-		layoutHBox.getChildren().remove(1);
-    	layoutHBox.getChildren().add(myProfilePane);
-    	HBox.setHgrow(myProfilePane, Priority.ALWAYS);
+		if(mainStackPane.getChildren().size() > 0) {
+			if(mainStackPane.getChildren().get(0).equals(myProfilePane))
+				return;
+			else 
+				ChatAnimation.doSlideInFromBottom((Pane) mainStackPane.getChildren().get(0), myProfilePane, mainStackPane);
+		}
+		else
+			ChatAnimation.doSlideInFromBottom(null, myProfilePane, mainStackPane);
 	}
 	
 	//Questo metodo controlla se il pannello per la visualizzazione dell'imagine è rimasto aperto e, in caso, lo chiude
@@ -172,19 +210,15 @@ public class SceneHandler {
 		windowFrame.setMinWidth(1080);
 		windowFrame.setResizable(true);
 		scene.getStylesheets().clear();
-		scene.getStylesheets().add(getClass().getResource("/application/style.css").toExternalForm());
-		scene.setRoot(mainChat);
+		scene.getStylesheets().add(getClass().getResource("/application/styles/style.css").toExternalForm());
+		scene.setRoot(mainChatPane);
 		windowFrame.show();
 	}
 
-	public void showGroupCreationPane() {
-		HBox layoutHBox = (HBox) mainChat.getChildren().get(0);
-		if(layoutHBox.getChildren().get(1).equals(SceneHandler.getInstance().getCreateGroupPane()))
-    		return;
-    	
-    	layoutHBox.getChildren().remove(1);
-    	layoutHBox.getChildren().add(createGroupPane);
-    	HBox.setHgrow(layoutHBox.getChildren().get(1), Priority.ALWAYS);
+	public boolean isChatPaneActive() {
+		if(mainStackPane.getChildren().size() == 0)
+			return false;
 		
+		return mainStackPane.getChildren().get(mainStackPane.getChildren().size() - 1).equals(chatPane);
 	}
 }

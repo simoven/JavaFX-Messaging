@@ -69,7 +69,7 @@ public class ImageViewer {
 	public void confirmFoto() {
 		//qua significa che sto inviando una foto
 		if(classWhoRequestedAction instanceof ChatPaneController)
-			((ChatPaneController) classWhoRequestedAction).attachImage(actualImg);
+			((ChatPaneController) classWhoRequestedAction).confirmAttachImage(actualImg);
 		//qua significa che sto modificando la mia foto profilo
 		else if(classWhoRequestedAction instanceof MyProfileController)
 			((MyProfileController) classWhoRequestedAction).updatePhoto(actualImg);

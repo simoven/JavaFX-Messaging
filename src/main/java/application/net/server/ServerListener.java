@@ -36,7 +36,7 @@ public class ServerListener implements Runnable {
 		try {
 			outputStream = new ObjectOutputStream(socket.getOutputStream());		
 		} catch (IOException e) {
-			//TODO mostra errore impossibile stabilire una connessione con il server
+			e.printStackTrace();
 		}
 	}
 	
@@ -145,6 +145,10 @@ public class ServerListener implements Runnable {
 						handleMyInfoChanged(false);
 						break;
 						
+					case Protocol.REMOVE_MESSAGE:
+						handleMessageRimotion();
+						break;
+						
 					default:
 						sendMessage(Protocol.BAD_REQUEST);
 						break;
@@ -176,6 +180,46 @@ public class ServerListener implements Runnable {
 		closeStreams();
 	}
 	
+	private void handleSingleMessageRimotion(InformationMessage infMsg, ChatMessage chatMsg, String receiver) throws SQLException, IOException {
+		ObjectOutputStream destOut = server.getStream(receiver);
+		if(destOut == null) 
+			DatabaseHandler.getInstance().addPendingMessage(chatMsg, receiver);
+		else {
+			destOut.writeObject(Protocol.REMOVE_MESSAGE);
+			destOut.writeObject(infMsg);
+		}
+	}
+	
+	private void handleMessageRimotion() throws ClassNotFoundException, IOException, SQLException {
+		ChatMessage msg = (ChatMessage) inputStream.readObject();
+		
+		//Questi sono gli utenti che non hanno mai ricevuto il messaggio che è stato eliminato perché erano offline
+		//e quindi non serve comunicargli che è stato eliminato il messaggio
+		ArrayList <String> usersNotReceivedMessage = DatabaseHandler.getInstance().removeMessage(msg);
+		
+		InformationMessage infMsg = new InformationMessage();
+		infMsg.setInformation(Protocol.REMOVE_MESSAGE);
+		infMsg.setPacket(msg);
+		msg.setDeleted(true);
+		
+		//Se il destinatario non è nell'array, allora ha ricevuto quel messaggio e, quindi, gli devo comunicare l'eliminazione
+		if(!msg.isAGroupMessage()) {
+			if(!usersNotReceivedMessage.contains(msg.getReceiver()))
+				handleSingleMessageRimotion(infMsg, msg, msg.getReceiver());
+			
+			handleSingleMessageRimotion(infMsg, msg, msg.getSender());
+		}
+		else {
+			ArrayList <String> partecipants = DatabaseHandler.getInstance().getGroupPartecipants(msg.getGroupId());
+			for(String user : partecipants) {
+				if(usersNotReceivedMessage.contains(user))
+					continue;
+				
+				handleSingleMessageRimotion(infMsg, msg, user);
+			}
+		}
+	}
+
 	//Se non è la foto, è lo stato
 	private void handleMyInfoChanged(boolean isProfilePic) throws IOException, ClassNotFoundException, SQLException {
 		String requester = (String) inputStream.readObject();
@@ -461,6 +505,7 @@ public class ServerListener implements Runnable {
 		}
 	}
 	
+	//questo metodo restituisce le info su un gruppo, tipo nome, creazione, foto, ecc
 	private void handleGroupInformation() throws ClassNotFoundException, IOException, SQLException {
 		int groupId = Integer.parseInt((String) inputStream.readObject());
 		
@@ -505,22 +550,20 @@ public class ServerListener implements Runnable {
 			InformationMessage info = new InformationMessage();
 			info.setInformation(Protocol.ONLINE_STATUS_REQUEST);
 			
-			sendMessage(Protocol.ONLINE_STATUS_REQUEST);
-			
 			if(server.checkIsUserLogged(userToCheck)) 
 				info.setPacket(userToCheck + ";" + Protocol.USER_ONLINE);	
 			else {
 				String date = DatabaseHandler.getInstance().getLastAccess(userToCheck);
 				if(date == null) 
-					info.setPacket(userToCheck + ";" + null);		
+					info.setPacket(userToCheck + ";" + "null");		
 				else {
 					String dayDate = Utilities.getDateFromString(date);
 					String hour = Utilities.getHourFromStringTrimmed(date);
 					info.setPacket(userToCheck + ";" + dayDate + " " + hour);
-					//TODO change date format
 				}
 			}
 			
+			sendMessage(Protocol.ONLINE_STATUS_REQUEST);
 			sendObject(info);
 		} catch (NullPointerException e) {
 			return;
@@ -559,29 +602,23 @@ public class ServerListener implements Runnable {
 	}
 
 	private void handleSendMessage() throws IOException, ClassNotFoundException, SQLException {
-		try {
-			Message msg = (Message) inputStream.readObject();
-						
-			if(!msg.isAGroupMessage()) {
-				//Se è un messaggio singolo prendo il socket della persona e lo invio direttamente a lei
-				handleSingleMessageSend(msg.getReceiver(), (ChatMessage) msg);
-			}
-			else {
-				//Devo prendere tutte le persone che sono nel gruppo e inviarlo singolarmente a ognuno di esse
-				ArrayList <String> groupUsers = DatabaseHandler.getInstance().getGroupPartecipants(msg.getGroupId());
-				for(String partecipant : groupUsers) 
-				{
-					//Evito di mandare il messaggio a me stesso, a meno che non sia un messaggio informativo
-					if(partecipant.equals(serverUsername) && !msg.getSender().equals("null"))
-						continue;
+		Message msg = (Message) inputStream.readObject();
 					
-					handleSingleMessageSend(partecipant, (ChatMessage) msg);
-				}
+		if(!msg.isAGroupMessage()) {
+			//Se è un messaggio singolo prendo il socket della persona e lo invio direttamente a lei
+			handleSingleMessageSend(msg.getReceiver(), (ChatMessage) msg);
+		}
+		else {
+			//Devo prendere tutte le persone che sono nel gruppo e inviarlo singolarmente a ognuno di esse
+			ArrayList <String> groupUsers = DatabaseHandler.getInstance().getGroupPartecipants(msg.getGroupId());
+			for(String partecipant : groupUsers) 
+			{
+				//Evito di mandare il messaggio a me stesso, a meno che non sia un messaggio informativo
+				if(partecipant.equals(serverUsername) && !msg.getSender().equals("null"))
+					continue;
+				
+				handleSingleMessageSend(partecipant, (ChatMessage) msg);
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			sendMessage(Protocol.BAD_REQUEST);
-			return;
 		}
 	}
 
@@ -597,8 +634,6 @@ public class ServerListener implements Runnable {
 		
 		if(server.checkIsUserLogged(username)) {
 			sendMessage(Protocol.USER_ALREADY_LOGGED);
-			//TODO Show error
-			System.out.println("Gia loggato");
 			return false;
 		}	
 		

@@ -44,4 +44,5 @@ public class Protocol {
 	public static final String PASSWORD_CHANGE = "Change the password";
 	public static final String STATUS_CHANGE = "Change the status";
 	public static final String PHOTO_CHANGE = "Change the photo";
+	public static final String REMOVE_MESSAGE = "Remove message";
 }

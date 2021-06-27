@@ -17,10 +17,31 @@ public class Message implements Serializable {
 	protected String timestamp;
 	protected int groupId;
 	protected boolean isGroupMessage;
+	protected int messageId;
+	protected boolean deleted;
 	
 	public Message(String sender, String receiver) {
 		this.sender = sender;
 		this.receiver = receiver;
+		messageId = -1;
+		groupId = -1;
+		deleted = false;
+	}
+	
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
+	}
+	
+	public boolean isDeleted() {
+		return deleted;
+	}
+	
+	public void setMessageId(int messageId) {
+		this.messageId = messageId;
+	}
+	
+	public int getMessageId() {
+		return messageId;
 	}
 	
 	public void setReceiver(String receiver) {
@@ -85,5 +106,24 @@ public class Message implements Serializable {
 		}
 		
 		return 0;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == null)
+			return false;
+		
+		if(this == obj)
+			return true;
+		
+		if(this.getClass() != obj.getClass())
+			return false;
+		
+		Message msg = (Message) obj;
+		
+		if(isGroupMessage)
+			return sender.equals(msg.getSender()) && groupId == (msg.getGroupId()) && timestamp.equals(msg.getTimestamp());
+		else 
+			return sender.equals(msg.getSender()) && receiver.equals(msg.getReceiver()) && timestamp.equals(msg.getTimestamp());
 	}
 }

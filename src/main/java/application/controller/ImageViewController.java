@@ -52,8 +52,8 @@ public class ImageViewController {
     
     //aggiorno i constraints per adattarmi al pannello dove devo essere aggiunto
     public void updateConstraints(StackPane root) {
-    	paneVBox.prefWidthProperty().unbind();
-    	paneVBox.prefHeightProperty().unbind();
+    	thisRoot.prefWidthProperty().unbind();
+    	thisRoot.prefHeightProperty().unbind();
     	thisRoot.prefWidthProperty().bind(root.widthProperty());
     	thisRoot.prefHeightProperty().bind(root.heightProperty());
     }

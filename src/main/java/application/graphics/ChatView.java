@@ -2,6 +2,9 @@ package application.graphics;
 
 import java.io.ByteArrayInputStream;
 
+import com.pavlobu.emojitextflow.EmojiTextFlow;
+
+import application.MainApplication;
 import application.controller.ChatMainController;
 import application.controller.ChatPaneController;
 import application.logic.ChatLogic;
@@ -17,8 +20,9 @@ import application.net.misc.Utilities;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.geometry.NodeOrientation;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -30,6 +34,7 @@ import javafx.scene.paint.ImagePattern;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 
 //Questa classe si occupa di gestire la visualizzazione di tutte le chat a sinistra e della singola chat a destra
 public class ChatView {
@@ -67,8 +72,8 @@ public class ChatView {
 		chatMainController.getMyPropicCircle().setFill(new ImagePattern(img));
 	}
 	
+	//Questo metodo aggiunge un messaggio alla schermata della chat
 	public void appendMessageInChat(Message msg, boolean isMyMessage, String lastUser) {
-		//Questo metodo aggiunge un messaggio alla schermata della chat
 		if(!(msg instanceof ChatMessage))
 			return;
 		
@@ -79,7 +84,6 @@ public class ChatView {
 			Label information = new Label(chatMsg.getText());
 			information.getStyleClass().add("genericChatInformation");
 			information.setPadding(new Insets(5, 8, 5, 8));
-			//TODO
 			chatPaneController.getChatVbox().getChildren().add(information);
 			VBox.setMargin(information, new Insets(2));
 			return;
@@ -92,11 +96,14 @@ public class ChatView {
     	boolean labelFound = false;
     	
     	if(isMyMessage) {
-    		container.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
+    		//Lo faccio per spostare il messaggio a destra
+    		Pane spacer = new Pane();
+    		spacer.setPrefHeight(1);
+    		container.getChildren().add(spacer);
+    		HBox.setHgrow(spacer, Priority.ALWAYS);
     		box.getStyleClass().add("rightMessageVBox");
     	}
     	else {
-    		container.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
     		box.getStyleClass().add("leftMessageVBox");
     		
     		//Se il messaggio è di gruppo e l'ultima persona che ha inviato il messaggio è uguale al sender di ora, cambio lo stile del precedente messaggio
@@ -135,29 +142,65 @@ public class ChatView {
     	}
   
     	if(chatMsg.getText() != null) {
-    		Label field = new Label(chatMsg.getText()); 
-    		field.setWrapText(true);
-    		field.getStyleClass().add("messageText");
-    		box.getChildren().add(field);
-    		VBox.setMargin(field, new Insets(5, 10, 5, 10));
+    		EmojiTextFlow textFlow = new EmojiTextFlow(MainApplication.emojiTextFlowParameters);
+    		textFlow.setPrefHeight(TextFlow.USE_COMPUTED_SIZE);
+        	textFlow.parseAndAppend(chatMsg.getText());
+        	box.getChildren().add(textFlow);
+    		VBox.setMargin(textFlow, new Insets(8, 10, 6, 10));
     	}
     	
     	Text time = new Text(Utilities.getHourFromStringTrimmed(msg.getTimestamp()));
     	time.getStyleClass().add("messageTime");
-    	box.getChildren().add(time);
-    	VBox.setMargin(time, new Insets(0, 10, 5, 10));
+    	if(isMyMessage) {
+    		HBox textContainer = new HBox();
+    		Pane spacer = new Pane();
+    		spacer.setPrefHeight(1);
+    		textContainer.getChildren().add(spacer);
+    		HBox.setHgrow(spacer, Priority.ALWAYS);
+    		textContainer.getChildren().add(time);
+    		box.getChildren().add(textContainer);
+    		HBox.setMargin(time, new Insets(0, 10, 5, 10));
+    	}
+    	else {
+    		box.getChildren().add(time);
+    		VBox.setMargin(time, new Insets(0, 10, 5, 10));
+    	}
     	
     	container.getChildren().add(box);
     	chatPaneController.getChatVbox().getChildren().add(container);
     	
-    	int topMargin = 2;
+    	int topMargin = 0;
+    	//se sono in un gruppo, l'utente che ha inviato questo messaggio è diverso dall'ultimo utente e questo messaggio non è il mio
     	if(msg.isAGroupMessage() && !lastUser.equals(msg.getSender()) && !isMyMessage)
-    		topMargin = 4;
+    		topMargin = 2;
     	
     	if(isMyMessage) 
-    		VBox.setMargin(container, new Insets(topMargin, 5, 0, 0));
+    		VBox.setMargin(container, new Insets(topMargin, 5, 2, 0));
     	else
-    		VBox.setMargin(container, new Insets(topMargin, 0, 0, 5));
+    		VBox.setMargin(container, new Insets(topMargin, 0, 2, 5));
+    	
+    	//Questo è il menu che esce con il doppio click sul messaggio
+    	ContextMenu menu = new ContextMenu();
+    	MenuItem remove = new MenuItem("Elimina messaggio");
+    	menu.getItems().add(remove);
+    	
+    	remove.setOnAction(ev -> {
+    		menu.hide();
+    		int res;
+    		if(!isMyMessage)
+    			res = ChatDialog.getInstance().showConfirmDialog("Stai per eliminare il messaggio");
+    		else
+    			res = ChatDialog.getInstance().showCustomDialog(ChatDialog.CONFIRM_DIALOG_DELETE_MESSAGE);
+    			
+    		if(res == ChatDialog.REMOVE_FOR_ME_OPTION || res == ChatDialog.APPROVE_OPTION)
+    			ChatLogic.getInstance().removeMsg(chatMsg);
+    		else if(res == ChatDialog.REMOVE_FOR_ALL_OPTION)
+    			ChatLogic.getInstance().removeMessageForAll(chatMsg);
+    	});
+    	
+    	container.setOnContextMenuRequested(ev -> {
+    		menu.show(container.getScene().getWindow(), ev.getScreenX(), ev.getScreenY());
+    	});
 	}
 
 	public void showContactInformation(Contact activeContact, int groupMemberNumber) {
@@ -179,8 +222,8 @@ public class ChatView {
 			chatPaneController.getLastAccessLabel().setText("Membri : " + groupMemberNumber);
 	}
 
+	//Questo metodo aggiunge una chat nela pannello sulla sinistra con tutte le chat
 	public void appendChatInMainPanel(Chat chat) {
-		//Questo metodo aggiunge una chat nela pannello sulla sinistra con tutte le chat
 		HBox container = new HBox();
 
 		if(chat.getUnreadedMessage()) {
@@ -259,6 +302,15 @@ public class ChatView {
 		chatMainController.getAllChatVbox().getChildren().add(container);
 		container.addEventHandler(MouseEvent.MOUSE_CLICKED, chatMainController);
 	}
+	
+	public void appendSpacerInChatpanel() {
+		Pane spacer = new Pane();
+		spacer.setPrefHeight(50);
+		spacer.setMinHeight(50);
+		spacer.setMaxHeight(50);
+		spacer.setPrefWidth(1);
+		chatMainController.getAllChatVbox().getChildren().add(spacer);
+	}	
 
 	public void updateOnlineStatus(String status) {
 		//Questo metodo aggiorna l'ultimo accesso
@@ -267,8 +319,19 @@ public class ChatView {
 		
 		if(status.equals(Protocol.USER_ONLINE))
 			chatPaneController.getLastAccessLabel().setText("Online");
-		else 
-			chatPaneController.getLastAccessLabel().setText("Ultimo accesso : " + status);
+		else {
+			String day = status.split(" ") [0];
+			String hour = status.split(" ") [1];
+			if(day.equals(Utilities.getDateFromString(Utilities.getCurrentISODate())))
+				chatPaneController.getLastAccessLabel().setText("Ultimo accesso oggi alle " + hour);
+			else
+				chatPaneController.getLastAccessLabel().setText("Ultimo accesso il " + day + " alle " + hour);
+		}
 		
-	}	
+	}
+
+	public void openEmojiBox(HBox emojiHBox) {
+		chatPaneController.getChatMessageVBox().getChildren().add(emojiHBox);
+    	VBox.setMargin(emojiHBox, new Insets(6, 4, 4, 4));	
+	}
 }

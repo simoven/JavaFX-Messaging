@@ -8,7 +8,7 @@
 
 <BorderPane fx:id="root" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.controller.MyProfileController">
    <center>
-      <StackPane fx:id="myStackPane" BorderPane.alignment="CENTER">
+      <StackPane fx:id="myStackPane" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
          <children>
             <VBox fx:id="fieldVBox" alignment="TOP_CENTER">
                <children>
@@ -46,7 +46,7 @@
                         <Insets bottom="20.0" left="10.0" right="10.0" />
                      </VBox.margin>
                   </Pane>
-                  <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                  <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: white; -fx-background: white;" vbarPolicy="NEVER" VBox.vgrow="ALWAYS">
                      <content>
                         <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
                            <children>

@@ -16,6 +16,7 @@ import application.logic.contacts.GroupContact;
 import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
 import application.logic.messages.Message;
+import application.net.misc.Utilities;
 
 //Il database locale è quasi identico a quello sul server 
 /*step dopo il login :
@@ -57,8 +58,15 @@ public class LocalDatabaseHandler {
 				createUtenteInGruppo();
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logException(e);
 		}
+	}
+	
+	private void logException(Exception e) {
+		Utilities.getInstance().logToFile(e.getMessage());
+		for(StackTraceElement str : e.getStackTrace())
+			Utilities.getInstance().logToFile(str.toString());
+		Utilities.getInstance().logToFile("\n\n\n");
 	}
 	
 	public boolean checkUserExist(String username) throws SQLException {
@@ -72,24 +80,30 @@ public class LocalDatabaseHandler {
 		return result;
 	}
 	
-	public boolean registerUser(SingleContact utente, boolean visible) throws SQLException {
-		if(checkUserExist(utente.getUsername()))
-			return false;
+	public boolean registerUser(SingleContact utente, boolean visible) {
+		try {
+			if(checkUserExist(utente.getUsername()))
+				return false;
+			
+			String query = "INSERT INTO Utente VALUES(?, ?, ?, ?);";
+			PreparedStatement stm = dbConnection.prepareStatement(query);
+			stm.setString(1, utente.getUsername());
+			stm.setBytes(2, utente.getProfilePic());
+			stm.setString(3, utente.getStatus());
+			if(visible)
+				stm.setInt(4, 1);
+			else
+				stm.setInt(4, 0);
+			
+			int res = stm.executeUpdate();
+			stm.close();
+			
+			return res != 0;
+		} catch (SQLException e) {
+			Utilities.getInstance().logToFile(e.getMessage());
+		}
 		
-		String query = "INSERT INTO Utente VALUES(?, ?, ?, ?);";
-		PreparedStatement stm = dbConnection.prepareStatement(query);
-		stm.setString(1, utente.getUsername());
-		stm.setBytes(2, utente.getProfilePic());
-		stm.setString(3, utente.getStatus());
-		if(visible)
-			stm.setInt(4, 1);
-		else
-			stm.setInt(4, 0);
-		
-		int res = stm.executeUpdate();
-		stm.close();
-		
-		return res != 0;
+		return false;
 	}
 	
 	public void addMessage(ChatMessage msg) {
@@ -115,11 +129,40 @@ public class LocalDatabaseHandler {
 			}
 			stmt.executeUpdate();
 			stmt.close();
+			
+			msg.setMessageId(getLastMessageId(msg.isAGroupMessage()));
 		} catch (SQLException e) {
-			e.printStackTrace();
+			Utilities.getInstance().logToFile(e.getMessage());
+			for(StackTraceElement str : e.getStackTrace())
+				Utilities.getInstance().logToFile(str.toString());
+			Utilities.getInstance().logToFile("\n\n\n");
 		}
 	}
 	
+	private int getLastMessageId(boolean isGroupMessage) {
+		try {
+			String query;
+			if(isGroupMessage)
+				query = "SELECT * FROM Messaggi WHERE Id_messaggio IN (SELECT MAX(Id_messaggio) FROM Messaggi);";
+			else 
+				query = "SELECT * FROM MessaggioDiGruppo WHERE Id_messaggio IN (SELECT MAX(Id_messaggio) FROM MessaggioDiGruppo);";
+			
+			PreparedStatement stm = dbConnection.prepareStatement(query);
+			ResultSet rs = stm.executeQuery();
+			int id = -1;
+			if(rs.next())
+				id = rs.getInt("Id_messaggio");
+			
+			rs.close();
+			stm.close();
+			return id;
+		} catch (SQLException e) {
+			logException(e);
+		}
+		
+		return -1;
+	}
+
 	public void clearGroupChat(int groupId) {
 		try {
 			String query = "DELETE FROM MessaggioDiGruppo WHERE Group_id=?;";
@@ -162,44 +205,63 @@ public class LocalDatabaseHandler {
 		}
 	}
 	
-	public boolean createGroup(GroupContact gpContact) throws SQLException {
-		String query = "INSERT INTO Gruppo VALUES (?, ?, ?, ?, ?, 0);";
-		PreparedStatement stm = dbConnection.prepareStatement(query);
-		stm.setInt(1, gpContact.getGroupId());
-		stm.setString(2, gpContact.getUsername());
-		stm.setBytes(3, gpContact.getProfilePic());
-		stm.setString(4, gpContact.getOwner());
-		stm.setString(5, gpContact.getCreationDate());
-		
-		if(stm.executeUpdate() == 0)
-			return false;
-		
-		stm.close();
-		
-		System.out.println("Gruppo salvato nel db");
-		return true;
-	}
-	
-	public void addPartecipantToGroup(int groupID, String partecipant) throws SQLException {
-		String query = "INSERT INTO UtenteInGruppo VALUES (?,?, null);";
-		PreparedStatement stm = dbConnection.prepareStatement(query);
-		stm.setString(1, partecipant);
-		stm.setInt(2, groupID);
-		stm.executeUpdate();
-		stm.close();
-	}
-
-	public void addPartecipantsToGroup(int groupID, Vector<String> partecipants) throws SQLException {
-		String query = "INSERT INTO UtenteInGruppo VALUES (?,?, null);";
-		PreparedStatement stm = dbConnection.prepareStatement(query);
-		
-		for(String user : partecipants) {
-			stm.setString(1, user);
-			stm.setInt(2, groupID);
-			stm.executeUpdate();
+	public boolean createGroup(GroupContact gpContact) {
+		try {
+			String query = "INSERT INTO Gruppo VALUES (?, ?, ?, ?, ?, 0);";
+			PreparedStatement stm = dbConnection.prepareStatement(query);
+			stm.setInt(1, gpContact.getGroupId());
+			stm.setString(2, gpContact.getUsername());
+			stm.setBytes(3, gpContact.getProfilePic());
+			stm.setString(4, gpContact.getOwner());
+			stm.setString(5, gpContact.getCreationDate());
+			
+			if(stm.executeUpdate() == 0)
+				return false;
+			
+			stm.close();
+			
+			return true;
+		} catch (SQLException e) {
+			Utilities.getInstance().logToFile(e.getMessage());
 		}
 		
-		stm.close();
+		return false;
+	}
+	
+	public void addPartecipantToGroup(int groupID, String partecipant) {
+		try {
+			String query = "INSERT INTO UtenteInGruppo VALUES (?,?, null);";
+			PreparedStatement stm = dbConnection.prepareStatement(query);
+			stm.setString(1, partecipant);
+			stm.setInt(2, groupID);
+			stm.executeUpdate();
+			stm.close();
+		} catch (SQLException e) {
+			Utilities.getInstance().logToFile(e.getMessage());
+		}
+	}
+
+	public void addPartecipantsToGroup(int groupID, Vector<String> partecipants) {
+		try {
+			String del = "DELETE FROM UtenteInGruppo WHERE Id_gruppo=?;";
+			PreparedStatement stm = dbConnection.prepareStatement(del);
+			stm.setInt(1, groupID);
+			stm.executeUpdate();
+			stm.close();
+			
+			String query = "INSERT INTO UtenteInGruppo VALUES (?,?, null);";
+			stm = dbConnection.prepareStatement(query);
+			
+			for(String user : partecipants) {
+				stm.setString(1, user);
+				stm.setInt(2, groupID);
+				stm.executeUpdate();
+			}
+			
+			stm.close();
+		} catch (SQLException e) {
+			logException(e);
+		}
 	}
 	
 	private Vector <Message> retrieveMessageFromChat(String dest) throws SQLException {
@@ -215,6 +277,7 @@ public class LocalDatabaseHandler {
 			msg.setText(rs.getString("Message_text"));
 			msg.setImage(rs.getBytes("Image"));
 			msg.setTimestamp(rs.getString("Date"));
+			msg.setMessageId(rs.getInt("Id_messaggio"));
 			msgList.add(msg);
 		}
 		
@@ -259,6 +322,7 @@ public class LocalDatabaseHandler {
 			msg.setGroupMessage(true);
 			msg.setGroupId(rs.getInt("Group_id"));
 			msg.setTimestamp(rs.getString("Date"));
+			msg.setMessageId(rs.getInt("Id_messaggio"));
 			msgList.add(msg);
 		}
 		
@@ -337,8 +401,12 @@ public class LocalDatabaseHandler {
 			contact.setProfilePic(rs.getBytes("ProPic"));
 			contact.setOwner(rs.getString("Owner"));
 			contact.setCreationDate(rs.getString("Data_creazione"));
-			if(rs.getInt("Deleted") == 1)
+			contact.setDeleted(false);
+			if(rs.getInt("Deleted") == 1) {
 				contact.setDeleted(true);
+				contact.setProfilePic(null);
+				contact.setUsername("Gruppo eliminato");
+			}
 			listContatti.add(contact);
 		}
 		
@@ -349,31 +417,34 @@ public class LocalDatabaseHandler {
 	}
 	
 	//questo metodo flagga un gruppo come eliminato, ma i precedenti messaggi restano
-	public void setGroupDeleted(int groupId) {
+	public void setGroupDeletion(int groupId, boolean isDeleted) {
 		try {
-			String query = "UPDATE Gruppo SET Deleted=1, ProPic=?, Nome=?  WHERE Id_gruppo=?;";
+			String query = "UPDATE Gruppo SET Deleted=? WHERE Id_gruppo=?;";
 			PreparedStatement stm = dbConnection.prepareStatement(query);
-			stm.setBytes(1, null);
-			stm.setString(2, "Gruppo eliminato");
+			if(isDeleted)
+				stm.setInt(1, 1);
+			else
+				stm.setInt(1, 0);
+			
+			stm.executeUpdate();
+			stm.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			logException(e);
+		}
+	}
+	
+	public void updateGroup(int groupId, String name, byte[] image) {
+		try {
+			String query = "UPDATE Gruppo SET ProPic=?, Nome=? WHERE Id_gruppo=?;";
+			PreparedStatement stm = dbConnection.prepareStatement(query);
+			stm.setBytes(1, image);
+			stm.setString(2, name);
 			stm.setInt(3, groupId);
 			stm.executeUpdate();
 			stm.close();
 		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-	}
-	
-	public void updateGroup(int groupId, byte[] image) {
-		try {
-			String query = "UPDATE Gruppo SET ProPic=? WHERE Id_gruppo=?;";
-			PreparedStatement stm = dbConnection.prepareStatement(query);
-			stm.setBytes(1, image);
-			stm.setInt(2, groupId);
-			stm.executeUpdate();
-			stm.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
+			logException(e);
 		}
 	}
 	
@@ -386,7 +457,7 @@ public class LocalDatabaseHandler {
 			stm.executeUpdate();
 			stm.close();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logException(e);
 		}
 	}
 	
@@ -426,6 +497,49 @@ public class LocalDatabaseHandler {
 		return true;
 	}
 	
+	public void removeMessage(ChatMessage chatMessage) {
+		//se è diverso da -1, significa che sto eliminando un messaggio per me sul mio dispositivo
+		try {
+			if(chatMessage.getMessageId() != -1) {
+				String query;
+				if(chatMessage.isAGroupMessage())
+					query = "DELETE FROM MessaggioDiGruppo WHERE Id_messaggio=?;";
+				else
+					query = "DELETE FROM Messaggi WHERE Id_messaggio=?;";
+				
+				PreparedStatement stm = dbConnection.prepareStatement(query);
+				stm.setInt(1, chatMessage.getMessageId());
+				stm.executeUpdate();
+				stm.close();
+			}
+			//significa che ho ricevuto una richiesta di eliminazione messaggio dal server
+			else {
+				String query;
+				if(chatMessage.isAGroupMessage())
+					query = "DELETE FROM MessaggioDiGruppo WHERE Sender=? AND Group_id=? AND Date=? AND MessageText=?;";
+				else
+					query = "DELETE FROM Messaggi WHERE ((Sender=? OR Receiver=?) AND Date=? AND Message_text=?);";
+				
+				PreparedStatement stm = dbConnection.prepareStatement(query);
+				stm.setString(1, chatMessage.getSender());
+				if(chatMessage.isAGroupMessage())
+					stm.setInt(2, chatMessage.getGroupId());
+				else
+					stm.setString(2, chatMessage.getReceiver());
+				
+				stm.setString(3, chatMessage.getTimestamp());
+				stm.setString(4, chatMessage.getText());
+				stm.executeUpdate();
+				stm.close();
+			}
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+			logException(e);
+		}
+	}
+	
+	//questi due metodi cambiano la visibilità di un contatto
 	public void setInvisible(String user) {
 		try {
 			String query = "UPDATE Utente SET Visible=0 WHERE Username=?;";
@@ -450,13 +564,17 @@ public class LocalDatabaseHandler {
 		}
 	}
 	
-	public void removeFromGroup(String user, Integer groupId) throws SQLException {
-		String query = "DELETE FROM UtenteInGruppo WHERE User_utente=? AND Id_gruppo=?;";
-		PreparedStatement stm = dbConnection.prepareStatement(query);
-		stm.setString(1, user);
-		stm.setInt(2, groupId);
-		stm.executeUpdate();
-		stm.close();
+	public void removeFromGroup(String user, Integer groupId) {
+		try {
+			String query = "DELETE FROM UtenteInGruppo WHERE User_utente=? AND Id_gruppo=?;";
+			PreparedStatement stm = dbConnection.prepareStatement(query);
+			stm.setString(1, user);
+			stm.setInt(2, groupId);
+			stm.executeUpdate();
+			stm.close();
+		} catch (SQLException e) {
+			logException(e);
+		}
 	}	
 	
 	public void removeContact(String substring) {

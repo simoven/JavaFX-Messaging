@@ -121,7 +121,11 @@ public class MyProfileController {
 
     @FXML
     void backButtonPressed(MouseEvent event) {
-    	SceneHandler.getInstance().setChatPane();
+    	if(ChatLogic.getInstance().getActiveChat() != null)
+    		SceneHandler.getInstance().setChatPane(true);
+    	else
+    		((StackPane) root.getParent()).getChildren().remove(root);
+    	
     	passwordHBox.setVisible(false);
     	passwordInfoLabel.setText("");
     }
@@ -149,31 +153,24 @@ public class MyProfileController {
     
     @FXML
     void changeProfilePic(MouseEvent event) {
-    	int res = ChatDialog.getInstance().showPhotoOptionDialog();
+    	int res = ChatDialog.getInstance().showCustomDialog(ChatDialog.PHOTO_DIALOG_NEW_PHOTO);
     	File selectedPhoto = null;
     	if(res == ChatDialog.NEW_PHOTO_OPTION) 
     		selectedPhoto = FXUtilities.chooseImage();
-    	else if(res == ChatDialog.REMOVE_PHOTO_OPTION) 
-    		selectedPhoto = null;
-    	else 
-			 return;
-		 
-		 if(selectedPhoto == null) {
-			 propicCircle.setFill(new ImagePattern(defaultImage));
-			 ChatLogic.getInstance().updateMyPhoto(null);
-		 }
-		 else 
-			 ImageViewer.getInstance().displayImageChooser(myStackPane, this, selectedPhoto);
+    	else if(res == ChatDialog.REMOVE_PHOTO_OPTION) {
+    		propicCircle.setFill(new ImagePattern(defaultImage));
+			ChatLogic.getInstance().updateMyPhoto(null);
+			return;
+    	}
+    	
+		if(selectedPhoto == null)
+			return;
+		
+		ImageViewer.getInstance().displayImageChooser(myStackPane, this, selectedPhoto);
     }
     
     public void updatePhoto(File photo) {
-    	try {
-    		//propicCircle.setFill(new ImagePattern(new Image(new FileInputStream(photo), 200, 200, true, true)));
-    		ChatLogic.getInstance().updateMyPhoto(photo);
-    	} catch (Exception e) {
-    		//TODO
-    		e.printStackTrace();
-    	}
+    	ChatLogic.getInstance().updateMyPhoto(photo);
     }
     
     @FXML
@@ -246,6 +243,8 @@ public class MyProfileController {
     
     @FXML
     void logOut(ActionEvent event) {
+    	popupMenuButton.hide();
+    	((StackPane) root.getParent()).getChildren().remove(root);
     	ChatLogic.getInstance().resetLogic();
     }
 }

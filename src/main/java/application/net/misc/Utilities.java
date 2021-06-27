@@ -1,8 +1,11 @@
 package application.net.misc;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -20,6 +23,28 @@ public class Utilities {
 	public static final String USERNAME_NOT_VALID = "I caratteri dell'username non sono validi";
 	public static final String PASSWORD_NOT_VALID = "I caratteri della password non sono validi";
 	
+	private static Utilities instance = null;
+	private File logFile;
+	private static BufferedWriter writer;
+	
+	private Utilities() {
+		try {
+			logFile = new File("FX_Messaging_Log.txt");
+			if(!logFile.exists())
+				logFile.createNewFile();
+			
+			writer = new BufferedWriter(new FileWriter(logFile, true));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static Utilities getInstance() {
+		if(instance == null)
+			instance = new Utilities();
+		
+		return instance;
+	}
 	
 	public static byte[] getByteArrFromFile(File file) {
 		if(file == null)
@@ -93,7 +118,7 @@ public class Utilities {
 			return PASSWORD_TOO_LONG;
 		
 		//Deve contenere almeno un numero, carattere lowercase, uppercase, speciale e niente spazi
-		String regex = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).*";
+		String regex = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).*";
 		if(Pattern.matches(regex, password))
 			return PASSWORD_VALID;
 		
@@ -119,5 +144,18 @@ public class Utilities {
 		
 		String regex = "[a-zA-Z0-9\\s]+";
 		return Pattern.matches(regex, name);
+	}
+	
+	public void logToFile(String log) {
+		if(writer == null)
+			return;
+		
+		try {
+			writer.write(log);
+			writer.newLine();
+			writer.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

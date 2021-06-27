@@ -19,6 +19,12 @@ public class ChatDialog {
 	public static final int DISCARD_OPTION = 3;
 	public static final int RETRY_OPTION = 4;
 	public static final int OK_OPTION = 5;
+	public static final int REMOVE_FOR_ME_OPTION = 6;
+	public static final int REMOVE_FOR_ALL_OPTION = 7;
+	
+	public static final int PHOTO_DIALOG_WALLPAPER = 10;
+	public static final int PHOTO_DIALOG_NEW_PHOTO = 11;
+	public static final int CONFIRM_DIALOG_DELETE_MESSAGE = 12;
 	
 	public static int result = -1;
 	
@@ -34,7 +40,7 @@ public class ChatDialog {
 		window.setResizable(false);
 		window.initModality(Modality.APPLICATION_MODAL);
 		window.setScene(scene);
-		scene.getStylesheets().add(getClass().getResource("/application/dialogStyle.css").toExternalForm());
+		scene.getStylesheets().add(getClass().getResource("/application/styles/dialogStyle.css").toExternalForm());
 	}
 	
 	public static ChatDialog getInstance() {
@@ -44,42 +50,73 @@ public class ChatDialog {
 		return instance;
 	}
 	
-	public int showPhotoOptionDialog() {
+	public int showCustomDialog(int option) {
 		result = -1;
 		parent.getChildren().clear();
 		window.setTitle("Conferma scelta");
-		Label text = new Label("Vuoi cambiare immagine o eliminare l' attuale ?");
+		Label text = new Label();
+		
+		if(option == PHOTO_DIALOG_NEW_PHOTO)
+			text.setText("Scegli se cambiare immagine o eliminare l'attuale");
+		
+		else if(option == PHOTO_DIALOG_WALLPAPER)
+			text.setText("Scegli se impostare lo sfondo di default o uno nuovo");
+		
+		else if(option == CONFIRM_DIALOG_DELETE_MESSAGE)
+			text.setText("Stai per eliminare il messaggio, conferma");
+		
 		text.setWrapText(true);
 		
-		Button newPhoto = new Button ("Nuova foto");
-		Button removeOld = new Button("Elimina attuale");
+		Button leftButton = new Button();
+		Button rightButton = new Button();
 		
-		newPhoto.getStyleClass().add("blueButton");
-		removeOld.getStyleClass().add("redButton");
+		if(option == PHOTO_DIALOG_NEW_PHOTO) {
+			leftButton.setText("Elimina attuale");
+			rightButton.setText("Nuova foto");
+		}
+		else if(option == PHOTO_DIALOG_WALLPAPER) {
+			leftButton.setText("Sfondo default");
+			rightButton.setText("Nuovo sfondo");
+		}
+		else if(option == CONFIRM_DIALOG_DELETE_MESSAGE) {
+			leftButton.setText("Elimina per tutti");
+			rightButton.setText("Elimina per me");
+		}
+		
+		leftButton.getStyleClass().add("redButton");
+		rightButton.getStyleClass().add("blueButton");
 		
 		HBox container = new HBox();
-		container.getChildren().add(removeOld);
-		container.getChildren().add(newPhoto);
+		container.getChildren().add(leftButton);
+		container.getChildren().add(rightButton);
 		
 		parent.setAlignment(Pos.CENTER);
-		newPhoto.prefWidthProperty().bind(parent.widthProperty().multiply(0.5));
-		removeOld.prefWidthProperty().bind(parent.widthProperty().multiply(0.5));
+		leftButton.prefWidthProperty().bind(parent.widthProperty().multiply(0.5));
+		rightButton.prefWidthProperty().bind(parent.widthProperty().multiply(0.5));
 		
-		newPhoto.setOnAction(ev -> {
-			result = NEW_PHOTO_OPTION;
+		leftButton.setOnAction(ev -> {
+			if(option == PHOTO_DIALOG_NEW_PHOTO || option == PHOTO_DIALOG_WALLPAPER)
+				result = REMOVE_PHOTO_OPTION;
+			else if(option == CONFIRM_DIALOG_DELETE_MESSAGE)
+				result = REMOVE_FOR_ALL_OPTION;
+			
 			window.close();
 		});
 		
-		removeOld.setOnMousePressed(ev -> {
-			result = REMOVE_PHOTO_OPTION;
+		rightButton.setOnMousePressed(ev -> {
+			if(option == PHOTO_DIALOG_NEW_PHOTO || option == PHOTO_DIALOG_WALLPAPER)
+				result = NEW_PHOTO_OPTION;
+			else if(option == CONFIRM_DIALOG_DELETE_MESSAGE)
+				result = REMOVE_FOR_ME_OPTION;
+			
 			window.close();
 		});
 		
 		parent.getChildren().add(text);
 		parent.getChildren().add(container);
 		HBox.setHgrow(container, Priority.ALWAYS);
-		HBox.setHgrow(newPhoto, Priority.ALWAYS);
-		HBox.setHgrow(removeOld, Priority.ALWAYS);
+		HBox.setHgrow(leftButton, Priority.ALWAYS);
+		HBox.setHgrow(rightButton, Priority.ALWAYS);
 		VBox.setMargin(text, new Insets(20));
 		
 		window.showAndWait();
@@ -163,15 +200,15 @@ public class ChatDialog {
 		Label text = new Label(testo);
 		text.setWrapText(true);
 		
-		Button confirm = new Button ("Ho capito");
+		Button confirm = new Button ("Chiudi");
 		Button retry = new Button("Riprova");
 		
-		confirm.getStyleClass().add("blueButton");
-		retry.getStyleClass().add("redButton");
+		confirm.getStyleClass().add("redButton");
+		retry.getStyleClass().add("blueButton");
 		
 		HBox container = new HBox();
-		container.getChildren().add(retry);
 		container.getChildren().add(confirm);
+		container.getChildren().add(retry);
 		
 		parent.setAlignment(Pos.CENTER);
 		confirm.prefWidthProperty().bind(parent.widthProperty().multiply(0.5));

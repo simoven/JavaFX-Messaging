@@ -11,8 +11,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -20,7 +20,7 @@ import javafx.scene.shape.Circle;
 public class ChatMainController implements EventHandler <MouseEvent>{
 
     @FXML
-    private BorderPane rightPane;
+    private StackPane rightPane;
 
     @FXML
     private TextField searchField;
@@ -62,6 +62,7 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     @FXML
     void initialize() {
     	ChatView.getInstance().setChatMainController(this);
+    	SceneHandler.getInstance().setMainStackPane(rightPane);
     	leftVbox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.2));
     	topHbox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
     	leftScrollPane.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.8));
@@ -89,9 +90,9 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     }
     
     @Override
+    //Questo metodo gestisce il click su una chat a sinistra
     public void handle(MouseEvent event) {
     	SceneHandler.getInstance().checkImageSceneActive();
-    	//Questo metodo gestisce il click su una chat
     	HBox box = (HBox) event.getSource();
     	//Se c'è il pallino di notifica, lo tolgo
     	if(box.getChildren().get(0) instanceof Circle) {
@@ -101,7 +102,6 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     	
     	VBox vBox = (VBox) box.getChildren().get(1);
     	Label username = (Label) vBox.getChildren().get(0);
-    	
     	Label groupId = (Label) vBox.getChildren().get(2);
     	//Significa che è una chat di gruppo
     	if(!groupId.getText().equals("-1"))
@@ -111,6 +111,7 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     }
     
     @FXML
+    //Ho premuto dei tatsti nella barra di ricerca
     void keySearchTyped(KeyEvent event) {
     	if(searchField.getText().isBlank()) {
     		ChatLogic.getInstance().displayAllChat();
@@ -122,6 +123,7 @@ public class ChatMainController implements EventHandler <MouseEvent>{
     }
     
     @FXML
+    //Ho cliccato sulla mia foto
     void displayMyInformation(MouseEvent event) {
     	ChatLogic.getInstance().displayMyInformation();
     }

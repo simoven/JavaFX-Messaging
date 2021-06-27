@@ -11,7 +11,28 @@
    <children>
       <HBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <Pane prefHeight="520.0" prefWidth="241.0" style="-fx-background-color: #46474A;" />
+            <VBox prefHeight="520.0" prefWidth="218.0">
+               <children>
+                  <Pane prefHeight="520.0" prefWidth="241.0" style="-fx-background-color: #46474A;" VBox.vgrow="ALWAYS">
+                     <children>
+                        <ImageView fx:id="chatIcon" fitHeight="90.0" fitWidth="90.0" layoutX="64.0" layoutY="98.0" pickOnBounds="true" preserveRatio="true" />
+                        <Label layoutX="54.0" layoutY="200.0" prefHeight="15.0" style="-fx-text-fill: linear-gradient(to right, #7289da, #C998FA);" text="FX Messaging">
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </Pane>
+                  <Label alignment="BOTTOM_LEFT" prefHeight="13.0" prefWidth="241.0" style="-fx-text-fill: white; -fx-background-color: #46474A;" text="Credits : Simone Ventrici 209714">
+                     <font>
+                        <Font size="10.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="5.0" left="20.0" />
+                     </padding>
+                  </Label>
+               </children>
+            </VBox>
             <VBox prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                <children>
                   <Pane prefHeight="58.0" prefWidth="447.0" />
@@ -64,7 +85,7 @@
                      <children>
                         <Label prefHeight="37.0" prefWidth="142.0" text="Non sei registrato ?">
                            <HBox.margin>
-                              <Insets left="20.0" />
+                              <Insets left="50.0" />
                            </HBox.margin>
                         </Label>
                         <Button fx:id="registerButton" mnemonicParsing="false" onAction="#setRegisterScene" prefHeight="31.0" prefWidth="85.0" text="Registrati" />

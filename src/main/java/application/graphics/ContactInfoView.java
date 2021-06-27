@@ -101,6 +101,7 @@ public class ContactInfoView {
 		
 		controller.displayImage(proPic, true);
 		
+		//aggiungo i vari menu item
 		MenuItem item = new MenuItem();
 		if(iAmOwner) {
 			controller.enableChangeImageLabel();
@@ -125,7 +126,7 @@ public class ContactInfoView {
 				if(ChatDialog.getInstance().showConfirmDialog("Stai per abbandonare. Sei sicuro ?") == ChatDialog.APPROVE_OPTION) {
 					ChatLogic.getInstance().leftGroup(activeChat);
 					controller.getPopupMenuButton().hide();
-					SceneHandler.getInstance().setChatPane();
+					SceneHandler.getInstance().setChatPane(true);
 				}
 			});
 		}
@@ -178,24 +179,25 @@ public class ContactInfoView {
 			Image dotBlackImage = new Image(getClass().getResourceAsStream("/application/images/3dot_2.png"), 25, 25, true, true);
 			button.setStyle("-fx-background-color: transparent;");
 			button.setGraphic(new ImageView(dotBlackImage));
-			if(chat.getGroupInfo().getOwner().equals(contact.getUsername())) 
-				item.setText("Rimuoviti ed elimina gruppo");
-			else
-				item.setText("Rimuovi utente");
+			item.setText("Rimuovi utente");
 			
 			button.getItems().add(item);
-			container.getChildren().add(button);
+			if(!chat.getGroupInfo().getOwner().equals(contact.getUsername())) 
+				container.getChildren().add(button);
+			
 			HBox.setMargin(button, new Insets(22, 10, 10, 0));
 		}
-		
-		controller.getScrollPaneVBox().getChildren().add(container);
 		
 		Pane horizontaLine = new Pane();
 		horizontaLine.getStyleClass().add("horizontaLine");
 		horizontaLine.setPrefHeight(1);
 		horizontaLine.setMinHeight(1);
 		horizontaLine.prefWidthProperty().bind(controller.getScrollPaneVBox().prefWidthProperty());
-		controller.getScrollPaneVBox().getChildren().add(horizontaLine);
+		
+		if(controller.getScrollPaneVBox().getChildren().size() > 1)
+			controller.getScrollPaneVBox().getChildren().add(horizontaLine);
+		
+		controller.getScrollPaneVBox().getChildren().add(container);
 		VBox.setMargin(horizontaLine, new Insets(0, 10, 0, 10));
 		
 		//è il bottone rimuovi utente
@@ -212,6 +214,7 @@ public class ContactInfoView {
 		});
 	}
 	
+	//Questo metodo appende i gruppi in comune nelle info di un contatto
 	private void appendGroupInfo(GroupChat commonChat) {
 		HBox container = new HBox();
 		container.prefWidthProperty().bind(controller.getScrollPaneVBox().prefWidthProperty());
@@ -238,16 +241,18 @@ public class ContactInfoView {
 		members.getStyleClass().add("contactStatusLabel");
 		textContainer.getChildren().add(members);
 		VBox.setMargin(members, new Insets(0, 10, 5, 0));
-		
+		 
 		container.getChildren().add(textContainer);
 		
-		controller.getScrollPaneVBox().getChildren().add(container);
 		
 		Pane horizontaLine = new Pane();
 		horizontaLine.getStyleClass().add("horizontaLine");
 		horizontaLine.setPrefHeight(1);
 		horizontaLine.prefWidthProperty().bind(controller.getScrollPaneVBox().prefWidthProperty());
-		controller.getScrollPaneVBox().getChildren().add(horizontaLine);
+		if(controller.getScrollPaneVBox().getChildren().size() > 1)
+			controller.getScrollPaneVBox().getChildren().add(horizontaLine);
+		
+		controller.getScrollPaneVBox().getChildren().add(container);
 		VBox.setMargin(horizontaLine, new Insets(0, 10, 0, 10));
 		
 		container.setOnMouseClicked(ev -> {

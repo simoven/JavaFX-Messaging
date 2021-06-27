@@ -7,6 +7,9 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Vector;
 
+import application.graphics.ChatDialog;
+import application.graphics.SceneHandler;
+import application.logic.ChatLogic;
 import application.logic.chat.GroupChat;
 import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
@@ -15,6 +18,7 @@ import application.logic.messages.Message;
 import application.net.misc.LongUser;
 import application.net.misc.Protocol;
 import application.net.misc.User;
+import application.net.misc.Utilities;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
@@ -30,12 +34,13 @@ public class Client extends Service <Message> {
 		try {
 			socket = new Socket("localhost", 8500);
 			outputStream = new ObjectOutputStream(socket.getOutputStream());
-			System.out.println("Client online");
 			
 		} catch (IOException e) {
-			System.out.println("Errore di connessione");
-			e.printStackTrace();
-			//TODO mostra errore connessione
+			int res = ChatDialog.getInstance().showErrorDialog("Impossibile connettersi al server");
+			if(res == ChatDialog.RETRY_OPTION)
+				resetClient();
+			else 
+				SceneHandler.getInstance().getWindowFrame().close();
 		}
 	}
 	
@@ -58,7 +63,7 @@ public class Client extends Service <Message> {
 			if(outputStream != null)
 				outputStream.close();
 		} catch (IOException e) {
-			
+			Utilities.getInstance().logToFile(e.getMessage() + "\n");
 		}
 		
 		inputStream = null;
@@ -71,9 +76,9 @@ public class Client extends Service <Message> {
 			outputStream.writeObject(obj);
 			outputStream.flush();
 			return true;
-		} catch (IOException e) {
-			e.printStackTrace();
-			//TODO show Error
+		} catch (Exception e) {
+			ChatDialog.getInstance().showResponseDialog("Impossibile stabilire una connessione con il server");
+			ChatLogic.getInstance().resetLogic();
 		}
 		
 		return false;
@@ -94,13 +99,23 @@ public class Client extends Service <Message> {
 
 			if(response.equals(Protocol.REQUEST_SUCCESSFUL))
 				utente = (LongUser) inputStream.readObject();
+			else if(response.equals(Protocol.WRONG_CREDENTIAL)) 
+				 ChatDialog.getInstance().showResponseDialog("La combinazione username/password è sbagliata");
+			
+			else if (response.equals(Protocol.USER_ALREADY_LOGGED)) 
+				ChatDialog.getInstance().showResponseDialog("L'account è già attivo su un altro dispositivo");
+			
 			else {
-				//showError(response)
+				int res = ChatDialog.getInstance().showErrorDialog("C'è stato un errore durante l'accesso");
+				if(res != ChatDialog.RETRY_OPTION)
+					SceneHandler.getInstance().getWindowFrame().close();
 			}
 		} catch (IOException | ClassNotFoundException e) {
-			//showError(Protocol.COMMUNICATION_ERROR)
-			resetClient();
-			e.printStackTrace();
+			int res = ChatDialog.getInstance().showErrorDialog("Errore durante la comunicazione con il server");
+			if(res == ChatDialog.RETRY_OPTION)
+				resetClient();
+			else
+				SceneHandler.getInstance().getWindowFrame().close();
 		}
 		
 		return utente;
@@ -117,9 +132,17 @@ public class Client extends Service <Message> {
 			
 			if(response.equals(Protocol.REQUEST_SUCCESSFUL))
 				return true;
+			else if(response.equals(Protocol.USER_ALREADY_EXIST))
+				ChatDialog.getInstance().showResponseDialog("Questo username esiste già, provane un altro");
+			else if(response.equals(Protocol.INVALID_CREDENTIAL))
+				ChatDialog.getInstance().showResponseDialog("Le credenziali non sono valide, riprova");
+			
 		} catch(IOException | ClassNotFoundException e) {
-			//TODO show error
-			e.printStackTrace();
+			int res = ChatDialog.getInstance().showErrorDialog("C'è stato un errore di comunicazione con il server");
+			if(res == ChatDialog.RETRY_OPTION)
+				resetClient();
+			else
+				SceneHandler.getInstance().getWindowFrame().close();
 		}
 		
 		return false;
@@ -128,7 +151,7 @@ public class Client extends Service <Message> {
 	public boolean sendChatMessage(Message msg) {
 		sendMessage(Protocol.MESSAGE_SEND_REQUEST);
 		
-		if(sendObject(msg)) {
+		if(sendObject(msg) && !msg.getSender().equals("null")) {
 			LocalDatabaseHandler.getInstance().addMessage((ChatMessage) msg);
 			return true;
 		}
@@ -248,6 +271,11 @@ public class Client extends Service <Message> {
 		sendMessage(username);
 		sendMessage(status);
 	}
+	
+	public void removeMessage(ChatMessage msg) {
+		sendMessage(Protocol.REMOVE_MESSAGE);
+		sendObject(msg);
+	}
 
 	@Override
 	protected Task <Message> createTask() {
@@ -256,12 +284,15 @@ public class Client extends Service <Message> {
 			@Override
 			protected Message call() throws Exception {
 				String requestIncoming = (String) inputStream.readObject();
-				System.out.println("In arrivo : " + requestIncoming);
 				Message msg = null;
 				
 				try {
 					if(requestIncoming.equals(Protocol.MESSAGE_SEND_REQUEST)) 
 						msg = (ChatMessage) inputStream.readObject();
+					else if(requestIncoming.equals(Protocol.SERVER_ERROR))
+						ChatDialog.getInstance().showResponseDialog("C'è stato un errore del server");
+					else if(requestIncoming.equals(Protocol.BAD_REQUEST))
+						ChatDialog.getInstance().showResponseDialog("C'è stato un errore sulla richiesta");
 					
 					else if(requestIncoming.equals(Protocol.CONTACTS_SEARCH) ||
 							requestIncoming.equals(Protocol.ONLINE_STATUS_REQUEST) ||
@@ -279,7 +310,8 @@ public class Client extends Service <Message> {
 							requestIncoming.equals(Protocol.GROUP_NAME_CHANGED) ||
 							requestIncoming.equals(Protocol.PASSWORD_CHANGE) ||
 							requestIncoming.equals(Protocol.STATUS_CHANGE) ||
-							requestIncoming.equals(Protocol.PHOTO_CHANGE))
+							requestIncoming.equals(Protocol.PHOTO_CHANGE) || 
+							requestIncoming.equals(Protocol.REMOVE_MESSAGE))
 						msg = (InformationMessage) inputStream.readObject();
 					
 				} catch(ClassNotFoundException e) {

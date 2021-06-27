@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
@@ -9,37 +10,17 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.controller.ChatPaneController">
-   <bottom>
-      <HBox fx:id="bottomHBox" BorderPane.alignment="CENTER">
-         <children>
-            <TextArea fx:id="messageTextArea" minHeight="0.0" onKeyPressed="#onKeyPressed" promptText="Scrivi un messaggio.." wrapText="true" HBox.hgrow="ALWAYS">
-               <HBox.margin>
-                  <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
-               </HBox.margin></TextArea>
-            <Circle fx:id="attachImageButton" fill="DODGERBLUE" onMouseClicked="#attachImage" radius="18.0" stroke="BLACK" strokeType="INSIDE">
-               <HBox.margin>
-                  <Insets left="2.0" right="2.0" top="2.0" />
-               </HBox.margin>
-            </Circle>
-            <Circle fx:id="sendButton" fill="DODGERBLUE" onMouseClicked="#sendMessage" radius="18.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
-               <HBox.margin>
-                  <Insets left="2.0" right="2.0" top="2.0" />
-               </HBox.margin>
-            </Circle>
-         </children>
-      </HBox>
-   </bottom>
    <top>
-      <HBox fx:id="chatProfileHBox" prefHeight="63.0" BorderPane.alignment="CENTER">
+      <HBox fx:id="chatProfileHBox" onMousePressed="#openContactPane" prefHeight="63.0" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
          <children>
-            <Circle fx:id="propicCircle" fill="DODGERBLUE" onMouseClicked="#openContactPane" radius="20.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+            <Circle fx:id="propicCircle" fill="DODGERBLUE" radius="20.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
                <HBox.margin>
                   <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                </HBox.margin>
             </Circle>
             <VBox prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                <children>
-                  <Label fx:id="usernameLabel" onMouseClicked="#openContactPane" prefHeight="30.0" prefWidth="310.0" text="simoven">
+                  <Label fx:id="usernameLabel" prefHeight="30.0" prefWidth="310.0" text="simoven">
                      <font>
                         <Font size="15.0" />
                      </font>
@@ -57,24 +38,73 @@
             <Pane prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
             <MenuButton fx:id="settingsButton" mnemonicParsing="false" style="-fx-background-color: transparent;">
                <items>
-                  <MenuItem mnemonicParsing="false" text="Elimina chat" />
+                  <MenuItem mnemonicParsing="false" onAction="#changeBackground" text="Cambia Sfondo" />
+                  <MenuItem mnemonicParsing="false" onAction="#deleteChat" text="Elimina chat" />
                </items>
                <HBox.margin>
                   <Insets right="15.0" top="15.0" />
                </HBox.margin>
             </MenuButton>
          </children>
+         <cursor>
+            <Cursor fx:constant="CLOSED_HAND" />
+         </cursor>
       </HBox>
    </top>
    <center>
       <StackPane fx:id="chatStackPane" BorderPane.alignment="CENTER">
          <children>
-            <ScrollPane fx:id="chatScrollPane" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER">
+            <ScrollPane fx:id="chatScrollPane" fitToWidth="true" hbarPolicy="NEVER">
                <content>
-                  <VBox fx:id="chatVbox" />
+                  <VBox fx:id="chatVbox">
+                     <children>
+                        <TextFlow />
+                     </children>
+                     <padding>
+                        <Insets bottom="2.0" />
+                     </padding></VBox>
                </content>
             </ScrollPane>
          </children>
       </StackPane>
    </center>
+   <bottom>
+      <VBox fx:id="chatMessageVBox" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
+         <children>
+            <HBox fx:id="bottomHBox">
+               <children>
+                  <Circle fx:id="showEmojiButton" fill="DODGERBLUE" onMousePressed="#showAllEmojis" radius="18.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                     <HBox.margin>
+                        <Insets left="2.0" right="2.0" top="4.0" />
+                     </HBox.margin>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </Circle>
+                  <TextArea fx:id="messageTextArea" minHeight="0.0" onKeyPressed="#onKeyPressed" promptText="Scrivi un messaggio.." wrapText="true" HBox.hgrow="ALWAYS">
+                     <HBox.margin>
+                        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+                     </HBox.margin>
+                  </TextArea>
+                  <Circle fx:id="attachImageButton" fill="DODGERBLUE" onMouseClicked="#attachImage" radius="18.0" stroke="BLACK" strokeType="INSIDE">
+                     <HBox.margin>
+                        <Insets left="2.0" right="2.0" top="2.0" />
+                     </HBox.margin>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </Circle>
+                  <Circle fx:id="sendButton" fill="DODGERBLUE" onMouseClicked="#sendMessage" radius="18.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                     <HBox.margin>
+                        <Insets left="2.0" right="2.0" top="2.0" />
+                     </HBox.margin>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </Circle>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </bottom>
 </BorderPane>

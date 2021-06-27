@@ -1,6 +1,7 @@
 package application.graphics;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 
 import application.controller.ChatChooserController;
 import application.controller.CreateGroupController;
@@ -24,6 +25,7 @@ public class CreateChatView {
 	private static CreateChatView instance = null;
 	private ChatChooserController chatChooserController = null;
 	private CreateGroupController createGroupController = null;
+	private ArrayList <SingleContact> usersNotInGroup = null;
 	
 	private CreateChatView() {}
 	
@@ -126,5 +128,23 @@ public class CreateChatView {
 
 	public void clearContactVBox() {
 		chatChooserController.getAllUsersVbox().getChildren().clear();
+	}
+
+	public void setUserNotInGroup(ArrayList<SingleContact> contactsToAdd) {
+		usersNotInGroup = contactsToAdd;
+	}
+	
+	//Questi due metodi mostrano i contatti che non sono in un gruppo e che sono stati "calcolati" prima in chatlogic
+	public void showPreviousFetchedContacts() {
+		chatChooserController.getAllUsersVbox().getChildren().clear();
+		for(SingleContact contact : usersNotInGroup) 
+			appendContactInChoiceScreen(contact, false, true, true);
+	}
+
+	public void showPreviousFetchedContactsFiltered(String subUsername) {
+		chatChooserController.getAllUsersVbox().getChildren().clear();
+		for(SingleContact contact : usersNotInGroup) 
+			if(contact.getUsername().contains(subUsername)) 
+				CreateChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact, false, true, true);
 	}
 }

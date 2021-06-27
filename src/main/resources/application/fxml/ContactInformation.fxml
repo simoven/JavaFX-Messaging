@@ -40,28 +40,28 @@
       </HBox>
    </top>
    <center>
-      <StackPane fx:id="myStackPane" BorderPane.alignment="CENTER">
+      <StackPane fx:id="myStackPane" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
          <children>
             <VBox fx:id="fieldVBox">
                <children>
                   <Pane minHeight="2.0" prefHeight="2.0" style="-fx-background-color: #46474A;" VBox.vgrow="NEVER" />
-                  <HBox VBox.vgrow="NEVER">
+                  <HBox style="-fx-background-color: white;" VBox.vgrow="NEVER">
                      <children>
                         <VBox>
                            <children>
                               <Circle fx:id="propicCircle" fill="DODGERBLUE" onMousePressed="#displayProfilePhoto" radius="45.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
                                  <VBox.margin>
-                                    <Insets left="10.0" right="10.0" />
+                                    <Insets left="15.0" right="10.0" />
                                  </VBox.margin>
                               </Circle>
                               <Label fx:id="changeImageLabel" onMouseClicked="#changeGroupImage" prefHeight="30.0" prefWidth="71.0" style="-fx-font-size: 0.9em;" text="  Cambia immagine" wrapText="true">
                                  <VBox.margin>
-                                    <Insets left="25.0" top="5.0" />
+                                    <Insets left="28.0" top="5.0" />
                                  </VBox.margin>
                               </Label>
                            </children>
                         </VBox>
-                        <VBox style="-fx-background-color: #636566; -fx-background-radius: 15;" HBox.hgrow="ALWAYS">
+                        <VBox fx:id="infoVBox" HBox.hgrow="ALWAYS">
                            <HBox.margin>
                               <Insets left="20.0" right="15.0" />
                            </HBox.margin>
@@ -107,13 +107,22 @@
                         </VBox>
                      </children>
                      <VBox.margin>
-                        <Insets bottom="10.0" top="10.0" />
+                        <Insets />
                      </VBox.margin>
+                     <padding>
+                        <Insets bottom="10.0" top="10.0" />
+                     </padding>
                   </HBox>
-                  <ScrollPane fx:id="bottomScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="NEVER" VBox.vgrow="ALWAYS">
+                  <ScrollPane fx:id="bottomScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background: white; -fx-background-color: white;" vbarPolicy="NEVER">
                      <content>
-                        <VBox fx:id="scrollPaneVBox" />
+                        <VBox fx:id="scrollPaneVBox" style="-fx-background-radius: 15; -fx-border-radius: 15; -fx-background-color: #EFEFEF;">
+                           <padding>
+                              <Insets bottom="5.0" />
+                           </padding></VBox>
                      </content>
+                     <VBox.margin>
+                        <Insets bottom="15.0" left="15.0" right="15.0" top="10.0" />
+                     </VBox.margin>
                   </ScrollPane>
                </children>
             </VBox>

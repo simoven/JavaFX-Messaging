@@ -6,12 +6,15 @@ import application.logic.contacts.SingleContact;
 import application.net.client.Client;
 import application.net.misc.LongUser;
 import application.net.misc.Utilities;
+import javafx.concurrent.Worker.State;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 public class LoginController {
 
@@ -26,6 +29,9 @@ public class LoginController {
 
     @FXML
     private PasswordField passwordField;
+    
+    @FXML
+    private ImageView chatIcon;
 
     @FXML
     private Label usernameLabel;
@@ -39,6 +45,7 @@ public class LoginController {
     	passwordLabel.setText("");
     	registerButton.getStyleClass().add("loginRegistrationButtons");
     	loginButton.getStyleClass().add("loginRegistrationButtons");
+    	chatIcon.setImage(new Image(getClass().getResourceAsStream("/application/images/chat3.png"), 142, 142, true, true));
     }
     
     @FXML
@@ -63,13 +70,13 @@ public class LoginController {
     		return;
     	
     	LongUser user = Client.getInstance().requestLogin(usernameField.getText(), passwordField.getText());
-    	//LongUser user = Client.getInstance().requestLogin("simoven", "Rn31tnj6@");
     	
     	if(user == null) {
-    	    //SceneHandler.showError("La combinazione username/password è sbagliata");
     		Client.getInstance().resetClient();
     		return;
     	}
+    	
+    	Utilities.getInstance();
     	
     	SceneHandler.getInstance().setChatScene();
     	SingleContact myContact = new SingleContact(user.getUsername());
@@ -80,6 +87,10 @@ public class LoginController {
     	
     	Client.getInstance().setOnFailed(new ClientFailedController());
     	Client.getInstance().setOnSucceeded(new ClientSucceedController());
+    	
+    	if(Client.getInstance().getState().equals(State.FAILED))
+    		Client.getInstance().reset();
+    	
     	Client.getInstance().start();
     }
     

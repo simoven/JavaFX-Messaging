@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 
+import application.graphics.ChatDialog;
 import application.graphics.CreateChatView;
 import application.graphics.ImageViewer;
 import application.graphics.SceneHandler;
@@ -46,6 +47,9 @@ public class CreateGroupController {
     
     @FXML
     private StackPane myStackPane;
+    
+    @FXML
+    private HBox labelHbox;
 
     @FXML
     private ScrollPane alluserScrollpane;
@@ -85,6 +89,7 @@ public class CreateGroupController {
     	if(selectedImage != null) {
     		selectedImage = null;
     		groupProfilePic.setFill(new ImagePattern(defaultGroupIcon));
+    		return;
     	}
     	
     	File file = FXUtilities.chooseImage();
@@ -103,7 +108,7 @@ public class CreateGroupController {
 			groupProfilePic.setFill(new ImagePattern(img2));
 			selectedImage = img;
 		} catch (Exception e) {
-			//TODO cannot load image
+			ChatDialog.getInstance().showResponseDialog("Impossibile caricare l'immagine, riprova");
 		}
     }
     

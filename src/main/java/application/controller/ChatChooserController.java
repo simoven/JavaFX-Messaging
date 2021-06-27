@@ -1,6 +1,5 @@
 package application.controller;
 
-import java.util.ArrayList;
 import java.util.Vector;
 
 import application.graphics.CreateChatView;
@@ -21,7 +20,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class ChatChooserController implements EventHandler <MouseEvent> {
-
+	
     @FXML
     private ScrollPane alluserScrollpane;
 
@@ -96,22 +95,29 @@ public class ChatChooserController implements EventHandler <MouseEvent> {
     void searchUser(ActionEvent event) {
     	String subUsername = searchField.getText();
     	if(subUsername.isBlank()) {
-    		ChatLogic.getInstance().showContactsChoice();
+    		if(buttonsForGroupAdd)
+    			CreateChatView.getInstance().showPreviousFetchedContacts();
+    		else
+    			ChatLogic.getInstance().showContactsChoice();
     		return;
     	}
     	
-    	ChatLogic.getInstance().showContactsChoiceFiltered(subUsername, buttonsForGroupAdd);
-    	
-    	if(!buttonsForGroupAdd)
+    	if(buttonsForGroupAdd)
+    		CreateChatView.getInstance().showPreviousFetchedContactsFiltered(subUsername);
+    	else {
+    		ChatLogic.getInstance().showContactsChoiceFiltered(subUsername, buttonsForGroupAdd);
     		Client.getInstance().requestSearch(subUsername);
+    	}
     }
     
     @FXML
     void createGroup(MouseEvent event) {
+    	//Se i bottono non sono per l'aggiunta in un gruppo allora ho cliccato su "nuovo gruppo"
     	if(!buttonsForGroupAdd) {
 	    	SceneHandler.getInstance().showGroupCreationPane();
 	    	ChatLogic.getInstance().showContactForGroupCreation();
     	}
+    	//altrimenti ho cliccato su "aggiungi contatto"
     	else {
     		Vector <String> selectedContacts = new Vector <String>();
     		for(int i = 0; i < allUsersVbox.getChildren().size();) {
@@ -129,8 +135,6 @@ public class ChatChooserController implements EventHandler <MouseEvent> {
     		
     		if(!selectedContacts.isEmpty())
     			ChatLogic.getInstance().addContactsToGroup(selectedContacts, groupIdForAdd);
-    		
-    		SceneHandler.getInstance().setChatPane();
     	}
     }
 

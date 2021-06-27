@@ -17,6 +17,7 @@ public class GroupChat extends Chat {
 	public GroupChat(GroupContact group) {
 		this.groupInfo = group;
 		this.colorList = new Vector<>();
+		this.listUtenti = new Vector<>();
 	}
 	
 	public GroupContact getGroupInfo() {
@@ -114,7 +115,7 @@ public class GroupChat extends Chat {
 			ChatMessage msg = (ChatMessage) listMessaggi.lastElement();
 			
 			if(msg.getImage() != null)
-				return msg.getSender() + " : Image..";
+				return msg.getSender() + " : Immagine..";
 			else {
 				if(msg.getSender().equals("null"))
 					return msg.getText();

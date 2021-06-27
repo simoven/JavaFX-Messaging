@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
+import application.graphics.ChatDialog;
 import application.graphics.SceneHandler;
 import application.misc.FXUtilities;
 import application.net.client.Client;
@@ -16,6 +17,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -30,6 +32,9 @@ public class RegisterController {
 
     @FXML
     private Button registerButton;
+    
+    @FXML
+    private ImageView chatIcon;
 
     @FXML
     private Button loginButton;
@@ -78,6 +83,7 @@ public class RegisterController {
     	
     	loginButton.getStyleClass().add("loginRegistrationButtons");
     	registerButton.getStyleClass().add("loginRegistrationButtons");
+    	chatIcon.setImage(new Image(getClass().getResourceAsStream("/application/images/chat3.png"), 142, 142, true, true));
     }
     
     @FXML
@@ -118,12 +124,11 @@ public class RegisterController {
     	utente.setPropicFile(Utilities.getByteArrFromFile(selectedImage));
     	
     	if(Client.getInstance().requestRegistration(utente)) {
-    		//TODO SceneHandler.showConfirm();
+    		ChatDialog.getInstance().showResponseDialog("La registrazione è avvenuta con successo");
     		SceneHandler.getInstance().setLoginScene();
     	}
-    	else {
+    	else 
     		Client.getInstance().resetClient();
-    	}
     }
     
     @FXML
@@ -143,7 +148,7 @@ public class RegisterController {
 				picChooserCircle.setFill(new ImagePattern(img2));
 				selectedImage = file;
 			} catch (FileNotFoundException e) {
-				//show error
+				ChatDialog.getInstance().showResponseDialog("Impossibile caricare l'immagine, riprova");
 			}
 		}
     }

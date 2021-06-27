@@ -3,6 +3,7 @@ package application.controller;
 import java.io.File;
 import java.util.ArrayList;
 
+import application.graphics.ChatDialog;
 import application.logic.ChatLogic;
 import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
@@ -24,8 +25,7 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 		Message packet = (Message) event.getSource().getValue();
 		if(packet instanceof ChatMessage) {
 			ChatLogic.getInstance().addIncomingMessage((ChatMessage) packet);
-			if(!packet.getSender().equals("null"))
-				LocalDatabaseHandler.getInstance().addMessage((ChatMessage) packet);
+			LocalDatabaseHandler.getInstance().addMessage((ChatMessage) packet);
 		}
 		else if(packet instanceof InformationMessage) {
 			switch (((InformationMessage) packet).getInformation()) {
@@ -97,6 +97,10 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 					handleMyInfoChanged((InformationMessage) packet, false);
 					break;
 					
+				case Protocol.REMOVE_MESSAGE:
+					handleMessageRimotion((InformationMessage) packet);
+					break;
+					
 				default:
 					break;
 			}
@@ -105,20 +109,25 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 		Client.getInstance().restart();
 	}
 	
+	private void handleMessageRimotion(InformationMessage packet) {
+		ChatMessage msg = (ChatMessage) packet.getPacket();
+		msg.setMessageId(-1);
+		ChatLogic.getInstance().removeMsg(msg);
+	}
+	
 	private void handleMyInfoChanged(InformationMessage packet, boolean isProPic) {
 		if(isProPic) {
 			if(packet.getPacket() instanceof String && packet.getPacket().equals("null")) {
-				//TODO errore
+				ChatDialog.getInstance().showResponseDialog("C'è stato un problema nel cambiare l'immagine");
 			}
-			else if(packet.getPacket() instanceof File) 
+			else if(packet.getPacket() instanceof File || packet.getPacket() == null) 
 				ChatLogic.getInstance().handleMyPhotoUpdate((File) packet.getPacket());
 		}
 		else {
 			if(packet.getPacket() == null) {
-				//TODO errore
+				ChatDialog.getInstance().showResponseDialog("C'è stato un problema nel cambiare lo stato");
 			}
 			else {
-				System.out.println(packet.getPacket());
 				ChatLogic.getInstance().handleMyStatusChanged((String) packet.getPacket());
 			}
 		}	
@@ -172,7 +181,7 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 	private void handleContactInformation(InformationMessage packet, boolean fullInfo) {
 		User utente = (User) packet.getPacket();
 		if(!fullInfo) 
-			ChatLogic.getInstance().firstRegisterUser(utente.getUsername(), utente.getStatus(), utente.getProPic());
+			ChatLogic.getInstance().registerUpdateUser(utente.getUsername(), utente.getStatus(), utente.getProPic());
 		else {
 			ChatLogic.getInstance().updateUser(utente.getUsername(), utente.getStatus(), utente.getProPic());
 			LongUser user = (LongUser) utente;
@@ -207,8 +216,12 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 		ArrayList <Message> listMessaggi = (ArrayList<Message>) message.getPacket();
 		ChatLogic.getInstance().retrievePendingMessage(listMessaggi);
 		
-		for(Message msg : listMessaggi) 
+		for(Message msg : listMessaggi) {
+			if(msg.isDeleted())
+				continue;
+			
 			LocalDatabaseHandler.getInstance().addMessage((ChatMessage) msg);
+		}
 	}
 
 	private void handleOnlineRequest(InformationMessage message) {

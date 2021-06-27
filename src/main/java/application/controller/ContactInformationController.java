@@ -81,6 +81,9 @@ public class ContactInformationController implements EventHandler <ActionEvent> 
     @FXML
     private StackPane myStackPane;
     
+    @FXML
+    private VBox infoVBox;
+    
     private Image dotWhiteImage;
     
     private Image defaultGroup;
@@ -128,6 +131,7 @@ public class ContactInformationController implements EventHandler <ActionEvent> 
     	cancelButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/cancelIcon.png"), 100, 100, true, true)));
     	approveButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/approveTicker.png"), 100, 100, true, true)));
     	popupMenuButton.setGraphic(new ImageView(dotWhiteImage));
+    	infoVBox.getStyleClass().add("blackVBox");
     	disableChangeImageLabel();
     	ContactInfoView.getInstance().setController(this);
     	textField1.setEditable(false);
@@ -136,7 +140,7 @@ public class ContactInformationController implements EventHandler <ActionEvent> 
     
     @FXML
     void backButtonPressed(MouseEvent event) {
-    	SceneHandler.getInstance().setChatPane();
+    	SceneHandler.getInstance().setChatPane(true);
     }
 
 	@Override
@@ -171,29 +175,28 @@ public class ContactInformationController implements EventHandler <ActionEvent> 
 	@FXML
 	//Questo metodod viene chiamato cliccando su "Cambia immagine"
     void changeGroupImage(MouseEvent event) {
-		 int result = ChatDialog.getInstance().showPhotoOptionDialog();
+		 int result = ChatDialog.getInstance().showCustomDialog(ChatDialog.PHOTO_DIALOG_NEW_PHOTO);
 		 File selectedPhoto = null;
-		 if(result == ChatDialog.NEW_PHOTO_OPTION)
-			selectedPhoto = FXUtilities.chooseImage(); 
-		 else if (result == ChatDialog.REMOVE_PHOTO_OPTION)
-			 selectedPhoto = null;
-		 else 
-			 return;
-		 
-		 if(selectedPhoto == null) {
-			 propicCircle.setFill(new ImagePattern(defaultGroup));
-			 ChatLogic.getInstance().groupPictureChanged(selectedPhoto);
+		 if(result == ChatDialog.NEW_PHOTO_OPTION) {
+			selectedPhoto = FXUtilities.chooseImage();
+			
+			if(selectedPhoto != null)
+				ImageViewer.getInstance().displayImageChooser(myStackPane, this, selectedPhoto);
 		 }
-		 else 
-			 ImageViewer.getInstance().displayImageChooser(myStackPane, this, selectedPhoto);
+		 else if (result == ChatDialog.REMOVE_PHOTO_OPTION) {
+			 propicCircle.setFill(new ImagePattern(defaultGroup));
+			 ChatLogic.getInstance().groupPictureChanged(null);
+			 
+		 }
     }
 	
+	//questo metodo viene chiamato dopo che confermo la foto da cambiare per il gruppo
 	public void changeGroupPhoto(File image) {
 		try {
 			propicCircle.setFill(new ImagePattern(new Image(new FileInputStream(image), 200, 200, true, true)));
 			ChatLogic.getInstance().groupPictureChanged(image);
 		} catch (Exception e) {
-			//TODO show error
+			ChatDialog.getInstance().showResponseDialog("Impossibile caricare l'immagine, riprova");
 		}
 	}
 	 
