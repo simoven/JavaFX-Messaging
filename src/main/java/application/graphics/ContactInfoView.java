@@ -42,7 +42,7 @@ public class ContactInfoView {
 	}
 	
 	//Mostra le informazioni su un contatto singolo
-	public void showInfo(String username, String name, String lastName, String status, byte[] proPic, boolean isSavedContact) {
+	public void showInfo(SingleContact contact) {
 		controller.getPopupMenuButton().getItems().clear();
 		controller.getStatusLabel().setVisible(true);
 		controller.getMyStatusLabel().setVisible(true);
@@ -50,26 +50,26 @@ public class ContactInfoView {
 		controller.disableChangeImageLabel();
 		
 		controller.getInfoLabel().setText("Info sul contatto");
-		controller.getTextField2().setText("@" + username);
-		controller.getTextField1().setText(name + " " + lastName);
-		if(status != null)
-			controller.getStatusLabel().setText(status);
+		controller.getTextField2().setText("@" + contact.getUsername());
+		controller.getTextField1().setText(contact.getName() + " " + contact.getLastName());
+		if(contact.getStatus() != null)
+			controller.getStatusLabel().setText(contact.getStatus());
 		else
 			controller.getStatusLabel().setText("");
 		
-		controller.displayImage(proPic, false);
+		controller.displayImage(contact.getProfilePic(), false);
 	
 		MenuItem item = new MenuItem();
 		item.setOnAction(controller);
 		
-		if(!isSavedContact)
+		if(!contact.isVisible())
 			item.setText("Aggiungi contatto");
 		else
 			item.setText("Rimuovi contatto");
 		
 		controller.getPopupMenuButton().getItems().add(item);
 		createLabel("Gruppi in comune");
-		for(GroupChat commonChat : ChatLogic.getInstance().getCommonGroups(username))
+		for(GroupChat commonChat : ChatLogic.getInstance().getCommonGroups(contact.getUsername()))
 			appendGroupInfo(commonChat);
 	}
 

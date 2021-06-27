@@ -181,11 +181,10 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 	private void handleContactInformation(InformationMessage packet, boolean fullInfo) {
 		User utente = (User) packet.getPacket();
 		if(!fullInfo) 
-			ChatLogic.getInstance().registerUpdateUser(utente.getUsername(), utente.getStatus(), utente.getProPic());
-		else {
 			ChatLogic.getInstance().updateUser(utente.getUsername(), utente.getStatus(), utente.getProPic());
+		else {
 			LongUser user = (LongUser) utente;
-			ChatLogic.getInstance().showUserInfo(user.getUsername(), user.getName(), user.getLastName());
+			ChatLogic.getInstance().registerUser(utente.getUsername(), user.getName(), user.getLastName(), utente.getStatus(), utente.getProPic());
 		}
 	}
 
@@ -198,11 +197,13 @@ public class ClientSucceedController implements EventHandler<WorkerStateEvent> {
 	@SuppressWarnings("unchecked")
 	//Poiche la classe user è un mezzo di scambio client-server, converto gli user in contatti
 	private void handleContactSearch(InformationMessage message) {
-		ArrayList <User> listUser = (ArrayList <User>) message.getPacket();
+		ArrayList <LongUser> listUser = (ArrayList <LongUser>) message.getPacket();
 		ArrayList <SingleContact> listContatti = new ArrayList <SingleContact>();
 		
-		for(User user : listUser) {
+		for(LongUser user : listUser) {
 			SingleContact contact = new SingleContact(user.getUsername());
+			contact.setName(user.getName());
+			contact.setLastName(user.getLastName());
 			contact.setProfilePic(user.getProPic());
 			contact.setStatus(user.getStatus());
 			listContatti.add(contact);

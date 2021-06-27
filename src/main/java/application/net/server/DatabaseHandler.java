@@ -227,15 +227,14 @@ public class DatabaseHandler {
 		return lista;
 	}
 	
-	public synchronized ArrayList <User> searchUsers(String subUsername) throws SQLException {
-		ArrayList <User> lista = new ArrayList <User>();
+	public synchronized ArrayList <LongUser> searchUsers(String subUsername) throws SQLException {
+		ArrayList <LongUser> lista = new ArrayList <LongUser>();
 		String query = "SELECT * FROM Utente WHERE Username LIKE '%" + subUsername + "%';";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		//stm.setString(1, "%" + subUsername + "%");
 		ResultSet rs = stm.executeQuery();
 		while (rs.next()) {
-			System.out.println("Result found");
-			User user = new User(rs.getString("Username"));
+			LongUser user = new LongUser(rs.getString("Username"), rs.getString("Nome"), rs.getString("Cognome"));
 			user.setPropicFile(rs.getBytes("Img_profilo"));
 			user.setStatus(rs.getString("Status"));
 			lista.add(user);
@@ -375,7 +374,7 @@ public class DatabaseHandler {
 		stm.close();
 	}
 
-	public boolean updatePassword(String username, String newPassword) throws SQLException {
+	public synchronized boolean updatePassword(String username, String newPassword) throws SQLException {
 		String query = "Update Utente SET Password=? WHERE Username=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setString(1, BCrypt.hashpw(newPassword, BCrypt.gensalt(12)));
@@ -385,7 +384,7 @@ public class DatabaseHandler {
 		return answer;
 	}
 
-	public boolean updateProPic(String requester, File proPic) throws SQLException {
+	public synchronized boolean updateProPic(String requester, File proPic) throws SQLException {
 		String query = "Update Utente SET Img_profilo=? WHERE Username=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setBytes(1, Utilities.getByteArrFromFile(proPic));
@@ -395,7 +394,7 @@ public class DatabaseHandler {
 		return answer;
 	}
 
-	public boolean updateStatus(String requester, String status) throws SQLException {
+	public synchronized boolean updateStatus(String requester, String status) throws SQLException {
 		String query = "Update Utente SET Status=? WHERE Username=?;";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setString(1, status);
@@ -405,8 +404,8 @@ public class DatabaseHandler {
 		return answer;
 	}
 	
-	//Questo metodo rimuove il messaggio nel db, ovvero se il receiver non ha ancora ricevuto il messaggio
-	public ArrayList <String> removeMessage(ChatMessage msg) throws SQLException {
+	//Questo metodo rimuove il messaggio contenuto nel db, ovvero se il receiver non ha ancora ricevuto il messaggio
+	public synchronized ArrayList <String> removeMessage(ChatMessage msg) throws SQLException {
 		String query;
 		ArrayList <String> receiverArr = new ArrayList <String>();
 		if(!msg.isAGroupMessage())

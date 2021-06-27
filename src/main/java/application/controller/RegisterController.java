@@ -58,6 +58,9 @@ public class RegisterController {
     private TextField lastNameField;
     
     @FXML
+    private Circle helpButton;
+    
+    @FXML
     private Label nameLabel;
 
     @FXML
@@ -79,11 +82,13 @@ public class RegisterController {
     
     	usernameLabel.setText("");
     	passwordLabel.setText("");
+    	helpButton.setVisible(false);
     	nameLabel.setVisible(false);
     	
     	loginButton.getStyleClass().add("loginRegistrationButtons");
     	registerButton.getStyleClass().add("loginRegistrationButtons");
-    	chatIcon.setImage(new Image(getClass().getResourceAsStream("/application/images/chat3.png"), 142, 142, true, true));
+    	helpButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/questionMark.png"), 100, 100, true, true)));
+    	chatIcon.setImage(new Image(getClass().getResourceAsStream("/application/images/chatHome.png"), 142, 142, true, true));
     }
     
     @FXML
@@ -103,6 +108,10 @@ public class RegisterController {
     	
     	if(!passwordAnswer.equals(Utilities.PASSWORD_VALID)) {
     		passwordLabel.setText(passwordAnswer);
+    		
+    		if(passwordAnswer.equals(Utilities.PASSWORD_NOT_VALID))
+    			helpButton.setVisible(true);
+    		
     		valid = false;
     	}
     	
@@ -129,9 +138,26 @@ public class RegisterController {
     	}
     	else 
     		Client.getInstance().resetClient();
+    	
+    	clearField();
     }
     
-    @FXML
+    private void clearField() {
+    	usernameField.setText("");
+    	nameField.setText("");
+    	lastNameField.setText("");
+    	passwordField.setText("");
+    	passwordConfirmField.setText("");
+	}
+    
+    private void hidelabels() {
+    	usernameLabel.setText("");
+    	nameLabel.setVisible(false);
+    	passwordLabel.setText("");
+    	helpButton.setVisible(false);
+    }
+
+	@FXML
     void setPicture(MouseEvent event) {
     	if(selectedImage != null) {
     		selectedImage = null;
@@ -155,7 +181,18 @@ public class RegisterController {
     
     @FXML
     void setLoginScene(ActionEvent event) {
+    	hidelabels();
     	SceneHandler.getInstance().setLoginScene();
+    }
+    
+    @FXML
+    void showHelp(MouseEvent event) {
+    	String text = "La password deve contenere almeno :\n" +
+    				  "  \n- Un carattere maiuscolo " + 
+    				  "  \n- Un carattere minuscolo " + 
+    				  "  \n- Un carattere numerico " + 
+    				  "  \n- Un carattere tra @.?#$%^&+=! ";
+    	ChatDialog.getInstance().showResponseDialog(text);
     }
 
 }

@@ -93,14 +93,27 @@
                   </PasswordField>
                   <PasswordField fx:id="passwordConfirmField" promptText="Ripeti Password">
                      <VBox.margin>
-                        <Insets left="50.0" right="50.0" />
+                        <Insets bottom="5.0" left="50.0" right="50.0" />
                      </VBox.margin>
                   </PasswordField>
-                  <Label fx:id="passwordLabel" prefHeight="15.0" prefWidth="359.0" text="La password non è valida">
+                  <HBox prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <Label fx:id="passwordLabel" prefHeight="15.0" text="La password non è valida" />
+                        <Pane HBox.hgrow="ALWAYS">
+                           <HBox.margin>
+                              <Insets />
+                           </HBox.margin>
+                        </Pane>
+                        <Circle fx:id="helpButton" fill="DODGERBLUE" onMousePressed="#showHelp" radius="8.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+                           <HBox.margin>
+                              <Insets />
+                           </HBox.margin>
+                        </Circle>
+                     </children>
                      <VBox.margin>
-                        <Insets left="60.0" top="5.0" />
+                        <Insets left="50.0" right="50.0" />
                      </VBox.margin>
-                  </Label>
+                  </HBox>
                   <Pane prefHeight="61.0" prefWidth="468.0" />
                   <HBox nodeOrientation="RIGHT_TO_LEFT" prefHeight="87.0" prefWidth="468.0">
                      <children>

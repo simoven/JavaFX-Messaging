@@ -220,7 +220,7 @@ public class ServerListener implements Runnable {
 		}
 	}
 
-	//Se non è la foto, è lo stato
+	//Se non è la foto ad essere stata cambiata, è lo stato
 	private void handleMyInfoChanged(boolean isProfilePic) throws IOException, ClassNotFoundException, SQLException {
 		String requester = (String) inputStream.readObject();
 		String status;
@@ -342,6 +342,7 @@ public class ServerListener implements Runnable {
 	}
 	
 	@SuppressWarnings("unchecked")
+	//questo metodo gestisce l'aggiunta di un utente in un gruppo
 	private void handleGroupAdd() throws IOException, SQLException, ClassNotFoundException {
 		String requester = (String) inputStream.readObject();
 		int groupId = Integer.parseInt((String) inputStream.readObject());
@@ -351,10 +352,8 @@ public class ServerListener implements Runnable {
 			return;
 		
 		ArrayList <String> listPartecipanti = DatabaseHandler.getInstance().getGroupPartecipants(groupId);
-		if(listPartecipanti.indexOf(requester) == -1) {
-			System.out.println("owner not in group");
+		if(listPartecipanti.indexOf(requester) == -1) 
 			return;
-		}
 		
 		listPartecipanti.addAll(users);
 		
@@ -386,6 +385,7 @@ public class ServerListener implements Runnable {
 		}
 	}
 	
+	//Questo metodo controlla, all'accesso di un utente, se ci sono messaggi che non ha ricevuto perchè era offline
 	private void checkPendingMessage() throws SQLException {
 		ArrayList <Message> listMessaggi = DatabaseHandler.getInstance().getPendingMessages(serverUsername);
 		if(listMessaggi.isEmpty())
@@ -415,10 +415,10 @@ public class ServerListener implements Runnable {
 			return;
 		
 		ArrayList <String> listPartecipanti = DatabaseHandler.getInstance().getGroupPartecipants(groupId);
-		if(!autoRimotion && listPartecipanti.indexOf(requester) == -1) {
-			System.out.println("owner not in group");
+		//Chi ha richiesto l'operazione non è nemmeno nel gruppo
+		if(!autoRimotion && listPartecipanti.indexOf(requester) == -1) 
 			return;
-		}
+		
 		
 		String information;
 		if(!autoRimotion)
@@ -531,14 +531,14 @@ public class ServerListener implements Runnable {
 		if(utente != null) {
 			InformationMessage msg = new InformationMessage();
 			msg.setPacket(utente);
-			if(!fullInfo) {
+			
+			if(!fullInfo) 
 				msg.setInformation(Protocol.CONTACT_INFORMATION_REQUEST);
-				sendMessage(Protocol.CONTACT_INFORMATION_REQUEST);
-			}
-			else {
+			else 
 				msg.setInformation(Protocol.CONTACT_FULL_INFORMATION_REQUEST);
-				sendMessage(Protocol.CONTACT_FULL_INFORMATION_REQUEST);
-			}
+				
+			
+			sendMessage(msg.getInformation());
 			sendObject(msg);
 		}
 		
@@ -573,7 +573,7 @@ public class ServerListener implements Runnable {
 	private void handleContactSearch() throws ClassNotFoundException, IOException, SQLException {
 		try {
 			String subUsername = (String) inputStream.readObject();
-			ArrayList <User> listaRicercati = DatabaseHandler.getInstance().searchUsers(subUsername);
+			ArrayList <LongUser> listaRicercati = DatabaseHandler.getInstance().searchUsers(subUsername);
 			if(listaRicercati.size() > 0) {
 				InformationMessage msg = new InformationMessage();
 				msg.setPacket(listaRicercati);
@@ -653,7 +653,7 @@ public class ServerListener implements Runnable {
 	}
 	
 	private boolean handleRegistration() throws IOException, ClassNotFoundException, SQLException {
-		LongUser utente = (LongUser) retrieveUser();
+		LongUser utente = (LongUser) inputStream.readObject();
 		
 		if(!Utilities.checkIfUsernameValid(utente.getUsername()).equals(Utilities.USERNAME_VALID) ||
 		   !Utilities.checkIfPasswordValid(utente.getPassword()).equals(Utilities.PASSWORD_VALID)) {
@@ -714,12 +714,6 @@ public class ServerListener implements Runnable {
 			e.printStackTrace();
 			return;
 		}
-	}
-	
-	private User retrieveUser() throws IOException, ClassNotFoundException {
-		User utente = (User) inputStream.readObject();
-		
-		return utente;
 	}
 	
 	private void sendUser(User utente) throws IOException {

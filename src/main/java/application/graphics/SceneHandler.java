@@ -3,6 +3,7 @@ package application.graphics;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
@@ -49,7 +50,9 @@ public class SceneHandler {
 	}
 	
 	public void setMainStackPane(StackPane mainStackPane) {
-		this.mainStackPane = mainStackPane; }
+		this.mainStackPane = mainStackPane; 
+		mainStackPane.prefWidthProperty().bind(windowFrame.widthProperty().multiply(0.8));
+	}
 	
 	public ScrollPane getChatPaneScrollPane() {
 		return chatPaneScrollPane;
@@ -107,6 +110,7 @@ public class SceneHandler {
 		windowFrame.setTitle("JavaFX Messaging");
 		windowFrame.setScene(scene);
 		windowFrame.setResizable(false);
+		windowFrame.getIcons().add(new Image(getClass().getResourceAsStream("/application/images/chatHome.png"), 142, 142, true, true));
 		windowFrame.show();
 	}
 	

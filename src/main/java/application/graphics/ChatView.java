@@ -25,6 +25,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -135,6 +136,9 @@ public class ChatView {
     		ImageView img = new ImageView(new Image(new ByteArrayInputStream(chatMsg.getImage()), 250, 250, true, true));
     		img.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<Event>() {
     			public void handle(Event event) {
+    				if(((MouseEvent) event).getButton().equals(MouseButton.SECONDARY))
+    					return;
+    		
     				ImageViewer.getInstance().displayImageInPane(SceneHandler.getInstance().getChatPaneStackPane(), chatMsg.getImage()); };
 			});
     		box.getChildren().add(img);
@@ -314,14 +318,17 @@ public class ChatView {
 
 	public void updateOnlineStatus(String status) {
 		//Questo metodo aggiorna l'ultimo accesso
-		if(status.equals("null"))
-			status = "Mai";
-		
 		if(status.equals(Protocol.USER_ONLINE))
 			chatPaneController.getLastAccessLabel().setText("Online");
 		else {
-			String day = status.split(" ") [0];
-			String hour = status.split(" ") [1];
+			if(status.equals("null")) {
+				chatPaneController.getLastAccessLabel().setText("Ultimo accesso : Mai");
+				return;
+			}
+			
+			String [] split = status.split(" "); 
+			String day = split [0];
+			String hour = split [1];
 			if(day.equals(Utilities.getDateFromString(Utilities.getCurrentISODate())))
 				chatPaneController.getLastAccessLabel().setText("Ultimo accesso oggi alle " + hour);
 			else

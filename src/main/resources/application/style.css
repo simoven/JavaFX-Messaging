@@ -1,0 +1,256 @@
+#leftVbox {
+	-fx-background-color: #636566;
+}
+
+#topHbox {
+	-fx-background-color: #636566;
+}
+
+/*è l'hbox che contiene il label "aggiungi partecipanti" */
+#labelHbox {
+	-fx-background-color: #636566;
+}
+
+.blackVBox {
+	-fx-background-color: #636566;
+	-fx-background-radius: 15;
+}
+
+.searchTextField {
+	-fx-background-color: #46474A;
+	-fx-background-radius: 20;
+	-fx-text-fill: white;
+}
+
+#leftScrollPane {
+	-fx-background: #636566;
+	-fx-background-color: #636566;
+}
+
+/* i bottoni della schermata che mostra un'immagine*/
+.imageViewerButton {
+	-fx-background-color: #46474A;
+	-fx-background-radius: 15;
+	-fx-text-fill: white;
+}
+
+/* è il bottone di ricerca contatti */
+#searchUserButton {
+	-fx-background-radius: 15;
+	-fx-text-fill: white;
+	-fx-background-color: #7289da;
+}
+
+#searchUserButton: hover {
+	-fx-background-color: #6477C1;
+}
+
+#searchUserButton: pressed {
+	-fx-background-color: #5A6BAF;
+}
+
+#usernameLabel {
+	-fx-font-size: 1.4em;
+}
+
+.horizontaLine {
+	-fx-background-color: #9DA7A7;
+}
+
+.groupUserLabel {
+	-fx-background-color: transparent;
+}
+
+/* è il messaggio tipo "tizio si è unito" */
+.genericChatInformation {
+	-fx-background-color: #9DA7A7;
+    -fx-background-radius: 15;
+    -fx-text-fill: white;
+}
+
+#chatScrollPane {
+	-fx-background: transparent;
+	-fx-background-color: transparent;
+	-fx-background-size: cover;
+}
+
+/*è la textarea dove scrivo i messaggi*/
+#messageTextArea {
+    -fx-background-color: transparent;
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-border-width: 1;
+    -fx-border-color: #c6c6c6;
+}
+
+#messageTextArea .viewport{
+    -fx-background-color: transparent;
+}
+
+#messageTextArea .content{
+    -fx-background-color: transparent;
+}
+
+#messageTextArea .scroll-bar:vertical {
+    -fx-pref-width: 1;
+    -fx-opacity: 0;
+}
+
+.lastMessageInChat {
+	-fx-text-fill:  #9DA7A7;
+}
+
+/* è la vbox che contiene i miei messaggi*/
+.rightMessageVBox {
+	-fx-background-color: #5A6BAF;
+   	-fx-background-radius: 10 10 0 10;
+    -fx-text-fill: #eeeeee;
+    -fx-font-family : "Arial";
+}
+
+.scroll-pane { -fx-background-insets: 0; -fx-padding: 0; }
+
+.scroll-bar:vertical .track{
+    -fx-background-color : transparent;
+    -fx-border-color : transparent;
+    -fx-background-radius : 0.0em;
+    -fx-border-radius : 2.0em;
+}
+
+ .scroll-bar:vertical .increment-arrow,
+ .scroll-bar:vertical .decrement-arrow{
+    -fx-shape: " ";    
+    -fx-padding: 0.05em;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color :derive(black, 90.0%);
+    -fx-background-insets : 2.0, 0.0, 0.0;
+    -fx-background-radius : 2.0em;
+}
+
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color :derive(#4D4C4F,10.0%);
+    -fx-background-insets : 2.0, 0.0, 0.0;
+    -fx-background-radius : 2.0em;
+}
+
+.leftMessageVBox {
+	-fx-background-color: #636566;
+   	-fx-background-radius: 10 10 10 0;
+    -fx-text-fill: #eeeeee;
+    -fx-font-family: Arial;
+}
+
+/*è il messaggio di sinistra full rounded*/
+.leftMessageVBoxFull {
+	-fx-background-color: #636566;
+   	-fx-background-radius: 10;
+    -fx-text-fill: #eeeeee;
+    -fx-font-family: Arial;
+}
+
+.messageText {
+	-fx-text-fill: white; 
+	-fx-font-size: 1.2em;
+}
+
+.messageTime {
+	-fx-fill: #E5E5E5; 
+	-fx-font-size: 0.8em;
+}
+
+.contactUsernameLabel {
+	-fx-text-fill: black;
+	-fx-font-size: 1.2em;
+}
+
+.contactStatusLabel {
+	-fx-text-fill: grey;
+	-fx-font-size: 0.9em;
+}
+
+.transparent {
+	-fx-background-color: transparent;
+}
+
+.halfTransparent {
+	-fx-background-color: rgba(100, 100, 100, 0.7);
+}
+
+.newChatButtons {
+	-fx-background-color: #7289da;
+	-fx-text-fill: white;
+	-fx-background-radius: 15;
+}
+
+.newChatButtons: hover {
+	-fx-background-color: #6477C1;
+}
+
+.newChatButtons: pressed {
+	-fx-background-color: #5A6BAF;
+}
+
+.redButton {
+	-fx-background-color: #F51E1E;
+	-fx-text-fill: white;
+	-fx-font-size: 1.1em;
+	-fx-background-radius: 15;
+}
+
+.redButton: hover {
+	-fx-background-color: #D21717;
+	-fx-text-fill: white;
+}
+
+.check-box .box {
+	-fx-background-color: white;
+	-fx-border-color: grey;
+	-fx-background-radius: 15;
+	-fx-border-radius: 15; 
+}
+
+.check-box:hover .box{
+	-fx-background-color: #7289da;
+}
+
+.check-box:selected .mark {
+	-fx-background-color: white;
+}
+
+.check-box:selected .box {
+	-fx-background-color: #28a3f4;
+}
+
+.menu-button > .arrow-button {
+    -fx-padding: 0;
+}
+
+.menu-button > .arrow-button > .arrow {
+    -fx-padding: 0;
+}
+
+.menu-button > .label {
+    -fx-padding: 0;
+}
+
+.menu-item {
+    -fx-background-color: #636566; 
+}
+
+.menu-item .label {
+    -fx-text-fill: white;
+}
+
+.menu-item .label:disabled {
+    -fx-opacity: 1.0;
+}    
+
+.menu-item:focused, .menu-item:hovered {
+    -fx-background-color: #46474A; 
+}
+  
+.context-menu {
+    -fx-background-color: #636566; 
+}

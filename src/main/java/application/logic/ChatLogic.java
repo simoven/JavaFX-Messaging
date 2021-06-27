@@ -21,6 +21,7 @@ import application.logic.contacts.SingleContact;
 import application.logic.messages.ChatMessage;
 import application.logic.messages.InformationMessage;
 import application.logic.messages.Message;
+import application.misc.SoundEffectsHandler;
 import application.net.client.Client;
 import application.net.client.LocalDatabaseHandler;
 import application.net.misc.Protocol;
@@ -38,6 +39,7 @@ public class ChatLogic {
 	private File attachedImage;
 	private Vector <Contact> contactList;
 	private Vector <Chat> chatList;
+	//Sono gli ultimi contatti usciti da una ricerca globale
 	private ArrayList <SingleContact> lastSearchContacts;
 	private boolean needsUpdate = false;
 	
@@ -242,6 +244,7 @@ public class ChatLogic {
 		}
 		
 		needsUpdate = true;
+		//alla fine richiedo l'online status
 		if(SceneHandler.getInstance().isChatPaneActive())
 			updateStuff();
 		
@@ -249,6 +252,7 @@ public class ChatLogic {
 	}
 	
 	//L'animazione è finita, ora posso richiedere le info che mi servono senza bloccare l'animazione
+	//Oppure le richiedo manualmente se non c'è stata alcuna animazione
 	public void updateStuff() {
 		if(needsUpdate) {
 			if(activeContact != null && activeContact instanceof SingleContact) {
@@ -293,6 +297,7 @@ public class ChatLogic {
     			((GroupChat) activeChat).setUserOfLastMessage(msg.getSender());
     		
     		displayAllChat();
+    		SoundEffectsHandler.getInstance().playSentMessage();
     	}
 	}
 	
@@ -389,7 +394,7 @@ public class ChatLogic {
 	
 	private SingleContact createContact(String sender) {
 		//Poichè non è nei miei contatti, richiedo informazioni su di esso
-		Client.getInstance().requestContactInformation(sender, false);
+		Client.getInstance().requestContactInformation(sender, true);
 		SingleContact c = new SingleContact(sender);
 		contactList.add(c);
 		return c;
@@ -471,7 +476,11 @@ public class ChatLogic {
 				ChatView.getInstance().appendMessageInChat(msg, false, "");
 			else
 				ChatView.getInstance().appendMessageInChat(msg, false, ((GroupChat) chat).getUserOfLastMessage());
+			
+			SoundEffectsHandler.getInstance().playIncomingMessageActiveChat();
 		}
+		else
+			SoundEffectsHandler.getInstance().playIncomingMessage();
 		
 		if(chat instanceof GroupChat)
 			((GroupChat) chat).setUserOfLastMessage(msg.getSender());		
@@ -693,26 +702,19 @@ public class ChatLogic {
 	//Questo metodo aggiorna l'utente e viene chiamato quando riceviamo un messaggio da lui per la prima volta
 	//Viene inoltre aggiunto ai nostri contatti
 	//Oppure viene chiamato quando clicchiamo sulla sua chat e aggiorniamo le sue info
-	public void registerUpdateUser(String username, String status, byte[] proPic) {
+	public void registerUser(String username, String name, String lastName, String status, byte[] proPic) {
 		SingleContact user = searchContact(username);
-		if(user == null) {
-			user = createContact(username);
-			user.setStatus(status);
-			user.setProfilePic(proPic);
-			user.setVisible(false);
-			LocalDatabaseHandler.getInstance().registerUser(user, false);
-		}
-		else {
-			user.setStatus(status);
-			user.setProfilePic(proPic);
-			if(user.equals(activeContact))
-				ChatView.getInstance().showContactInformation(activeContact, -1);
-			LocalDatabaseHandler.getInstance().modifyUser(user);
-		}
-		
+		user.setStatus(status);
+		user.setProfilePic(proPic);
+		user.setName(name);
+		user.setLastName(lastName);
+		user.setVisible(false);
+		LocalDatabaseHandler.getInstance().registerUser(user, false);
+
 		displayAllChat();
 	}
 	
+	//Questo metodo viene chiamato quando richiedo le info aggiornate su un contatto, tipo immagine profilo o stato
 	public void updateUser(String username, String status, byte[] proPic) {
 		SingleContact user = searchContact(username);
 		if(user == null) 
@@ -723,6 +725,7 @@ public class ChatLogic {
 		LocalDatabaseHandler.getInstance().modifyUser(user);
 		if(user.equals(activeContact))
 			ChatView.getInstance().showContactInformation(user, -1);
+		
 		displayAllChat();
 	}
 
@@ -763,11 +766,11 @@ public class ChatLogic {
 	
 	//Richiede informazioni per mostrare il contatto sulla schermata di info
 	public void requestInfoForContactPane() {
-		if(activeChat == null)
+		if(activeChat == null) 
 			return;
 		
 		if(activeContact instanceof SingleContact) 
-			Client.getInstance().requestContactInformation(activeContact.getUsername(), true);
+			showUserInfo((SingleContact) activeContact);
 		else {
 			boolean iAmRemoved = false;
 			if(!((GroupChat) activeChat).getListUtenti().contains(myInformation))
@@ -782,20 +785,15 @@ public class ChatLogic {
 		}		
 	}
 
-	public void showUserInfo(String username, String name, String lastName) {
-		boolean isSavedContact = true;
-		SingleContact contact = searchContact(username);
-		
+	public void showUserInfo(SingleContact contact) {
 		if(contact == null)
 			return;
-		
-		if(!contact.isVisible())
-			isSavedContact = false;
 			
-		ContactInfoView.getInstance().showInfo(username, name, lastName, contact.getStatus(), contact.getProfilePic(), isSavedContact);
+		ContactInfoView.getInstance().showInfo(contact);
 		SceneHandler.getInstance().setContactInformationPane();
 	}
 
+	//questo metodo cambia la visibilità di un contatto, in modo da vederlo o no tra i miei contatti
 	public void setContactVisibility(String substring, boolean isVisible) {
 		SingleContact contact = searchContact(substring);
 		contact.setVisible(isVisible);
@@ -1051,8 +1049,11 @@ public class ChatLogic {
 
 	public void groupNameChanged(String name) {
 		if(activeChat instanceof GroupChat) {
-		if(((GroupChat) activeChat).getListUtenti().contains(myInformation))
-			Client.getInstance().updateGroupName(myInformation.getUsername(), name, ((GroupChat) activeChat).getGroupInfo().getGroupId());
+			if(((GroupChat) activeChat).getGroupInfo().getUsername().equals(name))
+				return;
+			
+			if(((GroupChat) activeChat).getListUtenti().contains(myInformation))
+				Client.getInstance().updateGroupName(myInformation.getUsername(), name, ((GroupChat) activeChat).getGroupInfo().getGroupId());
 		}
 	}
 

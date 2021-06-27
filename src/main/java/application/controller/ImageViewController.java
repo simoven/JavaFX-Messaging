@@ -3,9 +3,12 @@ package application.controller;
 import java.io.ByteArrayInputStream;
 
 import application.graphics.ImageViewer;
+import application.misc.FXUtilities;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -60,6 +63,19 @@ public class ImageViewController {
 
 	public void showImage(byte[] image) {
 		imageView.setImage(new Image(new ByteArrayInputStream(image), paneVBox.getPrefWidth() * 1.5, paneVBox.getPrefHeight() * 1.5, true, true));
+		
+		ContextMenu menu = new ContextMenu();
+		MenuItem item = new MenuItem("Salva");
+		menu.getItems().add(item);
+		
+		item.setOnAction(evt-> { 
+			menu.hide();
+			FXUtilities.saveImage(image);
+		});
+		
+		imageView.setOnContextMenuRequested(evt -> {
+			menu.show(imageView.getScene().getWindow(), evt.getScreenX(), evt.getScreenY());
+		});
 	}
 	
 	public void updateSelectButton(boolean isActive) {

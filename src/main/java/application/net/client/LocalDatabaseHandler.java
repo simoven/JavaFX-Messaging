@@ -85,15 +85,17 @@ public class LocalDatabaseHandler {
 			if(checkUserExist(utente.getUsername()))
 				return false;
 			
-			String query = "INSERT INTO Utente VALUES(?, ?, ?, ?);";
+			String query = "INSERT INTO Utente VALUES(?, ?, ?, ?, ?, ?);";
 			PreparedStatement stm = dbConnection.prepareStatement(query);
 			stm.setString(1, utente.getUsername());
-			stm.setBytes(2, utente.getProfilePic());
-			stm.setString(3, utente.getStatus());
+			stm.setString(2, utente.getName());
+			stm.setString(3, utente.getLastName());
+			stm.setBytes(4, utente.getProfilePic());
+			stm.setString(5, utente.getStatus());
 			if(visible)
-				stm.setInt(4, 1);
+				stm.setInt(6, 1);
 			else
-				stm.setInt(4, 0);
+				stm.setInt(6, 0);
 			
 			int res = stm.executeUpdate();
 			stm.close();
@@ -592,6 +594,8 @@ public class LocalDatabaseHandler {
 	private void createUtente() throws SQLException {
 		String query = "CREATE TABLE IF NOT EXISTS \"Utente\" (\n"
 				+ "	\"Username\"	TEXT NOT NULL,\n"
+				+ "	\"Nome\"	TEXT NOT NULL,\n"
+				+ "	\"Cognome\"	TEXT NOT NULL,\n"
 				+ "	\"Img_profilo\"	BLOB,\n"
 				+ "	\"Status\"	TEXT,\n"
 				+ "	\"Visible\"	INTEGER NOT NULL,\n"

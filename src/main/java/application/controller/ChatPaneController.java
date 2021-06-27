@@ -13,6 +13,7 @@ import application.graphics.ImageViewer;
 import application.graphics.SceneHandler;
 import application.logic.ChatLogic;
 import application.misc.FXUtilities;
+import application.misc.SoundEffectsHandler;
 import application.net.misc.Utilities;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -21,6 +22,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
@@ -78,6 +80,9 @@ public class ChatPaneController {
     private Circle sendButton;
     
     @FXML
+    private MenuItem audioSwitcherButton;
+    
+    @FXML
     private VBox chatMessageVBox;
     
     private Image blackDot;
@@ -124,6 +129,8 @@ public class ChatPaneController {
     	emojiHBox = EmojiLoader.getInstance().getEmojiHBox();
     	emojiHBox.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.8));
     	emojiHBox.maxHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.1));
+    	
+    	checkAudioButtontext();
     }
     
     public ScrollPane getChatScrollPane() { return chatScrollPane; }
@@ -235,5 +242,20 @@ public class ChatPaneController {
     		settingsButton.hide();
     		ChatLogic.getInstance().clearCurrentChat();
 		}
+    }
+    
+    @FXML
+    //Ho cliccato su attiva o disattiva audio
+    void switchAudio(ActionEvent event) {
+    	settingsButton.hide();
+    	SoundEffectsHandler.getInstance().setVolume(!SoundEffectsHandler.getInstance().isVolumeOn());
+    	checkAudioButtontext();
+    }
+    
+    private void checkAudioButtontext() {
+    	if(SoundEffectsHandler.getInstance().isVolumeOn())
+    		audioSwitcherButton.setText("Disattiva audio");
+    	else
+    		audioSwitcherButton.setText("Attiva audio");
     }
 }

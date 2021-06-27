@@ -38,6 +38,7 @@
             <Pane prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
             <MenuButton fx:id="settingsButton" mnemonicParsing="false" style="-fx-background-color: transparent;">
                <items>
+                  <MenuItem fx:id="audioSwitcherButton" mnemonicParsing="false" onAction="#switchAudio" text="Disattiva audio" />
                   <MenuItem mnemonicParsing="false" onAction="#changeBackground" text="Cambia Sfondo" />
                   <MenuItem mnemonicParsing="false" onAction="#deleteChat" text="Elimina chat" />
                </items>

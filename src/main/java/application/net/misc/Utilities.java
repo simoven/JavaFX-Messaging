@@ -118,7 +118,7 @@ public class Utilities {
 			return PASSWORD_TOO_LONG;
 		
 		//Deve contenere almeno un numero, carattere lowercase, uppercase, speciale e niente spazi
-		String regex = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).*";
+		String regex = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@\\.?#$%^&+=!])(?=\\S+$).*";
 		if(Pattern.matches(regex, password))
 			return PASSWORD_VALID;
 		
@@ -148,6 +148,9 @@ public class Utilities {
 	
 	public void logToFile(String log) {
 		if(writer == null)
+			return;
+		
+		if(log == null)
 			return;
 		
 		try {

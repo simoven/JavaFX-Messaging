@@ -45,7 +45,7 @@ public class LoginController {
     	passwordLabel.setText("");
     	registerButton.getStyleClass().add("loginRegistrationButtons");
     	loginButton.getStyleClass().add("loginRegistrationButtons");
-    	chatIcon.setImage(new Image(getClass().getResourceAsStream("/application/images/chat3.png"), 142, 142, true, true));
+    	chatIcon.setImage(new Image(getClass().getResourceAsStream("/application/images/chatHome.png"), 142, 142, true, true));
     }
     
     @FXML
