@@ -45,6 +45,7 @@ public class ChatLogic {
 	
 	private ChatLogic() {
 		chatList = new Vector <Chat> ();
+		contactList = new Vector <Contact> ();
 	}
 	
 	public static ChatLogic getInstance() {
@@ -62,7 +63,6 @@ public class ChatLogic {
 		lastSearchContacts = null;
 		activeChat = null;
 		activeContact = null;
-		Client.getInstance().resetClient();
 		SceneHandler.getInstance().setOpenLoginScene();
 	}
 	

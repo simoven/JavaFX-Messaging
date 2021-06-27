@@ -30,7 +30,7 @@ public class ServerListener implements Runnable {
 	public ServerListener(Socket socket, Server server) {
 		this.socket = socket;
 		this.server = server;
-		this.serverUsername = null;
+		this.serverUsername = "";
 		this.isLogged = false;
 		
 		try {
@@ -156,7 +156,7 @@ public class ServerListener implements Runnable {
 			}
 			
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println(serverUsername + " si è scollegato");
 			disconnect();
 			return;
 		} catch (SQLException i) {

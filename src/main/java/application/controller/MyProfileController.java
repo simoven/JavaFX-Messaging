@@ -139,6 +139,7 @@ public class MyProfileController {
     	oldPasswordField.prefWidthProperty().bind(SceneHandler.getInstance().getWindowFrame().widthProperty().multiply(0.30));
     	backButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/backArrow.png"), 100, 100, true, true)));
     	popupMenuButton.setGraphic(new ImageView(dotImage));
+    	
     	editStatusButton.getStyleClass().add("newChatButtons");
     	changePasswordButton.getStyleClass().add("redButton");
     	statusTextField.getStyleClass().add("searchTextField");
@@ -146,6 +147,7 @@ public class MyProfileController {
     	newPasswordField.getStyleClass().add("searchTextField");
     	confirmPasswordField.getStyleClass().add("searchTextField");
     	passwordInfoLabel.setText("");
+    	
     	passwordHBox.setVisible(false);
     	editStatusButton.setVisible(false);
     	editStatusButton.setDisable(true);
@@ -232,6 +234,10 @@ public class MyProfileController {
     	
     	passwordInfoLabel.setText("Password valida");
     	ChatLogic.getInstance().changePassword(oldPasswordField.getText(), newPasswordField.getText());
+    	
+    	oldPasswordField.setText("");
+    	newPasswordField.setText("");
+    	confirmPasswordField.setText("");
     }
     
     @FXML

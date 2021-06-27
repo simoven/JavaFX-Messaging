@@ -25,7 +25,6 @@ public class FXUtilities {
 	}
 	
 	public static void saveImage(byte [] img) {
-		System.out.println(img [0]);
 		FileChooser chooser = new FileChooser();
 		File toSave = chooser.showSaveDialog(SceneHandler.getInstance().getWindowFrame());
 		

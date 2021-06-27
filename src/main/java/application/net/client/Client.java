@@ -37,8 +37,10 @@ public class Client extends Service <Message> {
 			
 		} catch (IOException e) {
 			int res = ChatDialog.getInstance().showErrorDialog("Impossibile connettersi al server");
-			if(res == ChatDialog.RETRY_OPTION)
+			if(res == ChatDialog.RETRY_OPTION) {
 				resetClient();
+				getInstance();
+			}
 			else 
 				SceneHandler.getInstance().getWindowFrame().close();
 		}
@@ -85,7 +87,9 @@ public class Client extends Service <Message> {
 	}
 	
 	public LongUser requestLogin(String username, String password) {
-		sendMessage(Protocol.REQUEST_LOGIN);
+		if(!sendMessage(Protocol.REQUEST_LOGIN))
+			return null;
+		
 		sendMessage(username);
 		sendMessage(password);
 		
@@ -122,7 +126,9 @@ public class Client extends Service <Message> {
 	}
 	
 	public boolean requestRegistration(User utente) {
-		sendMessage(Protocol.REQUEST_REGISTRATION);
+		if(!sendMessage(Protocol.REQUEST_REGISTRATION))
+			return false;
+		
 		sendObject(utente);
 		
 		try {
@@ -149,7 +155,8 @@ public class Client extends Service <Message> {
 	}
 	
 	public boolean sendChatMessage(Message msg) {
-		sendMessage(Protocol.MESSAGE_SEND_REQUEST);
+		if(!sendMessage(Protocol.MESSAGE_SEND_REQUEST))
+			return false;
 		
 		if(sendObject(msg) && !msg.getSender().equals("null")) {
 			LocalDatabaseHandler.getInstance().addMessage((ChatMessage) msg);
@@ -160,17 +167,23 @@ public class Client extends Service <Message> {
 	}
 	
 	public void requestSearch(String subUsername) {
-		sendMessage(Protocol.CONTACTS_SEARCH);
+		if(!sendMessage(Protocol.CONTACTS_SEARCH))
+			return;
+		
 		sendMessage(subUsername);
 	}
 	
 	public void requestOnlineStatus(String userToCheck) {
-		sendMessage(Protocol.ONLINE_STATUS_REQUEST);
+		if(!sendMessage(Protocol.ONLINE_STATUS_REQUEST))
+			return;
+		
 		sendMessage(userToCheck);
 	}
 	
 	public boolean createGroup(GroupChat groupChat) {
-		sendMessage(Protocol.GROUP_CREATION);
+		if(!sendMessage(Protocol.GROUP_CREATION))
+			return false;
+		
 		sendMessage(groupChat.getGroupInfo().getUsername());
 		sendMessage(groupChat.getGroupInfo().getOwner());
 		byte [] arr = groupChat.getGroupInfo().getProfilePic();
@@ -196,84 +209,110 @@ public class Client extends Service <Message> {
 	
 	public void requestContactInformation(String user, boolean fullInfo) {
 		if(!fullInfo) 
-			sendMessage(Protocol.CONTACT_INFORMATION_REQUEST);
+			if(!sendMessage(Protocol.CONTACT_INFORMATION_REQUEST))
+				return;
 		else 
-			sendMessage(Protocol.CONTACT_FULL_INFORMATION_REQUEST);
+			if(!sendMessage(Protocol.CONTACT_FULL_INFORMATION_REQUEST))
+				return;
 	
 		sendMessage(user);
 	}
 
 	public void requestGroupInformation(int groupId) {
-		sendMessage(Protocol.GROUP_INFORMATION_REQUEST);
+		if(!sendMessage(Protocol.GROUP_INFORMATION_REQUEST))
+			return;
+		
 		sendMessage(Integer.toString(groupId));
 	}
 	
 	public void requestGroupMembers(int groupId) {
-		sendMessage(Protocol.GROUP_PARTECIPANT_REQUEST);
+		if(!sendMessage(Protocol.GROUP_PARTECIPANT_REQUEST))
+			return;
+		
 		sendMessage(Integer.toString(groupId));
 	}
 	
 	public void removeFromGroup(int groupId, String requester, String username) {
-		sendMessage(Protocol.GROUP_MEMBER_RIMOTION);
+		if(!sendMessage(Protocol.GROUP_MEMBER_RIMOTION))
+			return;
+		
 		sendMessage(requester);
 		sendMessage(Integer.toString(groupId));
 		sendMessage(username);
 	}
 	
 	public void requestGroupAdd(String requester, Vector <String> users, int groupIdForAdd) {
-		sendMessage(Protocol.GROUP_MEMBER_ADD);
+		if(!sendMessage(Protocol.GROUP_MEMBER_ADD))
+			return;
+		
 		sendMessage(requester);
 		sendMessage(Integer.toString(groupIdForAdd));
 		sendObject(users);
 	}
 	
 	public void requestGroupQuit(String username, int groupID) {
-		sendMessage(Protocol.GROUP_MEMBER_LEFT);
+		if(!sendMessage(Protocol.GROUP_MEMBER_LEFT))
+			return;
+		
 		sendMessage(Integer.toString(groupID));
 		sendMessage(username);
 	}
 	
 	public void requestGroupDeletion(int groupId, String requester) {
-		sendMessage(Protocol.GROUP_DELETION);
+		if(!sendMessage(Protocol.GROUP_DELETION))
+			return;
+		
 		sendMessage(requester);
 		sendMessage(Integer.toString(groupId));
 	}
 	
 	public void updateGroupPicture(File selectedPhoto, int groupId, String requester) {
-		sendMessage(Protocol.GROUP_PICTURE_CHANGED);
+		if(!sendMessage(Protocol.GROUP_PICTURE_CHANGED))
+			return;
+		
 		sendMessage(requester);
 		sendMessage(Integer.toString(groupId));
 		sendObject(selectedPhoto);
 	}
 	
 	public void updateGroupName(String requester, String gpName, int groupId) {
-		sendMessage(Protocol.GROUP_NAME_CHANGED);
+		if(!sendMessage(Protocol.GROUP_NAME_CHANGED))
+			return;
+		
 		sendMessage(requester);
 		sendMessage(Integer.toString(groupId));
 		sendMessage(gpName);
 	}
 	
 	public void requestPasswordChange(String username, String oldPassword, String newPassword) {
-		sendMessage(Protocol.PASSWORD_CHANGE);
+		if(!sendMessage(Protocol.PASSWORD_CHANGE))
+			return;
+		
 		sendMessage(username);
 		sendMessage(oldPassword);
 		sendMessage(newPassword);
 	}
 	
 	public void updateProPic(String username, File img) {
-		sendMessage(Protocol.PHOTO_CHANGE);
+		if(!sendMessage(Protocol.PHOTO_CHANGE))
+			return;
+		
 		sendMessage(username);
 		sendObject(img);
 	}
 
 	public void updateStatus(String username, String status) {
-		sendMessage(Protocol.STATUS_CHANGE);
+		if(!sendMessage(Protocol.STATUS_CHANGE))
+			return;
+		
 		sendMessage(username);
 		sendMessage(status);
 	}
 	
 	public void removeMessage(ChatMessage msg) {
-		sendMessage(Protocol.REMOVE_MESSAGE);
+		if(!sendMessage(Protocol.REMOVE_MESSAGE))
+			return;
+		
 		sendObject(msg);
 	}
 

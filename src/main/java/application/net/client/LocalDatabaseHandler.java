@@ -386,6 +386,8 @@ public class LocalDatabaseHandler {
 		while(rs.next()) {
 			SingleContact contact = new SingleContact(rs.getString("Username"));
 			contact.setProfilePic(rs.getBytes("Img_profilo"));
+			contact.setName(rs.getString("Nome"));
+			contact.setLastName(rs.getString("Cognome"));
 			contact.setStatus(rs.getString("Status"));
 			if(rs.getInt("Visible") == 0)
 				contact.setVisible(false);
