@@ -76,6 +76,8 @@ public class LoginController {
     		return;
     	}
     	
+    	Client.getInstance().setLogged(true);
+    	
     	Utilities.getInstance();
     	
     	SceneHandler.getInstance().setChatScene();

@@ -112,6 +112,8 @@ public class SceneHandler {
 		windowFrame.setResizable(false);
 		windowFrame.getIcons().add(new Image(getClass().getResourceAsStream("/application/images/chatHome.png"), 142, 142, true, true));
 		windowFrame.show();
+		
+		ChatDialog.getInstance();
 	}
 	
 	public void setLoginScene() {

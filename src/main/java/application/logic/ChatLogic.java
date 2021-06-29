@@ -64,6 +64,7 @@ public class ChatLogic {
 		activeChat = null;
 		activeContact = null;
 		SceneHandler.getInstance().setOpenLoginScene();
+		Client.getInstance().resetClient();
 	}
 	
 	public File getAttachedImage() {

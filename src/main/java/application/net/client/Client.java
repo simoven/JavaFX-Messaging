@@ -29,12 +29,14 @@ public class Client extends Service <Message> {
 	
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
+	private boolean logged;
 	
 	private Client() {
+		logged = false;
+		
 		try {
 			socket = new Socket("localhost", 8500);
 			outputStream = new ObjectOutputStream(socket.getOutputStream());
-			
 		} catch (IOException e) {
 			int res = ChatDialog.getInstance().showErrorDialog("Impossibile connettersi al server");
 			if(res == ChatDialog.RETRY_OPTION) {
@@ -44,6 +46,10 @@ public class Client extends Service <Message> {
 			else 
 				SceneHandler.getInstance().getWindowFrame().close();
 		}
+	}
+	
+	public void setLogged(boolean logged) {
+		this.logged = logged;
 	}
 	
 	public static Client getInstance() {
@@ -79,8 +85,10 @@ public class Client extends Service <Message> {
 			outputStream.flush();
 			return true;
 		} catch (Exception e) {
-			ChatDialog.getInstance().showResponseDialog("Impossibile stabilire una connessione con il server");
-			ChatLogic.getInstance().resetLogic();
+			if(logged) {
+				ChatDialog.getInstance().showResponseDialog("Impossibile stabilire una connessione con il server");
+				ChatLogic.getInstance().resetLogic();
+			}
 		}
 		
 		return false;
@@ -208,12 +216,14 @@ public class Client extends Service <Message> {
 	}
 	
 	public void requestContactInformation(String user, boolean fullInfo) {
-		if(!fullInfo) 
+		if(!fullInfo) {
 			if(!sendMessage(Protocol.CONTACT_INFORMATION_REQUEST))
 				return;
-		else 
+		}
+		else { 
 			if(!sendMessage(Protocol.CONTACT_FULL_INFORMATION_REQUEST))
 				return;
+		}
 	
 		sendMessage(user);
 	}

@@ -229,9 +229,9 @@ public class DatabaseHandler {
 	
 	public synchronized ArrayList <LongUser> searchUsers(String subUsername) throws SQLException {
 		ArrayList <LongUser> lista = new ArrayList <LongUser>();
-		String query = "SELECT * FROM Utente WHERE Username LIKE '%" + subUsername + "%';";
+		String query = "SELECT * FROM Utente WHERE Username LIKE CONCAT('%',?,'%');";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
-		//stm.setString(1, "%" + subUsername + "%");
+		stm.setString(1, subUsername);
 		ResultSet rs = stm.executeQuery();
 		while (rs.next()) {
 			LongUser user = new LongUser(rs.getString("Username"), rs.getString("Nome"), rs.getString("Cognome"));

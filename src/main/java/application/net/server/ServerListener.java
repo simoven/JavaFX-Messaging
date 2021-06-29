@@ -176,7 +176,7 @@ public class ServerListener implements Runnable {
 		try {
 			if(server.disconnectUser(serverUsername))
 				DatabaseHandler.getInstance().updateLastAccess(serverUsername);
-		} catch (SQLException i) {/*nulla*/ }
+		} catch (SQLException i) {/*nulla*/}
 		closeStreams();
 	}
 	
