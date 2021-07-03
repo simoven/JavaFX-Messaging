@@ -204,6 +204,9 @@ public class DatabaseHandler {
 			msg.setGroupMessage(true);
 			msg.setGroupId(rs.getInt("Group_id"));
 			msg.setTimestamp(rs.getString("Date"));
+			if(rs.getInt("Deleted") == 1)
+				msg.setDeleted(true);
+			
 			lista.add(msg);
 		}
 		
@@ -229,7 +232,7 @@ public class DatabaseHandler {
 	
 	public synchronized ArrayList <LongUser> searchUsers(String subUsername) throws SQLException {
 		ArrayList <LongUser> lista = new ArrayList <LongUser>();
-		String query = "SELECT * FROM Utente WHERE Username LIKE CONCAT('%',?,'%');";
+		String query = "SELECT * FROM Utente WHERE Username LIKE '%' || ? || '%';";
 		PreparedStatement stm = dbConnection.prepareStatement(query);
 		stm.setString(1, subUsername);
 		ResultSet rs = stm.executeQuery();
