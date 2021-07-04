@@ -21,14 +21,15 @@ public class SceneHandler {
 	private ScrollPane chatPaneScrollPane;
 	
 	private BorderPane contactsPane;
+	private BorderPane defaultChatPane;
 	private AnchorPane loginPane;
 	private AnchorPane registerPane;
 	private StackPane imageViewPane;
-	private AnchorPane createGroupPane;
+	private BorderPane createGroupPane;
 	private BorderPane contactInformationPane;
 	private BorderPane myProfilePane;
 	
-	//é lo stackPnae principale sulla destra, dove poi cambio chikdren in base al pannello che mi serve
+	//é lo stackPane principale sulla destra, dove poi cambio chikdren in base al pannello che mi serve
 	private StackPane mainStackPane;
 	private static SceneHandler instance = null;
 	
@@ -78,12 +79,14 @@ public class SceneHandler {
 		return contactsPane;
 	}
 	
-	public AnchorPane getCreateGroupPane() {
+	public BorderPane getCreateGroupPane() {
 		return createGroupPane;
 	}
 	
 	public void init(Stage primaryStage) throws Exception {
 		windowFrame = primaryStage;
+		windowFrame.getIcons().add(new Image(getClass().getResourceAsStream("/application/images/chatHome.png"), 128, 128, true, true));
+		
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("/application/fxml/ChatPane.fxml"));
 		chatPane = (BorderPane) loader.load();
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/ChatMain.fxml"));
@@ -97,7 +100,7 @@ public class SceneHandler {
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/ImageViewer.fxml"));
 		imageViewPane = (StackPane) loader.load();
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/CreateGroup.fxml"));
-		createGroupPane = (AnchorPane) loader.load();
+		createGroupPane = (BorderPane) loader.load();
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/ContactInformation.fxml"));
 		contactInformationPane = (BorderPane) loader.load();
 		loader = new FXMLLoader(getClass().getResource("/application/fxml/MyProfile.fxml"));
@@ -110,10 +113,10 @@ public class SceneHandler {
 		windowFrame.setTitle("JavaFX Messaging");
 		windowFrame.setScene(scene);
 		windowFrame.setResizable(false);
-		windowFrame.getIcons().add(new Image(getClass().getResourceAsStream("/application/images/chatHome.png"), 142, 142, true, true));
 		windowFrame.show();
 		
 		ChatDialog.getInstance();
+		defaultChatPane = (BorderPane) mainStackPane.getChildren().get(0);
 	}
 	
 	public void setLoginScene() {
@@ -154,6 +157,18 @@ public class SceneHandler {
 		else
 			ChatAnimation.doSlideInFromBottom(null, contactInformationPane, mainStackPane);
 	}
+	
+	public void setDefaultChatPane() {	
+		if(mainStackPane.getChildren().size() > 0) {
+			if(mainStackPane.getChildren().get(0).equals(defaultChatPane))
+				return;
+			else {
+				ChatAnimation.doSlideInFromLeft((Pane) mainStackPane.getChildren().get(0), defaultChatPane, mainStackPane);
+			}
+		}
+		else
+			ChatAnimation.doSlideInFromTop(null, defaultChatPane, mainStackPane);
+    }
 	
 	//se non deve scorrere da sinistra, allora deve arrivare da sopra
 	public void setChatPane(boolean fromLeft) {	
@@ -198,10 +213,10 @@ public class SceneHandler {
 			if(mainStackPane.getChildren().get(0).equals(myProfilePane))
 				return;
 			else 
-				ChatAnimation.doSlideInFromBottom((Pane) mainStackPane.getChildren().get(0), myProfilePane, mainStackPane);
+				ChatAnimation.doSlideInFromTop((Pane) mainStackPane.getChildren().get(0), myProfilePane, mainStackPane);
 		}
 		else
-			ChatAnimation.doSlideInFromBottom(null, myProfilePane, mainStackPane);
+			ChatAnimation.doSlideInFromTop(null, myProfilePane, mainStackPane);
 	}
 	
 	//Questo metodo controlla se il pannello per la visualizzazione dell'imagine è rimasto aperto e, in caso, lo chiude

@@ -14,10 +14,13 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
 
 public class ChatChooserController implements EventHandler <MouseEvent> {
 	
@@ -29,6 +32,12 @@ public class ChatChooserController implements EventHandler <MouseEvent> {
 
     @FXML
     private VBox allUsersVbox;
+    
+    @FXML
+    private Circle backButton;
+    
+    @FXML
+    private BorderPane root;
 
     @FXML
     private Button searchUserButton;
@@ -55,6 +64,14 @@ public class ChatChooserController implements EventHandler <MouseEvent> {
 		return newGroupButton;
 	}
     
+    public ScrollPane getAlluserScrollpane() {
+		return alluserScrollpane;
+	}
+    
+    public VBox getAllUsersVbox() {
+		return allUsersVbox;
+	}
+    
     public void setButtonsForGroupAdd(boolean buttonsForGroupAdd) {
 		this.buttonsForGroupAdd = buttonsForGroupAdd;
 		
@@ -68,17 +85,18 @@ public class ChatChooserController implements EventHandler <MouseEvent> {
     void initialize() {
     	CreateChatView.getInstance().setChatChooserController(this);
     	topHbox.prefHeightProperty().bind(SceneHandler.getInstance().getWindowFrame().heightProperty().multiply(0.05));
+    	backButton.setFill(new ImagePattern(new Image(getClass().getResourceAsStream("/application/images/backArrow.png"), 100, 100, true, true)));
     	searchField.getStyleClass().add("searchTextField");
     	newGroupButton.getStyleClass().add("newChatButtons");
     }
     
-    public ScrollPane getAlluserScrollpane() {
-		return alluserScrollpane;
-	}
-    
-    public VBox getAllUsersVbox() {
-		return allUsersVbox;
-	}
+    @FXML
+    void backButtonPressed(MouseEvent event) {
+    	if(ChatLogic.getInstance().getActiveChat() != null)
+    		SceneHandler.getInstance().setChatPane(true);
+    	else
+    		SceneHandler.getInstance().setDefaultChatPane();
+    }
     
     @Override
     public void handle(MouseEvent event) {

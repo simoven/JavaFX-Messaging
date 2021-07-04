@@ -138,7 +138,7 @@ public class ContactInfoView {
 			appendGroupPartecipants(activeChat, contact, iAmOwner);
 	}
 	
-	//Questo metodo mostra un partecipante di un gruppo
+	//Questo metodo aggiunge un partecipante di un gruppo nella sezione dei partecipanti
 	private void appendGroupPartecipants(GroupChat chat, SingleContact contact, boolean iAmOwner) {
 		HBox container = new HBox();
 		container.prefWidthProperty().bind(controller.getScrollPaneVBox().prefWidthProperty());

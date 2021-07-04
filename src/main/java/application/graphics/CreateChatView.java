@@ -106,8 +106,10 @@ public class CreateChatView {
 		horizontaLine.setPrefHeight(1);
 		
 		if(showCheckBox && !isForGroupAdd) {
+			if(createGroupController.getPartecipantsVBox().getChildren().size() > 1)
+				createGroupController.getPartecipantsVBox().getChildren().add(horizontaLine);
+			
 			createGroupController.getPartecipantsVBox().getChildren().add(container);
-			createGroupController.getPartecipantsVBox().getChildren().add(horizontaLine);
 		}
 		else {
 			chatChooserController.getAllUsersVbox().getChildren().add(container);
@@ -146,5 +148,14 @@ public class CreateChatView {
 		for(SingleContact contact : usersNotInGroup) 
 			if(contact.getUsername().contains(subUsername)) 
 				CreateChatView.getInstance().appendContactInChoiceScreen((SingleContact) contact, false, true, true);
+	}
+
+	//Questo metodo aggiunge il label "aggiungi partecipanti" alla vbox dove ci sono i contatti
+	public void appendPartecipantsLabel() {
+		Label label = new Label("Aggiungi partecipanti");
+		label.setStyle("-fx-text-fill: #7289da");
+		createGroupController.getPartecipantsVBox().getChildren().add(label);
+		VBox.setMargin(label, new Insets(5, 0, 5, 10));
+		
 	}
 }

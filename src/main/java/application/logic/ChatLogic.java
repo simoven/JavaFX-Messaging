@@ -336,6 +336,7 @@ public class ChatLogic {
 	//questo metodo mostra tutti i miei contatti prima della creazione di un gruppo
 	public void showContactForGroupCreation() {
 		CreateChatView.getInstance().getCreateGroupController().getPartecipantsVBox().getChildren().clear();
+		CreateChatView.getInstance().appendPartecipantsLabel();
 		for(Contact contact : ChatLogic.getInstance().getContactList()) {
 			if(!contact.isVisible())
 				continue;
@@ -468,8 +469,7 @@ public class ChatLogic {
 		if(msg.getMessageDateStamp() > chat.getLastMessageDateStamp()) 
 			if(activeChat == chat)
 				ChatView.getInstance().appendMessageInChat(createInformationMessage(msg.getSentDate()), false, "");
-		
-			
+				
 		chat.addNewMessage(msg);
 			
 		if(activeChat == chat) {

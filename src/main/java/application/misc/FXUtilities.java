@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import application.graphics.SceneHandler;
+import application.net.misc.Utilities;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 
@@ -48,7 +49,7 @@ public class FXUtilities {
 			stream.flush();
 			stream.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			Utilities.getInstance().logToFile(e.getMessage());
 		}
 	}
 }

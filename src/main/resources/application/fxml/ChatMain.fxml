@@ -60,7 +60,7 @@
             </VBox>
             <StackPane fx:id="rightPane" HBox.hgrow="ALWAYS">
                <children>
-                  <BorderPane>
+                  <BorderPane style="-fx-background-color: white;">
                      <center>
                         <Label style="-fx-text-fill: #9DA7A7;" text="Le chat che apri appariranno qui" BorderPane.alignment="CENTER" />
                      </center></BorderPane>

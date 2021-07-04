@@ -124,7 +124,7 @@ public class MyProfileController {
     	if(ChatLogic.getInstance().getActiveChat() != null)
     		SceneHandler.getInstance().setChatPane(true);
     	else
-    		((StackPane) root.getParent()).getChildren().remove(root);
+    		SceneHandler.getInstance().setDefaultChatPane();
     	
     	passwordHBox.setVisible(false);
     	passwordInfoLabel.setText("");
